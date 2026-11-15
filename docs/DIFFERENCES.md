@@ -5,6 +5,7 @@ Everything `ww-gc2hd` does is listed here with its evidence. Evidence tags:
 - **[CODE]** read in the decompilations: GameCube `zeldaret/tww` (`research/tww` in a working copy; clone it there), HD `ZeldaWWHDDecomp/wwhd`
   (`research/wwhd`, verified decompilation of the USA `cking.rpx`).
 - **[DATA]** observed in real save files (`samples/`, provenance in `samples/SOURCES.md`): 260 GameCube `.gci`
+  (257 are in the repository; the other three were modified by an exploit tool and are left out)
   (34 USA, 222 Japan, 4 Europe; 477 used files) and 45 HD `cking.sav` (56 used Quest Logs, 53 distinct).
 - **[RANDO]** vanilla item placements from the randomizers' data: GameCube `wwrando/logic/item_locations.txt`,
   HD `TWWHD-Randomizer/logic/data/location_data.yaml` and `logic/GameItem.hpp`.
