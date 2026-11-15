@@ -135,9 +135,7 @@ class SlotReport:
 
 def _map_bit(save, field_name, n):
     """collect map n (1-based) in one of the 128-bit chart flag sets"""
-    off = layout.FIELDS[field_name][0] + 4 * ((n - 1) >> 5)
-    word = int.from_bytes(save.data[off:off + 4], "big")
-    return bool(word >> ((n - 1) & 31) & 1)
+    return layout.chart_bit(save.raw(field_name), n)
 
 
 def _set_map_bit(save, field_name, n, on):
@@ -393,19 +391,19 @@ def _pawprint_settled(g, options):
 
 
 def settled_answers(slots, options):
-    """{(case, file index): why} for cases that another answer already settles: an answer given for one
-    of them has no effect, which a front end should say."""
+    """{(case, file index): (why, mode applied or None)} for cases that are settled without their own
+    answer. An answer given for one of them has no effect, which a front end should say unless it is the
+    mode that was applied anyway."""
     out = {}
     for s, g in enumerate(slots):
         if g is None or g.is_new():
             continue
         if _collected(g, PAWPRINT_CHEST) and _pawprint_settled(g, options.for_slot(s)):
             out[("pawprint_chest", s)] = ("floor 50 by rewards already settles that chest (opened, Treasure "
-                                          "Chart 46 salvaged)")
+                                          "Chart 46 salvaged)", None)
         if _lenzo_stuck(g) and not _couple_on_street(g):
-            if options.for_slot(s).lenzo != "steps":        # an answer of steps is what was done
-                out[("lenzo", s)] = ("the couple of the third picture no longer meets on the street in this "
-                                     "file, so only the translation by steps works and it was applied")
+            out[("lenzo", s)] = ("the couple of the third picture no longer meets on the street in this "
+                                 "file, so only the translation by steps works and it was applied", "steps")
     return out
 
 

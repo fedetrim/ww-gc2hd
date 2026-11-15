@@ -76,9 +76,7 @@ class View:
         return int.from_bytes(self.raw(name), "big")
 
     def mapbit(self, field, n):
-        w = self.raw(field)
-        i = 4 * ((n - 1) >> 5)
-        return int.from_bytes(w[i:i + 4], "big") >> ((n - 1) & 31) & 1
+        return int(layout.chart_bit(self.raw(field), n))
 
     def reg(self, r):
         off = layout.FIELDS["event.flags"][0]

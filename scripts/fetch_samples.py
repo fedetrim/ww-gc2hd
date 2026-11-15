@@ -86,11 +86,17 @@ def fetch(src):
     # What the repository already holds is not fetched again (a clone has the saves but none of the
     # archives or markers); --again forces it.
     wanted = expected_under(src["dest"])
-    if wanted and not FORCE and all(os.path.exists(os.path.join(SAMPLES, p)) for p in wanted):
-        return "present"
+    target = os.path.join(dest, src.get("archive_dir", ""), src.get("name", ""))
+    marker = os.path.join(dest, ".fetched-" + src.get("name", "repository"))    # written last
+    cut_out = os.path.join(dest, "extracted-gci", "01-GZLE-gczelda.gci")
+    if not FORCE:
+        if wanted:                              # a source of tracked saves: present when all of them are
+            if all(os.path.exists(os.path.join(SAMPLES, p)) for p in wanted):
+                return "present"
+        elif os.path.exists(marker) or (kind == "file" and os.path.exists(target)
+                                        and (not src.get("raw_card") or os.path.exists(cut_out))):
+            return "present"                    # a source of untracked files only: fetched once
     if kind == "github":
-        if os.path.exists(os.path.join(dest, "COMMIT.txt")):
-            return "present"
         data = download("https://codeload.github.com/%s/zip/%s" % (src["repo"], src["commit"]))
         with tempfile.TemporaryDirectory() as tmp:
             with zipfile.ZipFile(io.BytesIO(data)) as z:
@@ -113,18 +119,14 @@ def fetch(src):
                 shutil.copytree(top, dest, dirs_exist_ok=True)
         with open(os.path.join(dest, "COMMIT.txt"), "w") as f:
             f.write(src["commit"] + "\n")
+        with open(marker, "w") as f:
+            f.write(src["commit"] + "\n")
         return "downloaded"
-    target = os.path.join(dest, src.get("archive_dir", ""), src["name"])
     extracted = os.path.normpath(os.path.join(dest, src.get("extracted", "extracted")))
-    marker = os.path.join(dest, ".fetched-" + src["name"])      # written last: a failed fetch is retried
-    cut_out = os.path.join(dest, "extracted-gci", "01-GZLE-gczelda.gci")
-    if os.path.exists(marker) or (kind == "file" and os.path.exists(target)
-                                  and (not src.get("raw_card") or os.path.exists(cut_out))):
-        return "present"
     os.makedirs(os.path.dirname(target), exist_ok=True)
     part = target + ".part"
     try:
-        if not (kind == "file" and os.path.exists(target)):         # the card image may already be there
+        if FORCE or not (kind == "file" and os.path.exists(target)):  # the card image may already be there
             with open(part, "wb") as f:
                 f.write(download(src["url"]))
         if kind == "archive":
@@ -147,9 +149,8 @@ def fetch(src):
         os.makedirs(out, exist_ok=True)
         with open(os.path.join(out, "01-GZLE-gczelda.gci"), "wb") as f:
             f.write(card.dentry + card.blocks)
-    if kind == "archive":
-        with open(marker, "w") as f:
-            f.write(src["url"] + "\n")
+    with open(marker, "w") as f:
+        f.write(src["url"] + "\n")
     return "downloaded"
 
 

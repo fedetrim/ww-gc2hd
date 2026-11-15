@@ -521,7 +521,7 @@ class Conversion(unittest.TestCase):
         card = self._card(lenzo)
         self.assertEqual(conv.decisions_for(card.slots()), [])
         self.assertIn(("lenzo", 0), conv.settled_answers(card.slots(), conv.Options(lenzo="rewards")))
-        self.assertEqual(conv.settled_answers(card.slots(), conv.Options(lenzo="steps")), {})
+        self.assertEqual(conv.settled_answers(card.slots(), conv.Options(lenzo="steps"))[("lenzo", 0)][1], "steps")
 
         # a picture the file counts but the card cannot give is reported, not dropped in silence
         def counted(s):
@@ -593,6 +593,8 @@ class Conversion(unittest.TestCase):
         self.assertEqual(d.depends, {0: ("floor50", "steps")})     # a case only if floor 50 is by steps
         self.assertEqual(conv.settled_answers(card.slots(), conv.Options(floor50="rewards")).keys(),
                          {("pawprint_chest", 0)})
+        card.slots()[0].set_u("memory13.tbox", 0)           # a caller's edit does not reach the card
+        self.assertEqual(card.slots()[0].u("memory13.tbox"), 1 << 12 | 1 << 2)
         self.assertEqual(keys(conv.Options(floor50="steps")), ["floor50", "pawprint_chest"])
         self.assertEqual(keys(conv.Options(floor50="rewards")), ["floor50"])
         st = self._state(card, floor50="rewards")

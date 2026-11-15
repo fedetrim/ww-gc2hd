@@ -147,8 +147,9 @@ included as downloaded, each folder named after its source; `samples/SOURCES.md`
 its link and what the uploader said about the file. If one of them is yours and you want it removed, open
 an issue.
 
-`python3 scripts/fetch_samples.py --check` compares the folder with `samples/checksums.sha256`, and without
-`--check` the script downloads everything again from the sources (`samples/manifest.json`). That also brings
+`python3 scripts/fetch_samples.py --check` compares the folder with `samples/checksums.sha256`. Without
+`--check` the script downloads the sources whose saves are missing, and with `--again` every source
+(`samples/manifest.json`). A full download also brings
 what the repository does not keep because nothing here uses it: the original archives, files that failed
 validation, save states of the native port, and other files that came along (`.gitignore` lists them).
 

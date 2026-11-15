@@ -88,7 +88,7 @@ class GcCardFile:
         of its file 2 before restoring (as written in the game), so a good file 2 in the second copy is not
         used when that copy's file 3 is damaged."""
         if self._slots is not None:
-            return list(self._slots)
+            return [s.copy() if s is not None else None for s in self._slots]
         (_, a), (_, b) = self.copy_status()
         use_second = [not a[0] and b[0], not a[1] and b[2], not a[2] and b[2]]
         out = []
@@ -97,8 +97,8 @@ class GcCardFile:
             ok = (b if k else a)[s]
             off = 8 + s * GAMEDATA
             out.append(Save(self._copy(k + 1)[off:off + SAVE_SIZE]) if ok else None)
-        self._slots = out                       # the checksums are not cheap; the files do not change
-        return list(out)
+        self._slots = out                       # the checksums are not cheap; callers get copies
+        return [s.copy() if s is not None else None for s in out]
 
     def pictures(self):
         """Per file, the pictures the game itself would load (d_s_name.cpp:1218-1251): it visits the first
@@ -181,7 +181,10 @@ def _from_raw_card(raw):
             if not 5 <= blk < total_blocks:
                 raise GcError("corrupt block chain in memory card image")
             data += raw[BLOCK * blk:BLOCK * (blk + 1)]
-            blk = struct.unpack(">H", bat[0x0A + (blk - 5) * 2:0x0C + (blk - 5) * 2])[0]
+            link = 0x0A + (blk - 5) * 2
+            if link + 2 > len(bat):             # a card larger than its block map can describe
+                raise GcError("corrupt block chain in memory card image")
+            blk = struct.unpack(">H", bat[link:link + 2])[0]
         found.append(GcCardFile(e, data, "raw card"))
     if not found:
         raise GcError("no Wind Waker save ('gczelda') on this memory card image")

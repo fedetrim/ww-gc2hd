@@ -3,6 +3,7 @@ import argparse
 import textwrap
 import time
 import os
+import struct
 import sys
 
 from . import convert as conv
@@ -150,10 +151,10 @@ def cmd_convert(a):
                 if (key, s) not in in_case:
                     print("note: %s %d=%s was not used: Quest Log %d is not in that case." % (
                         _flag(key), s + 1, mode, s + 1), file=sys.stderr)
-    for (key, s), why in conv.settled_answers(slots, options).items():
+    for (key, s), (why, applied) in conv.settled_answers(slots, options).items():
         given = getattr(a, key)                 # an answer typed by hand that had no effect is said
         given = given.get(s) if isinstance(given, dict) else given
-        if given:
+        if given and given != applied:
             reports[s].warnings.append("%s %s was not used: %s" % (_flag(key), given, why))
     data = out_file.serialize()
     hd.HdFile.parse(data)                      # the output must pass the same checks as a real save
@@ -305,7 +306,7 @@ def main(argv=None):
             stream.reconfigure(errors="backslashreplace")
     try:
         a.func(a)
-    except (gc.GcError, hd.HdError, conv.ConversionError, OSError, OverflowError, ValueError) as e:
+    except (gc.GcError, hd.HdError, conv.ConversionError, OSError, OverflowError, ValueError, struct.error) as e:
         sys.exit("error: %s" % e)
 
 

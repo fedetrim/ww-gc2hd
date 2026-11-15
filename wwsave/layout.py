@@ -169,3 +169,9 @@ def item(save, slot):
 def get_bits(save, slot):
     """Ownership bits of an inventory slot."""
     return save.data[FIELDS["get_item.slot%02d" % slot][0]]
+
+
+def chart_bit(words, n):
+    """Collect map n (1-based) in the 16 bytes of one of the chart flag sets (get / open / complete)."""
+    i = 4 * ((n - 1) >> 5)
+    return bool(int.from_bytes(words[i:i + 4], "big") >> ((n - 1) & 31) & 1)

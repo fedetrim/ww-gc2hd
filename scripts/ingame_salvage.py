@@ -4,7 +4,8 @@
 Converts one file of a GameCube save by steps, then for each HD chart the conversion
 added: marks the chart as opened (what the player does on the chart screen), places the file in the
 chart's sea sector, boots the native port, moves the boat onto the sunken treasure, lowers the Grappling
-Hook crane and reads the game's save block: the rupees must grow and the chart must become "completed".
+Hook crane and reads the game's save block: the chart must become "completed" and the treasure must be paid
+(rupees grow; for Treasure Chart 46 the maximum life grows), unless the wallet or the life is already full.
 The converse (a chart the conversion marks as salvaged brings up nothing) is in verify/chests
 (cases salv46_f50rewards and salv45_kept): there the evidence is the screenshot of the empty crane next to a
 control run that brings the treasure up, because unchanged rupees alone would not show that the crane went
@@ -38,10 +39,7 @@ POINTS = {
 BUTTON = {0: "2000", 1: "1000", 2: "0010"}      # item buttons X, Y, R
 
 
-def _bit(words, n):
-    """Chart n (1-based) in a 128-bit chart flag set."""
-    w = 4 * ((n - 1) >> 5)
-    return bool(int.from_bytes(words[w:w + 4], "big") >> ((n - 1) & 31) & 1)
+_bit = layout.chart_bit
 
 
 def main():
@@ -93,9 +91,18 @@ def main():
             rupees = int.from_bytes(mem[rup_off:rup_off + 2], "big")
             moff = MEM["map"] + layout.FIELDS["map.complete_map"][0] - layout.BLOCKS["map"][0]
             done = _bit(mem[moff:moff + 16], k)
-            ok = done and rupees >= s.u("status_a.rupee")     # a full wallet cannot grow
-            print("Treasure Chart %d (sea room %d): rupees %d -> %d, chart completed: %s -> %s" % (
-                conv.REUSED_CHARTS[k], room, s.u("status_a.rupee"), rupees, done, "OK" if ok else "FAIL"))
+            life_off = layout.FIELDS["status_a.max_life"][0] - layout.BLOCKS["status_a"][0]
+            max_life = int.from_bytes(mem[life_off:life_off + 2], "big")
+            limit = layout.WALLET_HD[min(s.u("status_a.wallet_size"), 2)]
+            if k == 8:                          # Treasure Chart 46: a Piece of Heart
+                paid = max_life > s.u("status_a.max_life") or s.u("status_a.max_life") >= 80
+                what = "maximum life %d -> %d" % (s.u("status_a.max_life"), max_life)
+            else:                               # the others: rupees
+                paid = rupees > s.u("status_a.rupee") or s.u("status_a.rupee") >= limit
+                what = "rupees %d -> %d" % (s.u("status_a.rupee"), rupees)
+            ok = done and paid                  # a full wallet or 20 hearts cannot grow: then the bit decides
+            print("Treasure Chart %d (sea room %d): %s, chart completed: %s -> %s" % (
+                conv.REUSED_CHARTS[k], room, what, done, "OK" if ok else "FAIL"))
         else:
             print("Treasure Chart %d: the game did not finish the scenario\n%s" % (conv.REUSED_CHARTS[k], r.stdout[-600:]))
         failed += not ok
