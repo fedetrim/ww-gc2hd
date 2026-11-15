@@ -4,8 +4,6 @@
 game changed (read them in summary.txt); 1 some did not load.
 usage: ingame_batch.py EXE GAME_DIR OUT_DIR [WORKERS [steps|rewards]]"""
 import concurrent.futures
-import glob
-import hashlib
 import os
 import subprocess
 import sys
@@ -14,7 +12,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 from sample_jobs import sample_jobs  # noqa: E402
-from wwsave import convert as conv, gc  # noqa: E402
+from wwsave import convert as conv  # noqa: E402
 
 exe, game, out = [os.path.abspath(p) for p in sys.argv[1:4]]
 workers = int(sys.argv[4]) if len(sys.argv) > 4 else 3

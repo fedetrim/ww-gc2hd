@@ -15,7 +15,7 @@ here=${0:A:h}; root=${here:h:h}; list=${1:A}
 out=${WW_VERIFY_OUT:-${WW_RESEARCH:-$root/research}/out/verify}/chests
 cd $root
 mkdir -p $out/logs
-one() { name=${1%% *}; cp -n $out/shadercache.bin $out/shadercache$name.bin 2>/dev/null; eval "python3 $here/vc.py $1 --cache $name" > $out/logs/$name.out 2>&1; rm -f $out/shadercache$name.bin; echo "finished $name"; }
+one() { name=${1%% *}; cp -n $out/shadercache.bin $out/shadercache$name.bin 2>/dev/null; eval "python3 ${(q)here}/vc.py $1 --cache $name" > $out/logs/$name.out 2>&1; rm -f $out/shadercache$name.bin; echo "finished $name"; }
 n=0
 while IFS= read -r line; do
   [ -z "$line" ] && continue

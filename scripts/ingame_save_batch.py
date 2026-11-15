@@ -3,8 +3,6 @@
 result in the game, walk a little, save from the pause menu, and compare the file the game writes with the
 converted one.  usage: ingame_save_batch.py EXE GAME_DIR OUT_DIR [WORKERS] [--alt]"""
 import concurrent.futures
-import glob
-import hashlib
 import os
 import subprocess
 import sys
@@ -13,7 +11,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 from sample_jobs import sample_jobs  # noqa: E402
-from wwsave import convert as conv, gc, hd, layout  # noqa: E402
+from wwsave import convert as conv, hd, layout  # noqa: E402
 
 args = [a for a in sys.argv[1:] if not a.startswith("--")]
 exe, game, out = [os.path.abspath(p) for p in args[:3]]

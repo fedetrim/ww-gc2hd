@@ -405,6 +405,18 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
         out.set_u("info.save_count", 1)
         rep.changes.append("Save counter set to 1 (the GameCube keeps it at 0). HD shows a Quest Log whose "
                            "counter is 0 as empty, so the file would not appear.")
+    # Conventions of the HD file that change nothing the player holds: listed in one line of the report.
+    conventions = ["the player name is kept in HD's name record"]
+    if out.u("config.sound_mode") != 2:
+        conventions.append("the sound setting is the value HD writes on every load")
+    if out.u("map.triforce_bits") & HD_TRIFORCE_PRESET != HD_TRIFORCE_PRESET:
+        conventions.append("the decipher marks of the five Triforce Charts HD does not have are set, as in "
+                           "every HD file")
+    if any(_collected(g, ("tbox", TRIFORCE_CHESTS[4][0], b)) for b in TRIFORCE_CHESTS[4][1][1:]):
+        conventions.append("the Ghost Ship chest is recorded under the one flag HD has for it")
+    conventions.append("the inventory snapshots for the boss rematches use HD's button layout")
+    rep.changes.append("File conventions of HD applied, with no effect on what you hold: %s." %
+                       "; ".join(conventions))
     out.set_u("config.sound_mode", 2)
     out.set_u("map.triforce_bits", out.u("map.triforce_bits") | HD_TRIFORCE_PRESET)
     if out.u("item_record.picture_num") or out.event_reg(0x89FF):
@@ -489,6 +501,14 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
             _set_tbox(out, record, bits[0], True)
             rep.changes.append("%s chest marked as opened: in HD it is where Triforce Shard %d, which this "
                                "file has, comes from, so it must not give a second one." % (TRIFORCE_PLACES[k], k))
+
+    # The Ghost Ship is gone for good once its chest scene has ended (register 3); every real HD file with
+    # that chest open has it so.
+    if _collected(out, ("tbox",) + (TRIFORCE_CHESTS[4][0], TRIFORCE_CHESTS[4][1][0])) \
+            and out.event_reg(GHOST_SHIP_REG) != 3:
+        out.set_event_reg(GHOST_SHIP_REG, 3)
+        rep.changes.append("The Ghost Ship is marked as cleared: its chest is open in the converted file, and "
+                           "in HD the ship does not appear again after that.")
 
     # --- 3.2 places whose reward differs ------------------------------------------------------------
     def give_chart(k, salvaged=False):

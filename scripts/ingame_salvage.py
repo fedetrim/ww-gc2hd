@@ -25,6 +25,8 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 from wwsave import convert as conv, gc, hd, layout  # noqa: E402
+sys.path.insert(0, os.path.join(ROOT, "scripts"))
+from ingame_test import MEM  # noqa: E402
 
 # collect map id -> (sea room, treasure position for each value of info.random_salvage); HD stage data
 POINTS = {
@@ -89,7 +91,7 @@ def main():
             mem = open(si, "rb").read()[0x20:]
             rup_off = layout.FIELDS["status_a.rupee"][0] - layout.BLOCKS["status_a"][0]
             rupees = int.from_bytes(mem[rup_off:rup_off + 2], "big")
-            moff = 0x0C4 + layout.FIELDS["map.complete_map"][0] - layout.BLOCKS["map"][0]
+            moff = MEM["map"] + layout.FIELDS["map.complete_map"][0] - layout.BLOCKS["map"][0]
             done = _bit(mem[moff:moff + 16], k)
             ok = done and rupees >= s.u("status_a.rupee")     # a full wallet cannot grow
             print("Treasure Chart %d (sea room %d): rupees %d -> %d, chart completed: %s -> %s" % (

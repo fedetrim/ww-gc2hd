@@ -13,8 +13,8 @@ sys.path.insert(0, os.path.dirname(HERE))
 from wwsave import hd, layout
 import verifyenv
 HERE = verifyenv.out_dir("chests")          # the case folders
-MEM = {"status_a": 0x000, "status_b": 0x018, "return_place": 0x030, "item": 0x03C, "get_item": 0x051, "item_record": 0x066, "item_max": 0x06E, "bag_item": 0x076, "get_bag_item": 0x090, "bag_item_record": 0x09C, "collect": 0x0B4, "map": 0x0C4, "info": 0x148, "config": 0x1A4, "priest": 0x1AC, "ocean": 0x5C0, "event": 0x624, "reserve": 0x724}
-MEM.update({"status_c%d" % i: 0x1BC + 0x70 * i for i in range(4)}); MEM.update({"memory%02d" % i: 0x380 + 0x24 * i for i in range(16)})
+sys.path.insert(0, os.path.join(verifyenv.ROOT, "scripts"))
+from ingame_test import MEM  # noqa: E402  (the one table of block offsets in the game's memory)
 SKIP = ("status_b", "return_place")
 for case in sys.argv[1:]:
     s = hd.HdFile.parse(open(os.path.join(HERE, case, "cking.sav"), "rb").read()).slots[0]

@@ -27,7 +27,7 @@ for p in paths:
                 if conv._map_bit(g, "map.get_map", k) and conv._stuck_chart(g, k): tags.append("chart%d" % k)
             rec, bits = conv.TRIFORCE_CHESTS[4]
             gs = [b for b in bits if conv._collected(g, ("tbox", rec, b))]
-            if gs: tags.append("ghost%s/reg%d" % (gs, g.event_reg(0x8803) if hasattr(g, "event_reg") else -1))
+            if gs: tags.append("ghost%s/reg%d" % (gs, g.event_reg(0x8803)))
             if conv._collected(g, ("tbox", 1, 26)): tags.append("horseshoe")
             if conv._collected(g, ("tbox", 1, 11)): tags.append("starbelt")
             if conv._collected(g, conv.PAWPRINT_CHEST): tags.append("pawprint")

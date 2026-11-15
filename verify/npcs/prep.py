@@ -74,8 +74,13 @@ if flags.get("album"):      # the converter's own album files for this file, as 
         if int(m.group(2)) == gslot:
             open(os.path.join(os.path.dirname(out), "cking_pic%s0%s" % (m.group(1) or "", m.group(3))), "wb").write(data)
     from wwsave import picture
-    recs, order, count = picture.parse_order(open(os.path.join(os.path.dirname(out), "cking_pic_order0.sav"), "rb").read())
-    print("album: count %d order %s subjects %s" % (count, order[:count], [r[4] for r in recs[:count]]))
+    order_file = os.path.join(os.path.dirname(out), "cking_pic_order0.sav")
+    if os.path.exists(order_file):
+        recs, order, count = picture.parse_order(open(order_file, "rb").read())
+        print("album: count %d order %s subjects %s" % (count, order[:count], [r[4] for r in recs[:count]]))
+    else:
+        print("album: this file has no pictures, so the converter wrote no album (for Lenzo by rewards build "
+              "an input with make_gci_pictures.py)")
 def state(tag, x):
     print("%s: pendants %d bag %s sel %s 1C04 %d 1C08 %d 1E04 %d C0FF %d chart45 %d C407 %d slot8 %02X get8 %02X charm %s time %s rupee %d" % (
         tag, x.raw("bag_item_record.beast_num")[7], x.raw("bag_item.beast").hex(), x.raw("status_a.select_item").hex(),
@@ -85,6 +90,5 @@ def state(tag, x):
 state("hd", s)
 try:
     gs = card.slots()[gslot]
-    gs = gs if hasattr(gs, "raw") else layout.Save(gs)
     state("gc", gs)
 except Exception as e: print("gc state:", e)

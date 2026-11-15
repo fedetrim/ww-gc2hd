@@ -43,7 +43,8 @@ import verifyenv  # noqa: E402
 
 EXE = verifyenv.EXE
 GAME = verifyenv.GAME
-MEM = {"status_a": 0x000, "status_b": 0x018, "collect": 0x0B4, "map": 0x0C4, "event": 0x624}
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(HERE)), "scripts"))
+from ingame_test import MEM  # noqa: E402  (the one table of block offsets in the game's memory)
 LIVE = 0x778            # dSv_info_c.mMemory (the current stage's record) inside the save-info block
 BASE = 0x20
 
@@ -67,10 +68,7 @@ class View:
         if self.mem:
             block = name.split(".")[0]
             boff = layout.BLOCKS[block][0]
-            if block.startswith("memory"):
-                moff = 0x380 + 0x24 * int(block[6:])
-            else:
-                moff = MEM[block]
+            moff = MEM[block]
             off = BASE + moff + off - boff
         return self.d[off:off + size]
 

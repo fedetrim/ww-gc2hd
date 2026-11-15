@@ -49,8 +49,8 @@ def main():
     print(r.stdout.strip())
     log = ""
     if os.path.exists(os.path.join(out, "log")):
-        with open(os.path.join(out, "log"), errors="replace") as f:
-            log = f.read()
+        with open(os.path.join(out, "log"), errors="replace") as log_file:
+            log = log_file.read()
     else:
         print("the runner wrote no log (%s); its output:\n%s" % (RUNNER, (r.stderr or "")[-800:]))
     done = os.path.exists(os.path.join(out, "test_done"))

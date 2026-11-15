@@ -28,7 +28,8 @@ Read `README.md` for what the tool does and `docs/DIFFERENCES.md` for every diff
    for something only read.
 7. The tool, its messages and its docs are in English. No personal data (names, home paths, e-mail) in any
    published file, except the author's name in `LICENSE`. No game data and no third-party code in the
-   repository.
+   repository, except the two small patches for the native port in `scripts/`, which carry lines of the
+   file they modify and are under its license (`scripts/PORT-PATCHES.md`).
 
 ## Layout
 

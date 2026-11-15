@@ -10,10 +10,6 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from gc_stage_dump import yaz0  # noqa: E402
 
-TAGS = {b"STAG", b"ACTR", b"SCOB", b"PLYR", b"TRES", b"RTBL", b"EVNT", b"FILI", b"MULT", b"RPAT", b"RPPN",
-        b"PATH", b"PPNT", b"SOND", b"CAMR", b"RCAM", b"AROB", b"RARO", b"TGOB", b"TGSC", b"TGDR", b"DOOR",
-        b"SHIP", b"LGHT", b"LGTV", b"ENVR", b"Colo", b"Pale", b"Virt", b"2DMA", b"2Dma", b"DMAP", b"FLOR",
-        b"MEMA", b"MECO", b"LBNK", b"RPPN", b"SCLS", b"TRES", b"LGTV", b"MPAT", b"DOOR", b"FILI"}
 
 
 def sarc_files(d):

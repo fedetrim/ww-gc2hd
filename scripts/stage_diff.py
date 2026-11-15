@@ -15,10 +15,6 @@ def key(a):
     return (a["arc"], a["layer"], a["name"], tuple(a["pos"]))
 
 
-def record(st, c, S):
-    return 1 if c["type"] in (7, 8) else S[st]["save_table"]
-
-
 print("== chests")
 for st in sorted(set(G) & set(H)):
     g = collections.defaultdict(list)
