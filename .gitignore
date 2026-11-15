@@ -11,6 +11,20 @@
 /samples/**/*.gz
 /samples/**/*.log
 /samples/**/meta/
+# ... and what came with the saves but nothing here uses: files that failed validation, practice-ROM
+# files, save states of the native port and their thumbnails, saves modified by an exploit tool, HD
+# side files (play log, Miiverse), attachments that are not archives, tools of the source repositories.
+/samples/**/rejected/
+/samples/**/wwstate-only/
+/samples/gc/github-cgf95_tww-gz/
+/samples/**/Hacked_File_*/
+/samples/**/*.wwstate
+/samples/**/*.png
+/samples/**/*.sav.txt
+/samples/**/cking_playlog.sav
+/samples/**/cking_miiverse.sav
+/samples/gc/github-pdale-boop_ww-save-editor/research/
+/samples/gc/github-pdale-boop_ww-save-editor/tools/
 __pycache__/
 *.pyc
 .DS_Store

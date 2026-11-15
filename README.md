@@ -93,7 +93,7 @@ is listed, with evidence, in [docs/DIFFERENCES.md](docs/DIFFERENCES.md).
 ## How it was checked
 
 - Both save formats and every rule come from the decompilations of both games and were checked against
-  260 real GameCube saves and 45 real HD saves (`samples/`, sources in `samples/SOURCES.md`).
+  257 real GameCube saves and 45 real HD saves (`samples/`, sources in `samples/SOURCES.md`).
 - `python3 -m unittest tests.test_wwsave` converts every GameCube sample and checks the result against a
   model of what HD does when it loads a Quest Log, against properties of all real HD saves, and that no
   field outside the documented rules changes.
@@ -145,8 +145,9 @@ its link and what the uploader said about the file. If one of them is yours and 
 an issue.
 
 `python3 scripts/fetch_samples.py --check` compares the folder with `samples/checksums.sha256`, and without
-`--check` the script downloads everything again from the sources (`samples/manifest.json`), including the
-original archives, which are not kept in the repository.
+`--check` the script downloads everything again from the sources (`samples/manifest.json`). That also brings
+what the repository does not keep because nothing here uses it: the original archives, files that failed
+validation, save states of the native port, and other files that came along (`.gitignore` lists them).
 
 ## What is not in this repository
 
