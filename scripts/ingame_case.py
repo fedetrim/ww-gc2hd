@@ -17,6 +17,7 @@ bad = [a for a in sys.argv[7:] if "=" not in a] + [
 if bad or mode not in conv.MODES:
     sys.exit("not a case answer: %s\ncases: %s; answers: steps, rewards" % (
         ", ".join(bad) or "all=" + mode, ", ".join(conv.Options.CASES)))
+print("cases not named are answered by %s" % mode)
 card = gc.load(open(src, "rb").read())
 f, reports = conv.convert(card, conv.Options.all(mode, **kw))
 for c in reports[slot].changes: print("changed:", c)

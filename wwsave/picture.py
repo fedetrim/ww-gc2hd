@@ -61,17 +61,6 @@ class GcPicture:
         return self.capture_format not in (GX_TF_I4, GX_TF_I8)
 
 
-def to_png(img):
-    """Rows of (r, g, b) -> PNG bytes (for inspection)."""
-    h, w = len(img), len(img[0])
-    raw = b"".join(b"\0" + bytes(c for px in row for c in px) for row in img)
-
-    def chunk(tag, body):
-        return struct.pack(">I", len(body)) + tag + body + struct.pack(">I", zlib.crc32(tag + body) & 0xFFFFFFFF)
-    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0)) +
-            chunk(b"IDAT", zlib.compress(raw, 9)) + chunk(b"IEND", b""))
-
-
 # --- baseline JPEG encoder (4:2:0, standard tables), as the HD game's own pictures are stored ----------
 
 _ZIGZAG = [0, 1, 8, 16, 9, 2, 3, 10, 17, 24, 32, 25, 18, 11, 4, 5, 12, 19, 26, 33, 40, 48, 41, 34, 27, 20,

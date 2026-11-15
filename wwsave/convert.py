@@ -24,7 +24,6 @@ HD_TRIFORCE_PRESET = layout.HD_TRIFORCE_PRESET
 HD_CHART_SOURCES = {
     4: (("tbox", 1, 26), "Horseshoe Island north-western lookout chest (GameCube: Skull Necklace)"),
     6: (("tbox", 1, 11), "Star Belt Archipelago lookout chest (GameCube: Red Rupee)"),
-    7: (("event", 0x1C04), "Mrs. Marie's reward for 40 Joy Pendants (GameCube: Hero's Charm)"),
     8: (("tbox", 0xD, 2), "Pawprint Isle Wizzrobe cave chest (GameCube: Silver Rupee)"),
 }
 SAVAGE_FLOOR_50 = ("tbox", 0xD, 12)     # GameCube: Piece of Heart, HD: Hero's Charm
@@ -150,9 +149,8 @@ def _set_map_bit(save, field_name, n, on):
 
 
 def _collected(save, flag):
-    if flag[0] == "tbox":
-        return bool(save.u("memory%02d.tbox" % flag[1]) >> flag[2] & 1)
-    return save.event_bit(flag[1])
+    """Chest flag ("tbox", stage record, bit) of a save."""
+    return bool(save.u("memory%02d.tbox" % flag[1]) >> flag[2] & 1)
 
 
 def _set_tbox(save, record, bit, on):

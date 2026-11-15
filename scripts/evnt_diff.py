@@ -33,7 +33,7 @@ def gc_tables(iso):
         if p.startswith("/res/Stage/") and p.endswith("/Stage.arc"):
             f.seek(a)
             for fname, data in G.rarc_files(G.yaz0(f.read(b))).items():
-                if fname.endswith(".dzs"):
+                if fname.endswith(".dzs") and events(data):     # like the HD side: stages with entries
                     out[p.split("/")[3]] = events(data)
     return out
 

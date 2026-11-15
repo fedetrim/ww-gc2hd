@@ -18,6 +18,7 @@ exe, game, out = [os.path.abspath(p) for p in sys.argv[1:4]]
 workers = int(sys.argv[4]) if len(sys.argv) > 4 else 3
 MODE = sys.argv[5] if len(sys.argv) > 5 else "steps"      # steps | rewards, for every case
 OPTIONS = conv.Options.all(MODE)
+print("every case is answered by %s" % MODE, flush=True)
 os.makedirs(out, exist_ok=True)
 jobs = sample_jobs(OPTIONS, out)
 

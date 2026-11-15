@@ -93,6 +93,10 @@ Other options:
 |---|---|
 | `--swift-sail` | upgrade an owned Sail to HD's Swift Sail (off unless given) |
 | `--hero-mode` | HD's Hero Mode (off unless given) |
+| `--name NAME`, `--name N=NAME` | the player name of the HD file (up to 8 characters; default: the GameCube name). With more than one used file, say which Quest Log: `--name 2=Zelda` |
+| `--no-pictures` | do not write the Picto Box album files |
+| `--force` | replace a save already in the output folder (it is moved to a backup folder there) |
+| `--quiet` | do not print the summary of each converted file |
 
 Picto Box pictures are converted into HD's album files (`cking_pic*.sav`, written next to `cking.sav`;
 `--no-pictures` skips them). Not carried over: the card's banner. Everything else
