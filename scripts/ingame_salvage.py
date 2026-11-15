@@ -5,8 +5,10 @@ Converts one file of a GameCube save by steps, then for each HD chart the conver
 added: marks the chart as opened (what the player does on the chart screen), places the file in the
 chart's sea sector, boots the native port, moves the boat onto the sunken treasure, lowers the Grappling
 Hook crane and reads the game's save block: the rupees must grow and the chart must become "completed".
-For a chart the conversion already marks as salvaged, the same run must bring up nothing (rupees and maximum
-life unchanged).
+The converse (a chart the conversion marks as salvaged brings up nothing) is in verify/chests
+(cases salv46_f50rewards and salv45_kept): there the evidence is the screenshot of the empty crane next to a
+control run that brings the treasure up, because unchanged rupees alone would not show that the crane went
+down.
 
 Needs the port built with scripts/port-ship-warp.patch (adds WWHD_SHIP_WARP).
 
@@ -51,8 +53,7 @@ def main():
     if not given:
         sys.exit("the conversion adds no HD chart to this file")
     if slot:                                    # the runner loads Quest Log 1
-        hd_file.slots[0], hd_file.slots[slot] = hd_file.slots[slot], hd_file.slots[0]
-        hd_file.extras[0], hd_file.extras[slot] = hd_file.extras[slot], hd_file.extras[0]
+        hd_file.move_to_quest_log_1(slot)
     base = hd_file.slots[0]
     sel = list(base.raw("status_a.select_item")[:3])
     if layout.SLOT_GRAPPLING not in sel:
@@ -64,10 +65,7 @@ def main():
         x, z = points[base.u("info.random_salvage")]
         f = hd.HdFile.parse(hd_file.serialize())
         s = f.slots[0]
-        assert _bit(s.raw("map.get_map"), k)
-        # a chart the conversion marks as salvaged (its treasure was collected on the GameCube): the same
-        # run must bring up nothing
-        premarked = _bit(s.raw("map.complete_map"), k)
+        assert _bit(s.raw("map.get_map"), k) and not _bit(s.raw("map.complete_map"), k)
         conv._set_map_bit(s, "map.open_map", k, True)
         s.set_raw("return_place.stage", b"sea".ljust(8, b"\0"))
         s.set_u("return_place.room", room)
@@ -94,12 +92,6 @@ def main():
             moff = 0x0C4 + layout.FIELDS["map.complete_map"][0] - layout.BLOCKS["map"][0]
             done = _bit(mem[moff:moff + 16], k)
             ok = done and rupees >= s.u("status_a.rupee")     # a full wallet cannot grow
-            if premarked:
-                life_off = layout.FIELDS["status_a.max_life"][0] - layout.BLOCKS["status_a"][0]
-                max_life = int.from_bytes(mem[life_off:life_off + 2], "big")
-                ok = done and rupees == s.u("status_a.rupee") and max_life == s.u("status_a.max_life")
-                print("Treasure Chart %d, marked as salvaged by the conversion: maximum life %d -> %d" % (
-                    conv.REUSED_CHARTS[k], s.u("status_a.max_life"), max_life))
             print("Treasure Chart %d (sea room %d): rupees %d -> %d, chart completed: %s -> %s" % (
                 conv.REUSED_CHARTS[k], room, s.u("status_a.rupee"), rupees, done, "OK" if ok else "FAIL"))
         else:

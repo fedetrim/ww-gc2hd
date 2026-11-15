@@ -42,8 +42,7 @@ for path in sorted(glob.glob(os.path.join(ROOT, "samples/gc/**/*.gci"), recursiv
         seen.add(key)
         name = "%02d" % len(jobs)
         converted = conv.convert(card, OPTIONS)[0]
-        converted.slots[0], converted.slots[slot] = converted.slots[slot], converted.slots[0]
-        converted.extras[0], converted.extras[slot] = converted.extras[slot], converted.extras[0]
+        converted.move_to_quest_log_1(slot)
         sav = os.path.join(out, name + ".sav")
         open(sav, "wb").write(converted.serialize())
         jobs.append((name, "%s file %d" % (os.path.relpath(path, ROOT), slot + 1), sav))

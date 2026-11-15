@@ -117,6 +117,10 @@ class Decision:
     question: str
     choices: list           # [(value, description)], first = default
     slots: list = field(default_factory=list)
+    per_slot: dict = field(default_factory=dict)    # file index -> (question, choices): the text can differ
+
+    def text(self, slot):
+        return self.per_slot.get(slot, (self.question, self.choices))
 
 
 @dataclass
@@ -154,13 +158,6 @@ def _collected(save, flag):
 def _set_tbox(save, record, bit, on):
     name = "memory%02d.tbox" % record
     save.set_u(name, (save.u(name) | 1 << bit) if on else (save.u(name) & ~(1 << bit)))
-
-
-def _take_rupees(save, amount):
-    """Remove up to `amount` rupees; returns what was removed."""
-    taken = min(amount, save.u("status_a.rupee"))
-    save.set_u("status_a.rupee", save.u("status_a.rupee") - taken)
-    return taken
 
 
 def _take_spoil(save, index, item):
@@ -252,13 +249,16 @@ def gc_name(save, game_code=b"GZLE01"):
 
 
 def hd_name_for(name):
-    """HD stores up to 8 UTF-16 characters. Returns (name, note or None)."""
+    """HD stores up to 8 UTF-16 characters. Returns (name, note or None); the note says whenever the name
+    written is not the name given."""
     folded = unicodedata.normalize("NFKC", name)
-    if not folded or not all(0x20 <= ord(c) < 0x250 for c in folded):
+    if not folded or not all(0x20 <= ord(c) < 0x250 and not 0x7F <= ord(c) < 0xA0 for c in folded):
         return "Link", "name %r cannot be shown by the HD font; using 'Link'" % name
     if len(folded) > hd.NAME_CHARS:
         return folded[:hd.NAME_CHARS], "name %r shortened to %r (HD allows 8 characters)" % (
             name, folded[:hd.NAME_CHARS])
+    if folded != name:
+        return folded, "name %r written as %r (characters replaced by their plain form)" % (name, folded)
     return folded, None
 
 
@@ -273,8 +273,10 @@ def decisions_for(slots, options=None):
     out = {}
 
     def need(key, question, steps, rewards, s):
-        out.setdefault(key, Decision(key, question, [("steps", _STEPS + steps),
-                                                     ("rewards", _REWARDS + rewards)])).slots.append(s)
+        choices = [("steps", _STEPS + steps), ("rewards", _REWARDS + rewards)]
+        d = out.setdefault(key, Decision(key, question, choices))
+        d.slots.append(s)
+        d.per_slot[s] = (question, choices)
 
     for s, g in enumerate(slots):
         if g is None or g.is_new():
@@ -471,6 +473,7 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
         _set_map_bit(out, "map.open_map", k, salvaged)
         _set_map_bit(out, "map.complete_map", k, salvaged)
 
+    rupees = []                             # rupee amounts taken back (-) and given back (+)
     for key, k in LOOKOUT_CASES.items():
         flag, place = HD_CHART_SOURCES[k]
         if _collected(g, flag):
@@ -484,10 +487,9 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
                                        "does not." if took else "The Skull Necklace the GameCube gave in that "
                                        "chest could not be removed: you no longer hold one.")
                 else:
-                    took = _take_rupees(out, 20)
-                    rep.changes.append("%d rupees removed (-%d rupees): the Red Rupee the GameCube gave in that "
-                                       "chest, which HD does not give.%s" % (
-                                           took, took, "" if took == 20 else " You held fewer than 20."))
+                    rupees.append(-20)
+                    rep.changes.append("20 rupees removed (-20 rupees): the Red Rupee the GameCube gave in that "
+                                       "chest, which HD does not give.")
             else:
                 _set_tbox(out, flag[1], flag[2], False)
                 rep.changes.append("Chest closed again (by rewards): %s. In HD it holds Treasure Chart %d: open "
@@ -500,9 +502,10 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     charm_off = layout.FIELDS[HEROS_CHARM[0]][0] + HEROS_CHARM[1]
     if f50 or marie:
         # In HD the Hero's Charm and the floor-50 chest go together.
-        f50_open = a == "steps" or b == "rewards"
-        _set_tbox(out, SAVAGE_FLOOR_50[1], SAVAGE_FLOOR_50[2], f50_open)
         had_charm = bool(out.data[charm_off] & HEROS_CHARM[2])
+        # "rewards" keeps what is held: it marks the chest opened only for a charm the file really has
+        f50_open = a == "steps" or (b == "rewards" and had_charm)
+        _set_tbox(out, SAVAGE_FLOOR_50[1], SAVAGE_FLOOR_50[2], f50_open)
         if f50_open:
             out.data[charm_off] |= HEROS_CHARM[2]
             if not had_charm:
@@ -535,6 +538,9 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
                            "the piece is the sunken treasure of Treasure Chart 46 (Pawprint Isle Wizzrobe cave "
                            "chest, then Two-Eye Reef): salvage it to get the piece back.")
     if a == "rewards":
+        if paw and options.pawprint_chest in MODES:
+            rep.warnings.append("the answer given for the Pawprint chest was not used: floor 50 by rewards "
+                                "already settles that chest (opened, Treasure Chart 46 salvaged)")
         _set_tbox(out, PAWPRINT_CHEST[1], PAWPRINT_CHEST[2], True)
         give_chart(8, salvaged=True)
         rep.changes.append("Treasure Chart 46 added, already salvaged%s (floor 50 by rewards): its treasure in "
@@ -563,27 +569,30 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
             rep.changes.append("Treasure Chart 45 marked as salvaged: its treasure in HD is the Silver Rupee you "
                                "keep from the Pawprint chest, so it must not be collectable a second time.")
         else:
-            taken = _take_rupees(out, 200)
-            rep.changes.append("%d rupees removed (-%d rupees): the Silver Rupee the GameCube gave in the "
+            rupees.append(-200)
+            rep.changes.append("200 rupees removed (-200 rupees): the Silver Rupee the GameCube gave in the "
                                "Pawprint chest. In HD it is the sunken treasure of Treasure Chart 45 (Mrs. "
-                               "Marie's reward, then Seven-Star Isles): salvage it to get it back.%s" % (
-                                   taken, taken, "" if taken == 200 else " You held fewer than 200."))
+                               "Marie's reward, then Seven-Star Isles): salvage it to get it back.")
     # Tingle's fee for deciphering a Triforce Chart that HD does not have: HD never charges it.
     paid = [k for k in REUSED_CHARTS if g.u("map.triforce_bits") >> (k - 1) & 1]
-    if paid and out.u("status_a.rupee") >= HD_WALLET[min(out.u("status_a.wallet_size"), 2)]:
-        rep.warnings.append("the %d rupees paid to Tingle for deciphering Triforce Chart(s) %s could not be "
-                            "given back: the wallet is full" % (
-                                DECIPHER_FEE * len(paid), ", ".join(str(k) for k in paid)))
-    elif paid:
-        room = HD_WALLET[min(out.u("status_a.wallet_size"), 2)] - out.u("status_a.rupee")
-        back = max(0, min(DECIPHER_FEE * len(paid), room))
-        out.set_u("status_a.rupee", out.u("status_a.rupee") + back)
-        rep.changes.append("%d rupees added (+%d rupees): the %d rupees you paid Tingle to decipher Triforce "
-                           "Chart(s) %s. HD has no such chart%s, so an HD player never pays that.%s" % (
-                               back, back, DECIPHER_FEE * len(paid), ", ".join(str(k) for k in paid),
-                               "" if len(paid) == 1 else "s",
-                               "" if back == DECIPHER_FEE * len(paid) else
-                               " The rest does not fit: the wallet is full."))
+    if paid:
+        fee = DECIPHER_FEE * len(paid)
+        rupees.append(fee)
+        rep.changes.append("%d rupees added (+%d rupees): what you paid Tingle to decipher Triforce Chart(s) %s. "
+                           "HD has no such chart%s, so an HD player never pays that." % (
+                               fee, fee, ", ".join(str(k) for k in paid), "" if len(paid) == 1 else "s"))
+    if rupees:
+        # One balance: what is taken back and what is given back are applied together, so that neither is
+        # cut short by the order they are listed in.
+        limit = max(HD_WALLET[min(out.u("status_a.wallet_size"), 2)], out.u("status_a.rupee"))
+        wanted = out.u("status_a.rupee") + sum(rupees)
+        out.set_u("status_a.rupee", max(0, min(limit, wanted)))
+        if wanted < 0:
+            rep.warnings.append("%d of the rupees to take back were already spent and could not be removed" %
+                                -wanted)
+        elif wanted > limit:
+            rep.warnings.append("%d of the rupees to give back do not fit: the wallet holds %d" % (
+                wanted - limit, limit))
     if b == "rewards":
         out.set_event_bit(MARIE_EVENT, False)
         rep.changes.append("Mrs. Marie's reward for 40 Joy Pendants is pending again (by rewards): in HD it is "
@@ -598,6 +607,11 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     # --- Lenzo's Picto Box quest ------------------------------------------------------------------
     if _lenzo_stuck(g):
         if options.lenzo == "steps" or not _couple_on_street(g):       # no way back: only "steps" works
+            if not _couple_on_street(g):
+                rep.warnings.append("Lenzo's case was translated by steps whatever was chosen: the couple of "
+                                    "the third picture no longer meets on the street in this file (register "
+                                    "0xB907 is %d), so the picture could not be taken again" %
+                                    g.event_reg(0xB907))
             _set_item(out, layout.SLOT_CAMERA, ITEM_DELUXE_PICTO_BOX)
             _set_get_bits(out, layout.SLOT_CAMERA, _get_bits(out, layout.SLOT_CAMERA) | 2)
             rep.changes.append("Deluxe Picto Box added (Lenzo by steps): HD gives it when he accepts the third "

@@ -148,6 +148,15 @@ class HdFile:
         self.extras = extras                  # 3 x dict(section -> bytes)
         self.tails = tails or [bytes(SLOT_SUMMED - SAVE_SIZE)] * 3   # bytes 0x768..0xA8C of each slot
 
+    def move_to_quest_log_1(self, slot):
+        """Swap file `slot` (0-based) with Quest Log 1, save block and HD records. The test rigs load Quest
+        Log 1. Album files are named after their Quest Log and are not part of this object: rename them
+        separately if the file has pictures."""
+        if slot:
+            for part in (self.slots, self.extras, self.tails):
+                part[0], part[slot] = part[slot], part[0]
+        return self
+
     @classmethod
     def parse(cls, raw, strict=True):
         if len(raw) != FILE_SIZE:

@@ -128,8 +128,8 @@ def _digest(path):
 
 
 def check():
-    """Every expected file must be at its path with its content. Files that are elsewhere, differ, or are
-    save files nobody expects are listed."""
+    """Every expected file must be at its path with its content; those that differ or are missing are
+    listed. Save files that are not in the list are counted."""
     expected = {}
     with open(os.path.join(SAMPLES, "checksums.sha256")) as f:
         for line in f:
@@ -151,6 +151,17 @@ def check():
             print("  %s: %s" % (label, path))
         if len(paths) > 20:
             print("  ... and %d more" % (len(paths) - 20))
+    extra = []
+    for folder, _, files in os.walk(SAMPLES):
+        for name in files:
+            path = os.path.relpath(os.path.join(folder, name), SAMPLES)
+            if path not in expected and (name.endswith((".gci", ".raw")) or
+                                         (name.startswith("cking") and name.endswith(".sav"))):
+                extra.append(path)
+    if extra:
+        # Not an error: a full download brings files the repository leaves out (.gitignore). But the tests
+        # and the statistics read every save under samples/, so these take part in them.
+        print("save files not in the list: %d (for example %s)" % (len(extra), sorted(extra)[0]))
     return not wrong and not missing
 
 

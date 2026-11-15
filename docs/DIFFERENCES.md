@@ -382,9 +382,10 @@ three charted from the start (680 sector pairs, no exception).
     conversion adds all four was converted by steps; for each chart the file was placed in
     the chart's sea sector with the chart marked as opened (what the player does on the chart screen), the
     boat was moved onto the treasure, and the Grappling Hook crane was lowered with scripted input. All four
-    treasures come up and the game marks each chart completed; Chart 46 brings the Piece of Heart. With a
-    chart marked as salvaged (what `--floor50 rewards` does to Chart 46), the same run brings up nothing
-    (screenshots: the crane comes back empty). The same run on the author's own save with
+    treasures come up and the game marks each chart completed; Chart 46 brings the Piece of Heart. A chart
+    marked as salvaged brings up nothing: see the Treasure Chart 45 and 46 cases below
+    (`docs/verification/chests.md`, `salv45_kept` and `salv46_f50rewards`), where the same crane script that
+    brings the treasure up in the control run comes back empty. The same run on the author's own save with
     Treasure Chart 44 shows the chest and "You got an Orange Rupee!", and the rupee count goes from 3953 to
     4053. The boat is moved with a test aid added to the port (`scripts/port-ship-warp.patch`).
   - The Triforce played to the end: the author's own converted save, in which the conversion turned Triforce Charts

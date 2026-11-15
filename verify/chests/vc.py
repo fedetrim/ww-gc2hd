@@ -154,8 +154,7 @@ def main():
     for c in reports[slot].changes:
         say("converter:", c)
     if slot:
-        f.slots[0], f.slots[slot] = f.slots[slot], f.slots[0]
-        f.extras[0], f.extras[slot] = f.extras[slot], f.extras[0]
+        f.move_to_quest_log_1(slot)
     s = f.slots[0]
     for e in hds:
         exec(e, {"s": s, "conv": conv, "layout": layout, "tbox": tbox, "mapbit": mapbit})

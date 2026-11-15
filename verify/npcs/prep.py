@@ -43,8 +43,7 @@ gslot = slot
 f, reports = conv.convert(card, conv.Options.all(mode, **kw))
 for c in reports[slot].changes: print("changed:", c)
 if slot:
-    f.slots[0], f.slots[slot] = f.slots[slot], f.slots[0]
-    f.extras[0], f.extras[slot] = f.extras[slot], f.extras[0]
+    f.move_to_quest_log_1(slot)
 s = f.slots[0]
 s.set_raw("return_place.stage", stage.encode().ljust(8, b"\0"))
 s.set_u("return_place.room", int(room)); s.set_u("return_place.point", int(point))

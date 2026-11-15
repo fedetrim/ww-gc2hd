@@ -1,5 +1,6 @@
 """ww-gc2hd: convert a GameCube Wind Waker save into a Wind Waker HD (Wii U) save."""
 import argparse
+import dataclasses
 import textwrap
 import time
 import os
@@ -33,16 +34,17 @@ def _flag(key):
 
 def _ask(decision, slot):
     print()
-    print("Quest Log %d: %s" % (slot + 1, decision.question))
-    for i, (_, text) in enumerate(decision.choices):
+    question, choices = decision.text(slot)
+    print("Quest Log %d: %s" % (slot + 1, question))
+    for i, (_, text) in enumerate(choices):
         print("  %d) %s" % (i + 1, text))
     while True:
         try:
             answer = input("Choice (1 or 2): ").strip()
         except EOFError:
             sys.exit("\nno choice made for %s" % _flag(decision.key))
-        if answer.isdigit() and 1 <= int(answer) <= len(decision.choices):
-            return decision.choices[int(answer) - 1][0]
+        if answer.isdigit() and 1 <= int(answer) <= len(choices):
+            return choices[int(answer) - 1][0]
 
 
 def _case_value(text):
@@ -67,6 +69,17 @@ def cmd_convert(a):
     if not any(s is not None and not s.is_new() for s in slots):
         sys.exit("%s holds no used save file." % a.input)
 
+    # Checked before any question is asked. A save is cking.sav plus its album files. One already in the folder is never mixed with the new one
+    # and never lost: with --force all of it is moved to a backup folder first.
+    target = os.path.join(a.output, "cking.sav")
+    existing = []
+    if os.path.isdir(a.output):
+        existing = sorted(n for n in os.listdir(a.output)
+                          if n == "cking.sav" or (n.startswith("cking_pic") and n.endswith(".sav")))
+    if existing and not a.force:
+        sys.exit("%s already holds a save (%s). Use --force to replace it: the files there are first moved to "
+                 "a backup folder inside it." % (a.output, ", ".join(existing[:3]) +
+                                                 (" and %d more" % (len(existing) - 3) if len(existing) > 3 else "")))
     used = [s for s, g in enumerate(slots) if g is not None and not g.is_new()]
     names = {}
     for value in a.name or []:
@@ -85,23 +98,34 @@ def cmd_convert(a):
             value = {**{s: a.all for s in range(3)}, **value}
         setattr(options, key, value or a.all)
     # A case has no default: ask (terminal) or stop and name the options (script).
-    while True:
-        open_cases = [(d, s) for d in conv.decisions_for(slots, options) for s in d.slots
-                      if getattr(options.for_slot(s), d.key) is None]
-        if not open_cases:
-            break
+    def open_cases(opts):
+        return [(d, s) for d in conv.decisions_for(slots, opts) for s in d.slots
+                if getattr(opts.for_slot(s), d.key) is None]
+
+    while open_cases(options):
         if not sys.stdin.isatty():
+            # List everything a script may have to answer: the Pawprint case shows up only once floor 50
+            # is answered by steps, so look at that branch too.
+            both = dataclasses.replace(options)
+            for d, s in open_cases(options):
+                if d.key == "floor50":
+                    both.answer("floor50", s, "steps")
+            listed = {}
+            for d, s in open_cases(options) + [c for c in open_cases(both) if c[0].key == "pawprint_chest"]:
+                question, choices = d.text(s)
+                listed.setdefault((d.key, question, tuple(choices)), []).append(s)
             lines = ["%s holds states the two games do not share. Choose for each one (or --all for all;"
                      % a.input, "per Quest Log: 1=steps,2=rewards):"]
-            for d in dict.fromkeys(d.key for d, _ in open_cases):
-                d = next(x for x, _ in open_cases if x.key == d)
+            for (key, question, choices), logs in listed.items():
                 lines.append("")
-                lines.append("%s steps|rewards   (Quest Log %s)" % (
-                    _flag(d.key), ", ".join(str(s + 1) for x, s in open_cases if x.key == d.key)))
-                lines.append("  " + d.question)
-                lines.extend("    %s" % text for _, text in d.choices)
+                lines.append("%s steps|rewards   (Quest Log %s)%s" % (
+                    _flag(key), ", ".join(str(s + 1) for s in sorted(set(logs))),
+                    "   only needed with --floor50 steps" if key == "pawprint_chest" and any(
+                        getattr(options.for_slot(s), "floor50") is None for s in logs) else ""))
+                lines.append("  " + question)
+                lines.extend("    %s" % text for _, text in choices)
             sys.exit("\n".join(lines))
-        d, s = open_cases[0]
+        d, s = open_cases(options)[0]
         options.answer(d.key, s, _ask(d, s))
 
     out_file, reports = conv.convert(card, options)
@@ -110,17 +134,6 @@ def cmd_convert(a):
 
     album = {} if a.no_pictures else conv.convert_pictures(card)       # everything is built before writing
 
-    # A save is cking.sav plus its album files. One already in the folder is never mixed with the new one
-    # and never lost: with --force all of it is moved to a backup folder first.
-    target = os.path.join(a.output, "cking.sav")
-    existing = []
-    if os.path.isdir(a.output):
-        existing = sorted(n for n in os.listdir(a.output)
-                          if n == "cking.sav" or (n.startswith("cking_pic") and n.endswith(".sav")))
-    if existing and not a.force:
-        sys.exit("%s already holds a save (%s). Use --force to replace it: the files there are first moved to "
-                 "a backup folder inside it." % (a.output, ", ".join(existing[:3]) +
-                                                 (" and %d more" % (len(existing) - 3) if len(existing) > 3 else "")))
     os.makedirs(a.output, exist_ok=True)
     backup = None
     if existing:

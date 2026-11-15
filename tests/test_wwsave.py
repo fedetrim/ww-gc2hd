@@ -220,7 +220,8 @@ class CommandLine(unittest.TestCase):
             r = self._run("convert", gci, "-o", out, "--floor50", "1=steps,2=rewards")
             self.assertEqual(r.returncode, 0, r.stderr)
             self.assertIn("One Piece of Heart removed", r.stdout)
-            self.assertIn("398 rupees you paid Tingle", r.stdout)
+            self.assertIn("what you paid Tingle", r.stdout)
+            self.assertIn("do not fit: the wallet holds 500", r.stdout)
             self.assertIn("Maximum life:    12 hearts -> 11 hearts + 3/4", r.stdout)
             self.assertEqual(self._run("verify", out).returncode, 0)
             back = hd.HdFile.parse(_read(os.path.join(out, "cking.sav")))
@@ -432,6 +433,30 @@ class Conversion(unittest.TestCase):
         out, reports = conv.convert(self._card(edit), conv.Options(floor50="steps"))
         self.assertEqual(out.slots[0].u("status_a.max_life"), 0)
         self.assertEqual(len(reports[0].warnings), 1)
+
+    def test_rupees_are_one_balance(self):
+        """A take-back is not cut short because the refund is listed after it."""
+        def edit(s):
+            s.set_u("memory13.tbox", 1 << 2)                # Pawprint chest: Silver Rupee, 200
+            s.set_u("status_a.rupee", 100)
+            s.set_u("status_a.wallet_size", 1)
+            s.set_u("map.triforce_bits", 1 << 5)            # one chart deciphered: 398 back
+        out, reports = conv.convert(self._card(edit), conv.Options(pawprint_chest="steps"))
+        self.assertEqual(out.slots[0].u("status_a.rupee"), 100 - 200 + 398)
+        self.assertEqual(reports[0].warnings, [])
+
+    def test_question_text_is_per_file(self):
+        both = self._swapped(f50=True, marie=True).slots()[0]
+        card = gc.load(gc.build_gci(b"GZLE01", [both, both.copy(), hd.fresh_slot()]))
+        d = next(d for d in conv.decisions_for(card.slots(), conv.Options(floor50={0: "steps", 1: "rewards"}))
+                 if d.key == "marie")
+        self.assertIn("keep the Hero's Charm", d.text(0)[1][0][1])
+        self.assertIn("goes back into the floor-50 chest", d.text(1)[1][0][1])
+
+    def test_name_changes_are_reported(self):
+        self.assertEqual(conv.hd_name_for("Link"), ("Link", None))
+        self.assertIsNotNone(conv.hd_name_for("N\u00ba1")[1])        # written as "No1": said so
+        self.assertEqual(conv.hd_name_for("\u0080\u009fab")[0], "Link")    # control characters are refused
 
     def test_pawprint_chest(self):
         card = self._swapped(paw=True)
