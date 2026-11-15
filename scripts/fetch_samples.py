@@ -147,7 +147,8 @@ def fetch(src):
                 no_links(tmp)
                 shutil.copytree(tmp, extracted, dirs_exist_ok=True)
         if kind == "archive" and src.get("keep_archive", True) is False:
-            os.remove(part)
+            if os.path.exists(part):
+                os.remove(part)
         elif os.path.exists(part):
             os.replace(part, target)
     finally:

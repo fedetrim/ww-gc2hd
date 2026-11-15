@@ -270,7 +270,9 @@ def hd_name_for(name):
     written is not the name given."""
     folded = unicodedata.normalize("NFKC", name).strip()
     kept = folded[:hd.NAME_CHARS]               # only what is written has to be in the HD font
-    if not kept.strip() or not all(0x20 <= ord(c) < 0x250 and not 0x7F <= ord(c) < 0xA0 for c in kept):
+    if not kept.strip():
+        return "Link", "name %r is empty; using 'Link'" % name
+    if not all(0x20 <= ord(c) < 0x250 and not 0x7F <= ord(c) < 0xA0 for c in kept):
         return "Link", "name %r cannot be shown by the HD font; using 'Link'" % name
     if len(folded) > hd.NAME_CHARS:
         short = folded[:hd.NAME_CHARS].rstrip()
@@ -678,10 +680,9 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     if a == "steps":
         max_life = out.u("status_a.max_life") - 1
         out.set_u("status_a.max_life", max_life)
-        if out.u("status_a.life") > max_life // 4 * 4:
-            out.set_u("status_a.life", max_life // 4 * 4)
-            rep.changes.append("Current life lowered to %s: it cannot be above the full hearts of the new "
-                               "maximum." % _hearts(max_life // 4 * 4))
+        if out.u("status_a.life") > max_life:
+            out.set_u("status_a.life", max_life)
+            rep.changes.append("Current life lowered to %s, the new maximum." % _hearts(max_life))
         rep.changes.append("One Piece of Heart removed (maximum life -1/4 heart; floor 50 by steps): the "
                            "GameCube gave it in the floor-50 chest. In HD that chest gives the Hero's Charm and "
                            "the piece is the sunken treasure of Treasure Chart 46 (Pawprint Isle Wizzrobe cave "

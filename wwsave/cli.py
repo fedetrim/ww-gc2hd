@@ -3,13 +3,13 @@ import argparse
 import textwrap
 import time
 import os
-import struct
 import sys
 
 from . import convert as conv
 from . import describe, gc, hd
 
-EXIT_PARTIAL = 2            # convert wrote the save, but left out a used file that is not healthy
+EXIT_PARTIAL = 3            # convert wrote the save, but left out a used file that is not healthy
+                            # (1: nothing written; 2: wrong arguments, as argparse reports them)
 CEMU_HINT = "mlc01/usr/save/00050000/10143500/user/80000001/cking.sav"
 
 
@@ -105,12 +105,10 @@ def cmd_convert(a):
             if int(log) - 1 in names:
                 sys.exit("--name: Quest Log %s is named twice." % log)
             if int(log) - 1 not in used:
-                sys.exit("--name %s: Quest Log %s is not a used file on this card (used: %s)." % (
+                sys.exit("--name %s: Quest Log %s is not among the files that are converted (%s)." % (
                     value, log, ", ".join(str(s + 1) for s in used)))
             names[int(log) - 1] = name
-        elif sep and log.isdigit():
-            sys.exit("--name %s: there is no Quest Log %s (1 to 3)." % (value, log))
-        elif len(used) == 1:
+        elif len(used) == 1:                    # anything else is the name itself
             if used[0] in names:
                 sys.exit("--name: Quest Log %d is named twice." % (used[0] + 1))
             names[used[0]] = value
@@ -330,7 +328,7 @@ def main(argv=None):
         a.func(a)
     except KeyboardInterrupt:
         sys.exit("\ninterrupted")
-    except (gc.GcError, hd.HdError, conv.ConversionError, OSError, OverflowError, ValueError, struct.error) as e:
+    except (gc.GcError, hd.HdError, conv.ConversionError, OSError) as e:       # a bug raises as it is
         sys.exit("error: %s" % e)
 
 

@@ -29,5 +29,18 @@ if slot:
 s = f.slots[0]
 s.set_raw("return_place.stage", stage.encode().ljust(8, b"\0"))
 s.set_u("return_place.room", int(room)); s.set_u("return_place.point", int(point))
-os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
-open(out, "wb").write(f.serialize())
+folder = os.path.dirname(os.path.abspath(out))
+os.makedirs(folder, exist_ok=True)
+with open(out, "wb") as fh:
+    fh.write(f.serialize())
+# The rig copies the album files next to the save into the game: leave there only the album of the file
+# under test, named for Quest Log 1, where the file now is.
+for name in os.listdir(folder):
+    if name.startswith("cking_pic") and name.endswith(".sav"):
+        os.remove(os.path.join(folder, name))
+for name, data in conv.convert_pictures(card).items():
+    prefix = "cking_pic_order%d" % slot if name.startswith("cking_pic_order") else "cking_pic%d_" % slot
+    if name.startswith(prefix):
+        with open(os.path.join(folder, name.replace(prefix, prefix[:-2] + "0_" if prefix.endswith("_") else
+                                                    "cking_pic_order0", 1)), "wb") as fh:
+            fh.write(data)

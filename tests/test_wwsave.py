@@ -293,7 +293,7 @@ class CommandLine(unittest.TestCase):
             self.assertNotEqual(r.returncode, 0)            # one Quest Log named twice
             r = self._run("convert", gci, "-o", out, "--force", "--all", "steps", "--name", "3=Zed")
             self.assertNotEqual(r.returncode, 0)            # Quest Log 3 is not a used file
-            self.assertIn("not a used file", r.stderr)
+            self.assertIn("not among the files that are converted", r.stderr)
             # an answer typed for a Quest Log that is not in the case is pointed out; twice is refused
             r = self._run("convert", gci, "-o", out, "--force", "--all", "steps", "--floor50", "3=rewards")
             self.assertEqual(r.returncode, 0, r.stderr)
@@ -310,7 +310,7 @@ class CommandLine(unittest.TestCase):
             with open(gci3, "wb") as f:
                 f.write(gc.build_gci(b"GZLE01", [well, sick, hd.fresh_slot()]))
             r = self._run("convert", gci3, "-o", os.path.join(tmp, "out3"))
-            self.assertEqual(r.returncode, 2, r.stderr)
+            self.assertEqual(r.returncode, 3, r.stderr)     # 2 is argparse's status for wrong arguments
             self.assertIn("Quest Log 2: NOT CONVERTED", r.stdout)
             self.assertTrue(os.path.exists(os.path.join(tmp, "out3", "cking.sav")))
             # the Pawprint case alone is not said to depend on floor 50
@@ -613,6 +613,7 @@ class Conversion(unittest.TestCase):
         self.assertEqual(conv.hd_name_for("        x")[0], "x")             # never a name of spaces
         self.assertEqual(conv.hd_name_for("ab      cd")[0], "ab")
         self.assertEqual(conv.hd_name_for("   ")[0], "Link")
+        self.assertIn("is empty", conv.hd_name_for("   ")[1])
         self.assertEqual(conv.hd_name_for("ABCDEFGHIJ\u3042")[0], "ABCDEFGH")   # only what is written counts
 
     def test_pawprint_chest(self):
