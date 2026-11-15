@@ -9,6 +9,7 @@ import sys
 from . import convert as conv
 from . import describe, gc, hd
 
+EXIT_PARTIAL = 2            # convert wrote the save, but left out a used file that is not healthy
 CEMU_HINT = "mlc01/usr/save/00050000/10143500/user/80000001/cking.sav"
 
 
@@ -89,7 +90,7 @@ def cmd_convert(a):
         sys.exit("%s already holds a save (%s). Use --force to replace it: the files there are first moved to "
                  "a backup folder inside it." % (a.output, ", ".join(existing[:3]) +
                                                  (" and %d more" % (len(existing) - 3) if len(existing) > 3 else "")))
-    healthy = [s for s, g in enumerate(slots) if g is not None and not g.is_new() and not conv.health(g)]
+    healthy = [s for s, g in enumerate(slots) if conv.is_converted(g)]
     if not healthy:                             # checked first: nothing is asked or written
         problems = ["File %d: %s" % (s + 1, p) for s, g in enumerate(slots)
                     if g is not None and not g.is_new() for p in conv.health(g)]
@@ -199,7 +200,9 @@ def cmd_convert(a):
     print()
     print("%s (%s, %s) -> %s" % (a.input, card.code, card.source, target))
     for rep in reports:
-        if not rep.used:
+        if rep.unhealthy:
+            print("Quest Log %d: NOT CONVERTED (written empty)" % (rep.slot + 1))
+        elif not rep.used:
             print("Quest Log %d: empty" % (rep.slot + 1))
         else:
             print("Quest Log %d: %s" % (rep.slot + 1, out_file.name(rep.slot)))
@@ -228,6 +231,9 @@ def cmd_convert(a):
           "its cking_pic* files before copying.")
     if backup:
         print("The save that was in %s is in %s." % (a.output, backup))
+    left_out = [rep.slot + 1 for rep in reports if rep.unhealthy]
+    if left_out:                                # written, but not all of the card: say so in the exit status
+        sys.exit(EXIT_PARTIAL)
 
 
 def cmd_info(a):

@@ -23,7 +23,7 @@ def sample_jobs(options, out):
             continue
         wanted = []
         for slot, g in enumerate(card.slots()):
-            if g is None or g.is_new() or conv.health(g):   # only files that are converted
+            if not conv.is_converted(g):
                 continue
             key = hashlib.md5(bytes(g)).hexdigest()
             if key not in seen:

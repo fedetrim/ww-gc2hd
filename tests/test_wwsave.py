@@ -300,6 +300,19 @@ class CommandLine(unittest.TestCase):
             self.assertIn("--floor50 3=rewards was not used", r.stderr)
             r = self._run("convert", gci, "-o", out, "--force", "--floor50", "1=steps,1=rewards")
             self.assertNotEqual(r.returncode, 0)
+            # a card with a healthy file and one that is not: written, exit status 2, the file named
+            sick = hd.fresh_slot()
+            sick.set_raw("info.player_name", b"Sick".ljust(17, b"\0"))
+            sick.set_u("status_a.max_life", 0)
+            well = hd.fresh_slot()
+            well.set_raw("info.player_name", b"Well".ljust(17, b"\0"))
+            gci3 = os.path.join(tmp, "mixed.gci")
+            with open(gci3, "wb") as f:
+                f.write(gc.build_gci(b"GZLE01", [well, sick, hd.fresh_slot()]))
+            r = self._run("convert", gci3, "-o", os.path.join(tmp, "out3"))
+            self.assertEqual(r.returncode, 2, r.stderr)
+            self.assertIn("Quest Log 2: NOT CONVERTED", r.stdout)
+            self.assertTrue(os.path.exists(os.path.join(tmp, "out3", "cking.sav")))
             # the Pawprint case alone is not said to depend on floor 50
             paw = hd.fresh_slot()
             paw.set_raw("info.player_name", b"Paw".ljust(17, b"\0"))
@@ -350,7 +363,7 @@ class Conversion(unittest.TestCase):
         back = hd.HdFile.parse(data)                       # strict: checksums and CRC
         for s, g in enumerate(card.slots()):
             h = back.slots[s]
-            if g is None or g.is_new() or conv.health(g):   # unused, unreadable or not from normal play
+            if not conv.is_converted(g):                    # unused, unreadable or not from normal play
                 self.assertEqual(bytes(h), bytes(hd.fresh_slot()), path)
                 continue
             self.assertGreater(h.u("info.save_count"), 0, path)

@@ -54,8 +54,8 @@ def load():
         card = gc.load(open(f, "rb").read())
         slots = card.slots() if RAW else conv.convert(card, conv.Options.all("steps"))[0].slots
         for g, s in zip(card.slots(), slots):
-            if g is None or g.is_new():
-                continue
+            if g is None or g.is_new() or not (RAW or conv.is_converted(g)):
+                continue                        # a file that is not converted comes out as an empty Quest Log
             k = hashlib.md5(bytes(s)).hexdigest()
             if k not in seen:
                 seen.add(k)

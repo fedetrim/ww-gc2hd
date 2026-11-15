@@ -149,6 +149,9 @@ def main():
     mode = opts.pop("all", None)
     options = conv.Options.all(mode, **opts) if mode else conv.Options(**opts)
     f, reports = conv.convert(card, options)
+    if reports[slot].unhealthy or not reports[slot].used:
+        sys.exit("file %d is not converted (%s): there is nothing to test" % (
+            slot + 1, "; ".join(reports[slot].unhealthy) or "unused or unreadable"))
     for c in reports[slot].changes:
         say("converter:", c)
     if slot:

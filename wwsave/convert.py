@@ -300,7 +300,7 @@ def decisions_for(slots, options=None):
         d.per_slot[s] = (question, choices)
 
     for s, g in enumerate(slots):
-        if g is None or g.is_new() or health(g):           # an unhealthy file is not converted: no cases
+        if not is_converted(g):                             # no cases for a file that is not converted
             continue
         g = _with_owned_items(g)
         opts = all_options.for_slot(s)
@@ -387,13 +387,19 @@ def settled_answers(slots, options):
     mode that was applied anyway."""
     out = {}
     for s, g in enumerate(slots):
-        if g is None or g.is_new() or health(g):
+        if not is_converted(g):
             continue
         g = _with_owned_items(g)
         if _collected(g, PAWPRINT_CHEST) and _pawprint_settled(g, options.for_slot(s)):
             out[("pawprint_chest", s)] = ("floor 50 by rewards already settles that chest (opened, Treasure "
                                           "Chart 46 salvaged)", None)
     return out
+
+
+def is_converted(g):
+    """Whether a file of the card is translated: it is readable, used, and healthy. The one test every part
+    of the tool uses (cases, pictures, report, rigs)."""
+    return g is not None and not g.is_new() and not health(g)
 
 
 def health(g):
@@ -883,7 +889,7 @@ def convert_pictures(card):
     out = {}
     slots = card.slots()
     for s, blocks in enumerate(card.pictures()):
-        if not blocks or slots[s] is None or slots[s].is_new() or health(slots[s]):
+        if not blocks or not is_converted(slots[s]):
             continue                            # no album for a file that is not converted
         for key, data in picture.build_album(blocks).items():
             if key == "order":

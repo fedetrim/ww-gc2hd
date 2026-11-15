@@ -144,10 +144,10 @@ def _from_raw_card(raw):
         raise GcError("not a memory card image")
 
     def counter(blk_no):
-        return struct.unpack(">H", raw[BLOCK * blk_no + 0x1FFA:BLOCK * blk_no + 0x1FFC])[0]
+        return struct.unpack(">h", raw[BLOCK * blk_no + 0x1FFA:BLOCK * blk_no + 0x1FFC])[0]     # signed
 
     def bat_counter(blk_no):
-        return struct.unpack(">H", raw[BLOCK * blk_no + 4:BLOCK * blk_no + 6])[0]
+        return struct.unpack(">h", raw[BLOCK * blk_no + 4:BLOCK * blk_no + 6])[0]
 
     # Each of the two has a backup copy; the one in use is the valid copy with the higher update counter
     # (directory: checksums over its first 0x1FFC bytes; block map: over everything after its checksums).

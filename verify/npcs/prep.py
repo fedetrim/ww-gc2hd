@@ -41,6 +41,9 @@ mode = kw.pop("all", "steps")
 card = gc.load(open(src, "rb").read())
 gslot = slot
 f, reports = conv.convert(card, conv.Options.all(mode, **kw))
+if reports[slot].unhealthy or not reports[slot].used:
+    sys.exit("file %d of %s is not converted (%s): there is nothing to test" % (
+        slot + 1, src, "; ".join(reports[slot].unhealthy) or "unused or unreadable"))
 for c in reports[slot].changes: print("changed:", c)
 if slot:
     f.move_to_quest_log_1(slot)

@@ -72,12 +72,24 @@ def no_links(folder):
                 raise RuntimeError("archive holds a symbolic link (%s)" % name)
 
 
+def expected_files():
+    """{path under samples/: sha256} from samples/checksums.sha256."""
+    out = {}
+    with open(os.path.join(SAMPLES, "checksums.sha256")) as f:
+        for n, line in enumerate(f, 1):
+            if not line.strip():
+                continue
+            digest, sep, path = line.rstrip("\n").partition("  ")
+            if not sep or len(digest) != 64:
+                sys.exit("samples/checksums.sha256, line %d: expected '<sha256>  <path>'" % n)
+            out[path] = digest
+    return out
+
+
 def expected_under(folder):
     """The files of samples/checksums.sha256 that belong to one source folder."""
     prefix = folder.rstrip("/") + "/"
-    with open(os.path.join(SAMPLES, "checksums.sha256")) as f:
-        return [line.rstrip("\n").split("  ", 1)[1] for line in f
-                if line.rstrip("\n").split("  ", 1)[1].startswith(prefix)]
+    return [path for path in expected_files() if path.startswith(prefix)]
 
 
 def fetch(src):
@@ -126,12 +138,12 @@ def fetch(src):
     os.makedirs(os.path.dirname(target), exist_ok=True)
     part = target + ".part"
     try:
-        if FORCE or not (kind == "file" and os.path.exists(target)):  # the card image may already be there
+        if FORCE or not os.path.exists(target):         # a download kept from before is used again
             with open(part, "wb") as f:
                 f.write(download(src["url"]))
         if kind == "archive":
             with tempfile.TemporaryDirectory(dir=dest) as tmp:
-                unpack(part, tmp, src.get("members"))
+                unpack(part if os.path.exists(part) else target, tmp, src.get("members"))
                 no_links(tmp)
                 shutil.copytree(tmp, extracted, dirs_exist_ok=True)
         if kind == "archive" and src.get("keep_archive", True) is False:
@@ -162,11 +174,7 @@ def _digest(path):
 def check():
     """Every expected file must be at its path with its content; those that differ or are missing are
     listed. Save files that are not in the list are counted."""
-    expected = {}
-    with open(os.path.join(SAMPLES, "checksums.sha256")) as f:
-        for line in f:
-            digest, path = line.rstrip("\n").split("  ", 1)
-            expected[path] = digest
+    expected = expected_files()
     ok, wrong, missing = 0, [], []
     for path, digest in expected.items():
         full = os.path.join(SAMPLES, path)
