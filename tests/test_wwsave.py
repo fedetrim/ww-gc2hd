@@ -1,6 +1,7 @@
 """Tests. The sample-based ones run on every save under samples/ (skipped when it is absent)."""
 import glob
 import os
+import struct
 import sys
 import unittest
 
@@ -80,6 +81,16 @@ class Formats(unittest.TestCase):
         self.assertEqual(bytes(gc.load(bytes(card)).slots()[0]), bytes(save))
         with self.assertRaises(gc.GcError):
             gc.load(b"not a save")
+        # the directory has a backup copy: a newer copy with a bad checksum is not used
+        def sums(block, lo, hi, at):
+            block[at:at + 4] = struct.pack(">HH", *gc._card_sums(bytes(block[lo:hi])))
+        for d in (1, 2):
+            block = card[gc.BLOCK * d:gc.BLOCK * (d + 1)]
+            block[0x1FFA:0x1FFC] = d.to_bytes(2, "big")                 # copy 2 is the newer one
+            sums(block, 0, 0x1FFC, 0x1FFC)
+            card[gc.BLOCK * d:gc.BLOCK * (d + 1)] = block
+        card[gc.BLOCK * 2:gc.BLOCK * 2 + 4] = b"XXXX"                  # ... and is damaged
+        self.assertEqual(bytes(gc.load(bytes(card)).slots()[0]), bytes(save))
         # a card image without the game's file says so, not "not a card image"
         with self.assertRaisesRegex(gc.GcError, "no Wind Waker save"):
             gc.load(bytes(gc.BLOCK * 16))
@@ -264,6 +275,15 @@ class CommandLine(unittest.TestCase):
             r = self._run("convert", gci, "-o", out, "--force", "--all", "steps", "--name", "3=Zed")
             self.assertNotEqual(r.returncode, 0)            # Quest Log 3 is not a used file
             self.assertIn("not a used file", r.stderr)
+            # the Pawprint case alone is not said to depend on floor 50
+            paw = hd.fresh_slot()
+            paw.set_raw("info.player_name", b"Paw".ljust(17, b"\0"))
+            paw.set_u("memory13.tbox", 1 << 2)
+            gci2 = os.path.join(tmp, "paw.gci")
+            with open(gci2, "wb") as f:
+                f.write(gc.build_gci(b"GZLE01", [paw, hd.fresh_slot(), hd.fresh_slot()]))
+            r = self._run("convert", gci2, "-o", os.path.join(tmp, "out2"))
+            self.assertIn("--pawprint-chest steps|rewards   (Quest Log 1)\n", r.stderr)
             # a case answered for one Quest Log only: the other is still listed
             r = self._run("convert", gci, "-o", out, "--force", "--floor50", "1=steps")
             self.assertNotEqual(r.returncode, 0)
@@ -509,7 +529,11 @@ class Conversion(unittest.TestCase):
         # with the floor-50 Piece of Heart kept, the Pawprint chest is settled and not asked about
         card = self._swapped(f50=True, paw=True)
         keys = lambda o: [d.key for d in conv.decisions_for(card.slots(), o)]
-        self.assertEqual(keys(conv.Options()), ["floor50"])
+        self.assertEqual(keys(conv.Options()), ["floor50", "pawprint_chest"])
+        d = conv.decisions_for(card.slots(), conv.Options())[1]
+        self.assertEqual(d.depends, {0: ("floor50", "steps")})     # a case only if floor 50 is by steps
+        self.assertEqual(conv.settled_answers(card.slots(), conv.Options(floor50="rewards")).keys(),
+                         {("pawprint_chest", 0)})
         self.assertEqual(keys(conv.Options(floor50="steps")), ["floor50", "pawprint_chest"])
         self.assertEqual(keys(conv.Options(floor50="rewards")), ["floor50"])
         st = self._state(card, floor50="rewards")
@@ -574,8 +598,10 @@ class Conversion(unittest.TestCase):
                 # consumables: taken back by steps; the Silver Rupee is held <=> Chart 45's treasure is salvaged
                 ans = dict(zip(keys, answers))
                 self.assertEqual(done(7) and not paw, False, where)
+                kept = ans.get("pawprint_chest") == "rewards" or (f50 and ans.get("floor50") == "rewards")
+                self.assertEqual(done(7), bool(paw and kept and ans.get("marie") == "steps"), where)
                 rupees = 1000 - (20 if ans.get("star_belt_chest") == "steps" else 0) - (
-                    200 if paw and not done(7) else 0)
+                    200 if paw and not kept else 0)
                 self.assertEqual(h.u("status_a.rupee"), rupees, where)
                 spoils = h.raw("bag_item_record.beast_num")
                 self.assertEqual(spoils[0], 2 - (ans.get("horseshoe_chest") == "steps"), where)

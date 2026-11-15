@@ -7,7 +7,7 @@ CASE is an Options field: floor50, marie, lenzo, pawprint_chest, horseshoe_chest
 triforce_chart_2/4/6/7/8. `all` (default steps) answers the cases not named."""
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from wwsave import convert as conv, gc, hd
+from wwsave import convert as conv, gc
 src, slot, out, stage, room, point = sys.argv[1:7]
 slot = int(slot) - 1
 kw = dict(a.split("=") for a in sys.argv[7:])
@@ -20,5 +20,5 @@ if slot:
 s = f.slots[0]
 s.set_raw("return_place.stage", stage.encode().ljust(8, b"\0"))
 s.set_u("return_place.room", int(room)); s.set_u("return_place.point", int(point))
-os.makedirs(os.path.dirname(out), exist_ok=True)
+os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
 open(out, "wb").write(f.serialize())

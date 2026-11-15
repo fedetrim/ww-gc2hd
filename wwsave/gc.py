@@ -123,6 +123,17 @@ class GcCardFile:
         return out
 
 
+def _card_sums(data):
+    """The two checksums the memory card keeps for its directory and block map: the sum of the big-endian
+    16-bit words and the sum of their complements, where 0xFFFF is stored as 0."""
+    a = b = 0
+    for i in range(0, len(data), 2):
+        w = data[i] << 8 | data[i + 1]
+        a = (a + w) & 0xFFFF
+        b = (b + (w ^ 0xFFFF)) & 0xFFFF
+    return (0 if a == 0xFFFF else a, 0 if b == 0xFFFF else b)
+
+
 def _from_raw_card(raw):
     """Find the gczelda file(s) in a raw memory card image (optionally with Dolphin's 0x40 header)."""
     if len(raw) % BLOCK == 0x40:
@@ -136,8 +147,22 @@ def _from_raw_card(raw):
     def bat_counter(blk_no):
         return struct.unpack(">H", raw[BLOCK * blk_no + 4:BLOCK * blk_no + 6])[0]
 
-    d = 1 if counter(1) >= counter(2) else 2
-    b = 3 if bat_counter(3) >= bat_counter(4) else 4
+    # Each of the two has a backup copy; the one in use is the valid copy with the higher update counter
+    # (directory: checksums over its first 0x1FFC bytes; block map: over everything after its checksums).
+    def valid_dir(blk_no):
+        blk = raw[BLOCK * blk_no:BLOCK * (blk_no + 1)]
+        return _card_sums(blk[:0x1FFC]) == struct.unpack(">HH", blk[0x1FFC:0x2000])
+
+    def valid_bat(blk_no):
+        blk = raw[BLOCK * blk_no:BLOCK * (blk_no + 1)]
+        return _card_sums(blk[4:]) == struct.unpack(">HH", blk[0:4])
+
+    def pick(first, second, valid, count):
+        good = [n for n in (first, second) if valid(n)] or [first, second]     # both bad: as before
+        return max(good, key=lambda n: (count(n), -n))
+
+    d = pick(1, 2, valid_dir, counter)
+    b = pick(3, 4, valid_bat, bat_counter)
     directory = raw[BLOCK * d:BLOCK * (d + 1)]
     bat = raw[BLOCK * b:BLOCK * (b + 1)]
     total_blocks = len(raw) // BLOCK

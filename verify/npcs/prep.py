@@ -65,7 +65,7 @@ if flags.get("camera"):
     s.set_raw("status_a.select_item", bytes(sel))
 if "time" in flags:
     s.set_raw("status_b.time", struct.pack(">f", flags["time"] * 15.0))
-os.makedirs(os.path.dirname(out), exist_ok=True)
+os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
 open(out, "wb").write(f.serialize())
 if flags.get("album"):      # the converter's own album files for this file, as Quest Log 1
     import re

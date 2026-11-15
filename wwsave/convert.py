@@ -8,7 +8,7 @@ import unicodedata
 from dataclasses import dataclass, field
 
 from . import hd, hdcheck, layout
-from .layout import NO_ITEM, Save
+from .layout import NO_ITEM
 
 ITEM_TINGLE = 0x21          # Tingle Tuner (GameCube) / Tingle Bottle (HD)
 ITEM_WIND_WAKER = 0x22
@@ -118,6 +118,7 @@ class Decision:
     choices: list           # [(value, description)]; there is no default
     slots: list = field(default_factory=list)
     per_slot: dict = field(default_factory=dict)    # file index -> (question, choices): the text can differ
+    depends: dict = field(default_factory=dict)     # file index -> (case, mode): a case only with that answer
 
     def text(self, slot):
         return self.per_slot.get(slot, (self.question, self.choices))
@@ -161,10 +162,12 @@ def _set_tbox(save, record, bit, on):
 
 
 def _take_spoil(save, index, item):
-    """Remove one spoil (Spoils Bag counter `index`, item number `item`); False if none is left."""
+    """Remove one spoil (Spoils Bag counter `index`, item number `item`). Returns None if none is left,
+    else a note for the report (empty unless the last one was on an item button, which is then emptied)."""
     counts = bytearray(save.raw("bag_item_record.beast_num"))
     if not counts[index]:
-        return False
+        return None
+    note = ""
     counts[index] -= 1
     save.set_raw("bag_item_record.beast_num", bytes(counts))
     if not counts[index]:                                   # as dSv_player_bag_item_c::setBeastItemEmpty
@@ -176,9 +179,10 @@ def _take_spoil(save, index, item):
                 for b in range(3):
                     if sel[b] == BEAST_SLOT_FIRST + i:
                         sel[b] = NO_ITEM
+                        note = " It was your last one, so the %s button it was on is now empty." % "XYZ"[b]
         save.set_raw("bag_item.beast", bytes(bag))
         save.set_raw("status_a.select_item", bytes(sel))
-    return True
+    return note
 
 
 def _hearts(quarters):
@@ -316,16 +320,18 @@ def decisions_for(slots, options=None):
                      "The floor-50 chest then follows the Mrs. Marie case: it stays open if you keep the "
                      "Hero's Charm there, and is closed again otherwise" if marie else
                      "The floor-50 chest is closed again; open it in HD to get the Hero's Charm"), s)
-        if _collected(g, PAWPRINT_CHEST) and not (f50 and options.floor50 != "steps"):
+        if _collected(g, PAWPRINT_CHEST) and not _pawprint_settled(g, options):
+            if f50:
+                out.setdefault("pawprint_chest", Decision("pawprint_chest", "", [])).depends[s] = ("floor50", "steps")
             need("pawprint_chest",
                  "%s is open. In HD it holds Treasure Chart 46 (which leads to a Piece of Heart), and the "
                  "Silver Rupee is the sunken treasure of Treasure Chart 45 (Mrs. Marie's reward)." %
                  HD_CHART_SOURCES[8][1],
                  "the chest stays open: you get Treasure Chart 46 and lose the Silver Rupee (200 rupees, as "
                  "far as still held)",
-                 "the chest is closed again; open it in HD to get the chart. You keep the Silver Rupee if "
-                 "Treasure Chart 45 is in hand (Mrs. Marie by steps): its treasure is then marked as "
-                 "salvaged. Otherwise the 200 rupees are taken back and wait under Seven-Star Isles", s)
+                 "the chest is closed again; open it in HD to get the chart. You keep the Silver Rupee. If "
+                 "Treasure Chart 45 is in hand (Mrs. Marie by steps) its treasure is marked as salvaged; "
+                 "otherwise that treasure stays to be found, a second Silver Rupee", s)
         if marie:
             if not f50:
                 lose = "and lose the Hero's Charm until you open the floor-50 chest in HD"
@@ -359,6 +365,25 @@ def _couple_on_street(g):
     """The third picture (Anton and Linda looking at each other) can only be taken while register 0xB907 is
     0 or 1 (d_a_npc_people.cpp:120). Normal play cannot pass that without the Deluxe Picto Box."""
     return g.event_reg(0xB907) < 2
+
+
+def _pawprint_settled(g, options):
+    """Floor 50 by rewards opens the Pawprint chest and marks Treasure Chart 46 as salvaged, so the Pawprint
+    chest is not a case of its own then."""
+    return _collected(g, SAVAGE_FLOOR_50) and options.floor50 == "rewards"
+
+
+def settled_answers(slots, options):
+    """{(case, file index): why} for cases that another answer already settles: an answer given for one
+    of them has no effect, which a front end should say."""
+    out = {}
+    for s, g in enumerate(slots):
+        if g is None or g.is_new():
+            continue
+        if _collected(g, PAWPRINT_CHEST) and _pawprint_settled(g, options.for_slot(s)):
+            out[("pawprint_chest", s)] = ("floor 50 by rewards already settles that chest (opened, Treasure "
+                                          "Chart 46 salvaged)")
+    return out
 
 
 def _lenzo_stuck(g):
@@ -415,6 +440,11 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     if any(_collected(g, ("tbox", TRIFORCE_CHESTS[4][0], b)) for b in TRIFORCE_CHESTS[4][1][1:]):
         conventions.append("the Ghost Ship chest is recorded under the one flag HD has for it")
     conventions.append("the inventory snapshots for the boss rematches use HD's button layout")
+    if g.raw("return_place.stage").split(b"\0", 1)[0].ljust(8, b"\0") != g.raw("return_place.stage"):
+        conventions.append("the name of the place the file returns to is padded as HD pads it")
+    if any(g.raw("map.fmap_bits")[sector] & 1 for sector in range(49) if sector not in hd.PRECHARTED_SECTORS):
+        conventions.append("the sea sectors a Fishman has charted are also noted in HD's play log, where HD "
+                           "remembers that he was met")
     rep.changes.append("File conventions of HD applied, with no effect on what you hold: %s." %
                        "; ".join(conventions))
     out.set_u("config.sound_mode", 2)
@@ -527,8 +557,9 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
                 if k == 4:
                     took = _take_spoil(out, *SKULL_NECKLACE)
                     rep.changes.append("One Skull Necklace removed: the GameCube gave it in that chest and HD "
-                                       "does not." if took else "The Skull Necklace the GameCube gave in that "
-                                       "chest could not be removed: you no longer hold one.")
+                                       "does not." + took if took is not None else "The Skull Necklace the "
+                                       "GameCube gave in that chest could not be removed: you no longer hold "
+                                       "one.")
                 else:
                     rupees.append(-20)
                     rep.changes.append("20 rupees removed (-20 rupees): the Red Rupee the GameCube gave in that "
@@ -606,11 +637,16 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     if paw:
         # The Pawprint chest's Silver Rupee is the sunken treasure of Treasure Chart 45 in HD. It can be kept
         # only if that treasure can be marked as salvaged, which needs the chart in hand.
-        keep = (a == "rewards" or options.pawprint_chest == "rewards") and b == "steps"
-        if keep:
+        keep = a == "rewards" or options.pawprint_chest == "rewards"
+        if keep and b == "steps":
             give_chart(7, salvaged=True)
             rep.changes.append("Treasure Chart 45 marked as salvaged: its treasure in HD is the Silver Rupee you "
                                "keep from the Pawprint chest, so it must not be collectable a second time.")
+        elif keep:
+            rep.warnings.append("you keep the Silver Rupee of the Pawprint chest, and in HD the same rupee is "
+                                "the sunken treasure of Treasure Chart 45, which this file does not have yet "
+                                "(a chart cannot be marked as salvaged before it is owned): it can be "
+                                "collected once more, 200 rupees")
         else:
             rupees.append(-200)
             rep.changes.append("200 rupees removed (-200 rupees): the Silver Rupee the GameCube gave in the "
@@ -661,8 +697,8 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
                                "picture, which he already did.")
             took = _take_spoil(out, *JOY_PENDANT)
             rep.changes.append("One Joy Pendant removed: the GameCube gave it for that picture and HD does not."
-                               if took else "The Joy Pendant the GameCube gave for that picture could not be "
-                               "removed: you no longer hold one.")
+                               + took if took is not None else "The Joy Pendant the GameCube gave for that "
+                               "picture could not be removed: you no longer hold one.")
         else:
             out.set_event_reg(LENZO_REG, 5)
             rep.changes.append("Lenzo's third task is pending again (by rewards): bring him the picture of the "

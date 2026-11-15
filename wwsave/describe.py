@@ -2,7 +2,6 @@
 import struct
 
 from . import layout
-from .layout import Save
 
 ITEM_NAMES = {
     0x1F: "Joy Pendant", 0x20: "Telescope", 0x21: "Tingle Tuner (GC) / Tingle Bottle (HD)", 0x22: "Wind Waker",

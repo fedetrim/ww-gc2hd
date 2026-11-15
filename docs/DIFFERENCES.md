@@ -184,15 +184,16 @@ answers are the two consistent translations:
 Consumable rewards are translated too. By `steps` the GameCube one is taken back as far as the save still
 holds it (a spent rupee or a used spoil cannot be taken): Skull Necklace, Red Rupee (20), Silver Rupee (200),
 Lenzo's Joy Pendant. By `rewards` it is kept. One of them has a place in HD, the Silver Rupee (sunken treasure
-of Treasure Chart 45): it is kept when that treasure can be marked as salvaged, which needs Chart 45 in hand
-(`--marie steps`); otherwise the 200 rupees are taken back, and Chart 45 brings them.
+of Treasure Chart 45): by `rewards` it is kept like the others, and that treasure is marked as salvaged when Chart 45 is in hand
+(`--marie steps`). When it is not, the treasure stays to be found, a second Silver Rupee: a chart cannot be
+marked as salvaged before it is owned (see below). The report says so.
 
 | Case (option) | Applies when | `steps` | `rewards` |
 |---|---|---|---|
 | `--triforce-chart-2/4/6/7/8` | chart owned, shard not | shard given | chart dropped, chest closed again; for chart 4 the Ghost Ship register 0x8803 is also set from 3 to 0 (at 3 the ship no longer exists, `d_a_ghostship.cpp:275`) |
 | `--horseshoe-chest`, `--star-belt-chest` | lookout chest open | Treasure Chart 43 / 44 given; Skull Necklace / 20 rupees taken back | chest closed again |
 | `--floor50` | floor-50 chest open (Piece of Heart held) | Piece of Heart removed (maximum life -1, a full heart becomes three pieces); chest stays open, Hero's Charm given | Piece of Heart kept; Pawprint chest marked opened, Treasure Chart 46 owned, opened and salvaged; floor-50 chest closed again unless the Hero's Charm is held by `--marie rewards` |
-| `--pawprint-chest` | Pawprint chest open, and not already settled by `--floor50 rewards` | Treasure Chart 46 given; 200 rupees taken back | chest closed again; Silver Rupee kept with Chart 45 marked salvaged if `--marie steps`, else 200 rupees taken back |
+| `--pawprint-chest` | Pawprint chest open, and not already settled by `--floor50 rewards` | Treasure Chart 46 given; 200 rupees taken back | chest closed again; Silver Rupee kept, and Chart 45 marked salvaged if `--marie steps` |
 | `--marie` | event 0x1C04 set (Hero's Charm held) | Treasure Chart 45 given; Hero's Charm removed unless the floor-50 chest is open by `--floor50 steps` | Hero's Charm kept, floor-50 chest marked opened; 0x1C04 cleared: Mrs. Marie gives Treasure Chart 45 the next time she receives a Joy Pendant (`d_a_npc_ho.cpp:345`, total given stays >= 40) |
 | `--lenzo` | register 0xC407 >= 6, Picto Box not Deluxe | Deluxe Picto Box given; one Joy Pendant taken back | register set to 5: the third task is pending again |
 
@@ -306,6 +307,8 @@ three charted from the start (680 sector pairs, no exception).
 - A GameCube file without a player name is unused; it becomes a fresh HD Quest Log
   (`dSv_info_c::initdata_to_card` 025BAC50; equal to the 65 empty Quest Logs of the real HD files, apart from
   bytes the game leaves uninitialised).
+- A raw memory card image keeps a backup copy of its directory and of its block map. The one in use is
+  the copy with the higher update counter among those whose checksums are right, as the console picks it.
 - The card file holds two copies of the three files. The converter reads them as the game does
   (`mDoMemCdRWm_Restore`, `m_Do_MemCardRWmng.cpp:135-146`): the first copy, or the second when the first
   fails its checksum. For file 2 the game tests the second copy's file 3 before restoring, so a good file 2
@@ -342,6 +345,10 @@ three charted from the start (680 sector pairs, no exception).
   (visual or timing), the rest belong to items of this document. HD changed 25 prices (bait, bombs, arrows
   cost more; spoils sell for more; Lenzo's paid offer 150 instead of 50) and many enemy drops; neither is
   stored in a save. No message or event script writes save data differently.
+- `--pawprint-chest rewards` without `--marie steps` keeps the Silver Rupee while its HD place, the sunken
+  treasure of Treasure Chart 45, cannot be marked as salvaged yet: that rupee can be collected a second
+  time. Rupees are not a unique reward (both games give them without limit), so the file is still one HD
+  could have written; the report states it.
 - A consumable already used on the GameCube cannot be taken back by `steps` (the report says so when it
   happens).
 - Japanese and European GameCube saves convert (`--allow-region`) but were not analysed.

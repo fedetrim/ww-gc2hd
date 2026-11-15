@@ -12,7 +12,6 @@ printed; expected when the scenario plays something); 1 the game did not reach t
 """
 import os
 import shutil
-import struct
 import subprocess
 import sys
 

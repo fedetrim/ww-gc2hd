@@ -8,7 +8,7 @@ is "settled": real HD saves are (checked in the tests), and converted saves must
 `invariants` lists properties that hold in every real HD save of the sample collection.
 """
 from . import layout
-from .layout import NO_ITEM, Save
+from .layout import NO_ITEM
 
 # Item of each inventory slot when its get-item bit 0 is set (bottles excluded): the table behind
 # fopMsgM_getTableByte 025DB5AC, observed in real HD saves; upgrades are handled separately.

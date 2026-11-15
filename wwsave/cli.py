@@ -1,6 +1,5 @@
 """ww-gc2hd: convert a GameCube Wind Waker save into a Wind Waker HD (Wii U) save."""
 import argparse
-import copy
 import textwrap
 import time
 import os
@@ -43,7 +42,7 @@ def _ask(decision, slot):
             answer = input("Choice (1 or 2): ").strip()
         except EOFError:
             sys.exit("\nno choice made for %s" % _flag(decision.key))
-        if answer.isdigit() and 1 <= int(answer) <= len(choices):
+        if answer in [str(i + 1) for i in range(len(choices))]:
             return choices[int(answer) - 1][0]
 
 
@@ -107,24 +106,20 @@ def cmd_convert(a):
 
     while open_cases(options):
         if not sys.stdin.isatty():
-            # List everything a script may have to answer: the Pawprint case shows up only once floor 50
-            # is answered by steps, so look at that branch too.
-            both = copy.deepcopy(options)
-            for d, s in open_cases(options):
-                if d.key == "floor50":
-                    both.answer("floor50", s, "steps")
             listed = {}
-            for d, s in open_cases(options) + [c for c in open_cases(both) if c[0].key == "pawprint_chest"]:
+            for d, s in open_cases(options):
                 question, choices = d.text(s)
-                listed.setdefault((d.key, question, tuple(choices)), []).append(s)
+                dep = d.depends.get(s)
+                note = ""
+                if dep and getattr(options.for_slot(s), dep[0]) is None:
+                    note = "   only needed with %s %s" % (_flag(dep[0]), dep[1])
+                listed.setdefault((d.key, question, tuple(choices), note), []).append(s)
             lines = ["%s holds states the two games do not share. Choose for each one (or --all for all;"
                      % a.input, "per Quest Log: 1=steps,2=rewards):"]
-            for (key, question, choices), logs in listed.items():
+            for (key, question, choices, note), logs in listed.items():
                 lines.append("")
                 lines.append("%s steps|rewards   (Quest Log %s)%s" % (
-                    _flag(key), ", ".join(str(s + 1) for s in sorted(set(logs))),
-                    "   only needed with --floor50 steps" if key == "pawprint_chest" and any(
-                        getattr(options.for_slot(s), "floor50") is None for s in logs) else ""))
+                    _flag(key), ", ".join(str(s + 1) for s in sorted(set(logs))), note))
                 lines.append("  " + question)
                 lines.extend("    %s" % text for _, text in choices)
             sys.exit("\n".join(lines))
@@ -132,13 +127,11 @@ def cmd_convert(a):
         options.answer(d.key, s, _ask(d, s))
 
     out_file, reports = conv.convert(card, options)
-    if a.pawprint_chest is not None:            # an answer given by hand that had no effect is said
-        for s, g in enumerate(slots):
-            given = a.pawprint_chest.get(s) if isinstance(a.pawprint_chest, dict) else a.pawprint_chest
-            if given and g is not None and not g.is_new() and options.for_slot(s).floor50 == "rewards" \
-                    and conv._collected(g, conv.SAVAGE_FLOOR_50) and conv._collected(g, conv.PAWPRINT_CHEST):
-                reports[s].warnings.append("--pawprint-chest %s was not used: floor 50 by rewards already "
-                                           "settles that chest (opened, Treasure Chart 46 salvaged)" % given)
+    for (key, s), why in conv.settled_answers(slots, options).items():
+        given = getattr(a, key)                 # an answer typed by hand that had no effect is said
+        given = given.get(s) if isinstance(given, dict) else given
+        if given:
+            reports[s].warnings.append("%s %s was not used: %s" % (_flag(key), given, why))
     data = out_file.serialize()
     hd.HdFile.parse(data)                      # the output must pass the same checks as a real save
 
@@ -155,11 +148,15 @@ def cmd_convert(a):
         os.makedirs(backup)
         for name in existing:
             os.replace(os.path.join(a.output, name), os.path.join(backup, name))
-    with open(target, "wb") as f:
-        f.write(data)
-    for name, content in album.items():
-        with open(os.path.join(a.output, name), "wb") as f:
-            f.write(content)
+    try:
+        with open(target, "wb") as f:
+            f.write(data)
+        for name, content in album.items():
+            with open(os.path.join(a.output, name), "wb") as f:
+                f.write(content)
+    except OSError as e:
+        sys.exit("error: %s\nThe new save in %s is incomplete.%s" % (
+            e, a.output, " The save that was there is untouched in %s." % backup if backup else ""))
 
     print()
     print("%s (%s, %s) -> %s" % (a.input, card.game_code.decode(), card.source, target))
@@ -283,6 +280,9 @@ def main(argv=None):
     v.set_defaults(func=cmd_verify)
 
     a = ap.parse_args(argv)
+    for stream in (sys.stdout, sys.stderr):     # a name the terminal cannot show must not stop the report
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="backslashreplace")
     try:
         a.func(a)
     except (gc.GcError, hd.HdError, conv.ConversionError, OSError, OverflowError, ValueError) as e:
