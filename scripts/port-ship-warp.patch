@@ -1,0 +1,26 @@
+diff --git a/runtime/src/test_aids.cpp b/runtime/src/test_aids.cpp
+index 6fe4ffe..8bf7d6b 100644
+--- a/runtime/src/test_aids.cpp
++++ b/runtime/src/test_aids.cpp
+@@ -560,6 +560,21 @@ void before_execute_link(uint32_t proc) {
+             }
+         }
+     }
++    // WWHD_SHIP_WARP=step:x:z[,...] (local aid): moves the ship (play.mpPlayerPtr[2]) and Link with it, keeping heights
++    static size_t ship_warps_done = 0;
++    if (!interp::hold_pass() && origin_step()) {
++        if (const char* e = getenv("WWHD_SHIP_WARP")) {
++            for (size_t i = 0; i < ship_warps_done && e; i++) { e = strchr(e, ','); if (e) e++; }
++            unsigned long long step; float x,z;
++            if (e && sscanf(e,"%llu:%f:%f",&step,&x,&z)==3 && interp::logic_steps() >= origin_step()+step) {
++                uint32_t ship = ld32(GD(0x1046F0B0) + 0x5B3C);
++                LOG("[test] warp ship %08X from %.1f %.1f to %.1f %.1f",ship,ship?(float)ldf32(ship+0x314):0.f,ship?(float)ldf32(ship+0x31C):0.f,x,z);
++                for (uint32_t a : {ship, proc}) if (a) for (uint32_t off : {0x2ECu,0x300u,0x314u}) { stf32(a+off,x); stf32(a+off+8,z); }
++                stf32(GD(0x1046CD48),x);stf32(GD(0x1046CD50),z);
++                ship_warps_done++;
++            }
++        }
++    }
+     // WWHD_MEM_DUMP=path:addr:size: that memory before each full-pass execute of Link (same record format)
+     static FILE* md = nullptr;
+     static uint32_t md_a = 0, md_n = 0;

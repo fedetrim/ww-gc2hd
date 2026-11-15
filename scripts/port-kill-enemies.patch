@@ -1,0 +1,49 @@
+--- a/runtime/src/test_aids.cpp	2026-11-14 20:14:04
++++ b/runtime/src/test_aids.cpp	2026-11-15 08:22:11
+@@ -398,7 +398,7 @@
+     if (++n % 30 == 0) fflush(f);
+ }
+ bool dumping() {
+-    static const bool on = getenv("WWHD_ACTOR_DUMP") || getenv("WWHD_RNG_TRACE") || getenv("WWHD_MEM_DUMP") || getenv("WWHD_LINK_PRE") || getenv("WWHD_LINK_WARP");
++    static const bool on = getenv("WWHD_ACTOR_DUMP") || getenv("WWHD_RNG_TRACE") || getenv("WWHD_MEM_DUMP") || getenv("WWHD_LINK_PRE") || getenv("WWHD_LINK_WARP") || getenv("WWHD_KILL_ENEMIES");
+     return on;
+ }
+ // WWHD_PROC_DIGEST=path (comparisons of two builds, e.g. tools/decomp_build/compare.py): after
+@@ -538,6 +538,7 @@
+ void hook_0255BA9C(Cpu* c) { light_trace(4, c); f_0255BA9C_orig(c); }
+ }
+ 
++extern "C" void f_025DF944(Cpu*);  // fpcM_Delete
+ namespace test_aids {
+ // WWHD_LINK_PRE=path: Link's process (0x8284 bytes) right before each full-pass execute (same record format)
+ uint64_t origin_step();
+@@ -572,6 +573,29 @@
+                 for (uint32_t a : {ship, proc}) if (a) for (uint32_t off : {0x2ECu,0x300u,0x314u}) { stf32(a+off,x); stf32(a+off+8,z); }
+                 stf32(GD(0x1046CD48),x);stf32(GD(0x1046CD50),z);
+                 ship_warps_done++;
++            }
++        }
++    }
++    // WWHD_KILL_ENEMIES=step[,...] (local aid): at each step asks the game to delete (fpcM_Delete) every actor of the enemy group
++    static size_t kills_done = 0;
++    if (!interp::hold_pass() && origin_step()) {
++        if (const char* e = getenv("WWHD_KILL_ENEMIES")) {
++            for (size_t i = 0; i < kills_done && e; i++) { e = strchr(e, ','); if (e) e++; }
++            if (e && interp::logic_steps() >= origin_step() + strtoull(e, nullptr, 10)) {
++                int n = 0;
++                uint32_t node = ld32(GD(0x101F3328));
++                for (int count = 0; node >= mem::kMem2Start && node < mem::kMem2End && count < 2048; ++count) {
++                    uint32_t actor = ld32(node + 0xC);
++                    node = ld32(node + 8);
++                    if (actor < mem::kMem2Start || actor >= mem::kMem2End || ld8(actor + 0x2DA) != 2) continue;
++                    Cpu call = *threads::current();
++                    call.r[3] = actor;
++                    f_025DF944(&call);
++                    LOG("[test] kill enemy %08X (profile %04X) at %.0f %.0f %.0f", actor, ld16(actor + 8), (float)ldf32(actor+0x314), (float)ldf32(actor+0x318), (float)ldf32(actor+0x31C));
++                    n++;
++                }
++                LOG("[test] kill enemies: %d actors deleted", n);
++                kills_done++;
+             }
+         }
+     }

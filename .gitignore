@@ -1,0 +1,17 @@
+# Game data, third-party clones and local run output are never published.
+/research/
+/runs/
+/out/
+# Samples: the saves are published with their sources (samples/SOURCES.md). Not published: the original
+# archives they were unpacked from, logs and console metadata that came with them. scripts/fetch_samples.py
+# downloads everything again.
+/samples/**/*.zip
+/samples/**/*.7z
+/samples/**/*.rar
+/samples/**/*.gz
+/samples/**/*.log
+/samples/**/meta/
+__pycache__/
+*.pyc
+.DS_Store
+*.bak
