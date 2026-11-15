@@ -8,7 +8,9 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def sample_jobs(options, out):
     """Convert each USA sample card once and write, for every distinct used file on it, a cking.sav with
-    that file as Quest Log 1 (the test rig loads Quest Log 1). Returns [(name, label, path of the save)]."""
+    that file as Quest Log 1 (the test rig loads Quest Log 1). Returns [(name, label, path of the save)].
+    The album files are not written: the batches check that every save loads, not its pictures (those are
+    checked by the album runs under docs/verification/)."""
     import sys
     sys.path.insert(0, ROOT)
     from wwsave import convert as conv, gc

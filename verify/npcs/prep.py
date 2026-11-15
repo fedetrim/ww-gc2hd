@@ -38,6 +38,7 @@ src, slot, out, stage, room, point = pos[:6]
 slot = int(slot) - 1
 kw = dict(a.split("=") for a in pos[6:])
 mode = kw.pop("all", "steps")
+print("cases not named are answered by %s" % mode)
 card = gc.load(open(src, "rb").read())
 gslot = slot
 f, reports = conv.convert(card, conv.Options.all(mode, **kw))

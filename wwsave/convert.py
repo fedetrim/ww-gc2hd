@@ -441,6 +441,8 @@ def health(g):
         shard = bool(g.u("collect.triforce") >> (k - 1) & 1)
         if shard and not chart:
             bad.append("Triforce Shard %d without Triforce Chart %d, which leads to it" % (k, k))
+        if g.u("map.triforce_bits") >> (k - 1) & 1 and not chart:
+            bad.append("Triforce Chart %d was deciphered by Tingle but is not owned" % k)
         if chart != chest:
             bad.append("Triforce Chart %d is %s but the %s chest that holds it is %s" % (
                 k, "owned" if chart else "not owned", TRIFORCE_PLACES[k], "open" if chest else "closed"))
@@ -457,6 +459,9 @@ def health(g):
     deluxe = _item(g, layout.SLOT_CAMERA) == ITEM_DELUXE_PICTO_BOX or _get_bits(g, layout.SLOT_CAMERA) & 2
     if deluxe and g.event_reg(LENZO_REG) < 6:
         bad.append("the Deluxe Picto Box is held before Lenzo's third task is done")
+    if g.event_reg(LENZO_REG) >= 6 and _item(g, layout.SLOT_CAMERA) == NO_ITEM \
+            and not _get_bits(g, layout.SLOT_CAMERA):
+        bad.append("Lenzo's third task is done without a Picto Box")
     if g.event_reg(0xB907) >= 2 and not deluxe:
         bad.append("Anton and Linda are a couple (which needs a colour picture) without the Deluxe Picto Box")
     return bad
@@ -580,6 +585,7 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
                            "for both and never keeps them on an item button." % ", ".join(moved))
     # recollection records (inventory snapshots for the boss rematches): GameCube leaves an unused
     # record zeroed, HD fills it with the values of an empty inventory
+    menu_flag = 0
     for i in range(4):
         block = "status_c%d" % i
         off, size = layout.BLOCKS[block]
@@ -587,6 +593,8 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
             out.data[off:off + size] = hd.EMPTY_RECOLLECTION
         else:
             _hd_buttons(out, block + ".a_select_item", block + ".item%02d")
+            menu_flag |= out.data[layout.FIELDS[block + ".collect"][0] + 3] & 0x02
+            out.data[layout.FIELDS[block + ".collect"][0] + 3] &= ~0x02 & 0xFF    # as in the main block, below
 
     # --- 3.1 charts whose ids HD reuses --------------------------------------------------------
     for k, hd_chart in REUSED_CHARTS.items():
@@ -788,9 +796,9 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
 
     # --- flags HD sets under other conditions, or never (found in no real HD file) ---------------------
     off = layout.FIELDS["collect.collect"][0] + 3
-    if out.data[off] & 0x02:
-        rep.changes.append("A flag of the GameCube collection screen cleared (collect byte 3, bit 1): HD "
-                           "never sets it.")
+    if out.data[off] & 0x02 or menu_flag:
+        rep.changes.append("A flag of the GameCube collection screen cleared (collect byte 3, bit 1, also in "
+                           "the records kept for the boss rematches): HD never sets it.")
     out.data[off] &= ~0x02 & 0xFF       # set by the GameCube collection menu only (d_menu_collect.cpp:3744)
     tuner = [f for f in TUNER_FLAGS if out.event_bit(f)]
     for f in tuner:

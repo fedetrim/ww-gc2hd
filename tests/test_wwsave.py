@@ -234,8 +234,10 @@ class CommandLine(unittest.TestCase):
         save.set_u("status_a.max_life", 48)
         save.set_u("status_a.life", 48)
         save.set_u("status_a.rupee", 150)
-        save.set_u("memory13.tbox", 1 << 12)                # Savage Labyrinth floor-50 chest open
-        save.set_u("map.triforce_bits", 1 << 5)             # Triforce Chart 6 deciphered
+        save.set_u("memory13.tbox", 1 << 12 | 1 << 11)      # Savage Labyrinth floor-50 and floor-30 chests open
+        conv._set_map_bit(save, "map.get_map", 6, True)     # Triforce Chart 6 owned, deciphered, salvaged
+        save.set_u("map.triforce_bits", 1 << 5)
+        save.set_u("collect.triforce", 1 << 5)
         with tempfile.TemporaryDirectory() as tmp:
             gci, out = os.path.join(tmp, "card.gci"), os.path.join(tmp, "out")
             with open(gci, "wb") as f:
@@ -300,12 +302,13 @@ class CommandLine(unittest.TestCase):
             self.assertIn("--floor50 3=rewards was not used", r.stderr)
             r = self._run("convert", gci, "-o", out, "--force", "--floor50", "1=steps,1=rewards")
             self.assertNotEqual(r.returncode, 0)
-            # a card with a healthy file and one that is not: written, exit status 2, the file named
+            # a card with a healthy file and one that is not: written, exit status 3, the file named
             sick = hd.fresh_slot()
             sick.set_raw("info.player_name", b"Sick".ljust(17, b"\0"))
             sick.set_u("status_a.max_life", 0)
             well = hd.fresh_slot()
             well.set_raw("info.player_name", b"Well".ljust(17, b"\0"))
+            well.set_u("map.triforce_bits", 0)              # a GameCube file has none set from the start
             gci3 = os.path.join(tmp, "mixed.gci")
             with open(gci3, "wb") as f:
                 f.write(gc.build_gci(b"GZLE01", [well, sick, hd.fresh_slot()]))
@@ -317,6 +320,7 @@ class CommandLine(unittest.TestCase):
             paw = hd.fresh_slot()
             paw.set_raw("info.player_name", b"Paw".ljust(17, b"\0"))
             paw.set_u("memory13.tbox", 1 << 2)
+            paw.set_u("map.triforce_bits", 0)
             gci2 = os.path.join(tmp, "paw.gci")
             with open(gci2, "wb") as f:
                 f.write(gc.build_gci(b"GZLE01", [paw, hd.fresh_slot(), hd.fresh_slot()]))
@@ -538,6 +542,8 @@ class Conversion(unittest.TestCase):
             yield "item that is not what its flags say", lambda s: (s.set_u("item.slot12", 0x36),
                                                                     s.set_raw("get_item.slot12", b"\x03"))
             yield "Swift Sail by its ownership bit", lambda s: s.set_raw("get_item.slot01", b"\x03")
+            yield "deciphered chart not owned", lambda s: s.set_u("map.triforce_bits", 1 << 5)
+            yield "Lenzo done without a Picto Box", lambda s: s.set_event_reg(conv.LENZO_REG, 6)
             yield "less than three hearts of life", lambda s: s.set_u("status_a.life", 0)
         for what, edit in edits():
             card = self._card(edit)
@@ -590,10 +596,12 @@ class Conversion(unittest.TestCase):
     def test_rupees_are_one_balance(self):
         """A take-back is not cut short because the refund is listed after it."""
         def edit(s):
-            s.set_u("memory13.tbox", 1 << 2)                # Pawprint chest: Silver Rupee, 200
+            s.set_u("memory13.tbox", 1 << 2 | 1 << 11)      # Pawprint chest: Silver Rupee, 200
             s.set_u("status_a.rupee", 100)
             s.set_u("status_a.wallet_size", 1)
-            s.set_u("map.triforce_bits", 1 << 5)            # one chart deciphered: 398 back
+            conv._set_map_bit(s, "map.get_map", 6, True)    # Triforce Chart 6 owned and salvaged ...
+            s.set_u("collect.triforce", 1 << 5)
+            s.set_u("map.triforce_bits", 1 << 5)            # ... and deciphered: 398 back
         out, reports = conv.convert(self._card(edit), conv.Options(pawprint_chest="steps"))
         self.assertEqual(out.slots[0].u("status_a.rupee"), 100 - 200 + 398)
         self.assertTrue(any("(+198 in all): 100 -> 298." in c for c in reports[0].changes))

@@ -80,7 +80,7 @@ Flags that HD never sets, or sets under another condition. They are written as a
 | events 0x1708, 0x1A20, 0x1A08, 0x1A10, 0x2E08 | set through the Tingle Tuner (Knuckle found, Tuner message sent, Tuner states, trigger area) | no setter; 0 of 56 real Quest Logs. 0x1708 and 0x1A20 still select lines of Tingle; Knuckle appears from the five Tingle Statue chests | cleared |
 | event 0x1940 | set in every whirlpool (`d_a_ship.cpp:2825`) | set only with the bomb bag (`d_a_ship.cpp:3481`); selects a line of the King of Red Lions | cleared when no bombs are owned |
 | event 0x2B04 | the two Windfall gossips have told every hint; the last check is the Sail | the last check is the Swift Sail (`d_a_npc_people_event.cpp:233-253`); set in 9 real Quest Logs, all with the Swift Sail | cleared unless the converted file has the Swift Sail |
-| `collect.collect[3]` bit 1 | set by the collection menu (`d_menu_collect.cpp:3744`) | never set | cleared |
+| `collect.collect[3]` bit 1 | set by the collection menu (`d_menu_collect.cpp:3744`) | never set | cleared, also in the four boss-rematch records, which copy the field (set in 0 records of the real HD saves) [DATA] |
 | event 0x3940 | set the first time the Deku Tree is asked about the Koroks | set at the end of his explanation; then the sea chart shows the withered-tree icons | copied: who heard the explanation sees the icons |
 
 Left as they are: padding bytes that HD leaves uninitialised (`status_b._pad_16`, `return_place._unk_a/b`,
@@ -328,11 +328,12 @@ are converted. A file fails when:
 - an inventory slot holds an item without its ownership flag, or an item other than the one its flags
   stand for (HD rebuilds the slot from the flags on load, so the item would change);
 - for Triforce Chart 2, 4, 6, 7 or 8: the chart is owned and its chest is closed, the chest is open and the
-  chart is not owned, or the shard is held without the chart;
+  chart is not owned, the shard is held without the chart, or Tingle deciphered a chart that is not owned;
 - the Hero's Charm and Mrs. Marie's reward (event 0x1C04) disagree, or the Savage Labyrinth floor-50 chest
   is open in a file with only the three starting hearts;
 - the Ghost Ship is marked as cleared (register 0x8803 = 3) with its chest closed, or the reverse;
-- the Deluxe Picto Box is held before Lenzo's third task, or Anton and Linda are a couple without it.
+- the Deluxe Picto Box is held before Lenzo's third task, that task is done without any Picto Box, or Anton
+  and Linda are a couple without the Deluxe Picto Box.
 
 53 of the 477 used GameCube sample files fail (7 of the 53 USA ones): speedrun practice saves, which hold
 items without their ownership flags or a Triforce Chart whose chest was never opened; two files of one
