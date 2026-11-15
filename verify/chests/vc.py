@@ -114,6 +114,8 @@ def main():
         if a[i] == "--opt":
             k, v = a[i + 1].split("="); opts[k] = v; i += 2
         elif a[i] == "--gc":
+            # the card is rebuilt from its three files only: its picture blocks are not carried over
+            print("note: --gc rebuilds the card file without its Picto Box pictures")
             gcs.append(a[i + 1]); i += 2
         elif a[i] == "--hd":
             hds.append(a[i + 1]); i += 2

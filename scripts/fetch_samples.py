@@ -6,7 +6,9 @@ samples/checksums.sha256, and can fetch them again from the public places listed
 (GitHub repositories at pinned commits, archive.org, a few save sites, attachments of public GitHub
 issues), including the original archives, which the repository does not keep.
 
-    python3 scripts/fetch_samples.py            # download what is missing, then check
+    python3 scripts/fetch_samples.py            # download the sources whose saves are missing, then check
+    python3 scripts/fetch_samples.py --again    # download every source again (also what the repository
+                                                # leaves out: archives, save states, ...)
     python3 scripts/fetch_samples.py --check    # only compare samples/ with the expected checksums
     python3 scripts/fetch_samples.py --only gc/gc-saves.com --only gc/cryze
 
@@ -28,6 +30,7 @@ import zipfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SAMPLES = os.path.join(ROOT, "samples")
+FORCE = False
 sys.path.insert(0, ROOT)
 
 
@@ -69,9 +72,22 @@ def no_links(folder):
                 raise RuntimeError("archive holds a symbolic link (%s)" % name)
 
 
+def expected_under(folder):
+    """The files of samples/checksums.sha256 that belong to one source folder."""
+    prefix = folder.rstrip("/") + "/"
+    with open(os.path.join(SAMPLES, "checksums.sha256")) as f:
+        return [line.rstrip("\n").split("  ", 1)[1] for line in f
+                if line.rstrip("\n").split("  ", 1)[1].startswith(prefix)]
+
+
 def fetch(src):
     dest = os.path.join(SAMPLES, src["dest"])
     kind = src["kind"]
+    # What the repository already holds is not fetched again (a clone has the saves but none of the
+    # archives or markers); --again forces it.
+    wanted = expected_under(src["dest"])
+    if wanted and not FORCE and all(os.path.exists(os.path.join(SAMPLES, p)) for p in wanted):
+        return "present"
     if kind == "github":
         if os.path.exists(os.path.join(dest, "COMMIT.txt")):
             return "present"
@@ -184,7 +200,10 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--check", action="store_true", help="only compare samples/ with samples/checksums.sha256")
     ap.add_argument("--only", action="append", default=[], help="fetch only sources whose folder starts with this")
+    ap.add_argument("--again", action="store_true", help="download also the sources whose saves are already there")
     a = ap.parse_args()
+    global FORCE
+    FORCE = a.again
     if not a.check:
         with open(os.path.join(SAMPLES, "manifest.json")) as f:
             sources = json.load(f)

@@ -88,6 +88,8 @@ def cmd_convert(a):
     for value in a.name or []:
         log, sep, name = value.partition("=")
         if sep and log in ("1", "2", "3"):
+            if int(log) - 1 in names:
+                sys.exit("--name: Quest Log %s is named twice." % log)
             if int(log) - 1 not in used:
                 sys.exit("--name %s: Quest Log %s is not a used file on this card (used: %s)." % (
                     value, log, ", ".join(str(s + 1) for s in used)))
@@ -102,8 +104,8 @@ def cmd_convert(a):
     options = conv.Options(name=names or None, swift_sail=bool(a.swift_sail), hero_mode=bool(a.hero_mode))
     for key in conv.Options.CASES:
         value = getattr(a, key)
-        if isinstance(value, dict) and a.all:               # --all answers the Quest Logs not named
-            value = {**{s: a.all for s in range(3)}, **value}
+        if isinstance(value, dict):                         # a copy: answers given later are not "typed"
+            value = {**({s: a.all for s in range(3)} if a.all else {}), **value}
         setattr(options, key, value or a.all)
     # A case has no default: ask (terminal) or stop and name the options (script).
     def open_cases(opts):

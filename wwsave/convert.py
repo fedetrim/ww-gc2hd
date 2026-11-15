@@ -183,6 +183,12 @@ def _take_spoil(save, index, item):
     return note
 
 
+def _owned_item(save, slot):
+    """The item of a slot as HD will hold it after loading: HD puts the item back in a slot whose ownership
+    bit is set (hdcheck.load_fixups), so rules that depend on what is owned must look at it that way."""
+    return _item(hdcheck.load_fixups(save), slot)
+
+
 def _hearts(quarters):
     return "%d hearts%s" % (quarters // 4, " + %d/4" % (quarters % 4) if quarters % 4 else "")
 
@@ -397,8 +403,9 @@ def settled_answers(slots, options):
             out[("pawprint_chest", s)] = ("floor 50 by rewards already settles that chest (opened, Treasure "
                                           "Chart 46 salvaged)")
         if _lenzo_stuck(g) and not _couple_on_street(g):
-            out[("lenzo", s)] = ("the couple of the third picture no longer meets on the street in this file, "
-                                 "so only the translation by steps works and it was applied")
+            if options.for_slot(s).lenzo != "steps":        # an answer of steps is what was done
+                out[("lenzo", s)] = ("the couple of the third picture no longer meets on the street in this "
+                                     "file, so only the translation by steps works and it was applied")
     return out
 
 
@@ -707,7 +714,7 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
 
     # --- Tingle Tuner ---------------------------------------------------------------------------
     # Same event, slot and item number in both games: the item is HD's Tingle Bottle. Nothing to change.
-    if _item(out, layout.SLOT_TINGLE) == ITEM_TINGLE:
+    if _owned_item(out, layout.SLOT_TINGLE) == ITEM_TINGLE:
         rep.changes.append("The Tingle Tuner is now the Tingle Bottle: HD replaced the item (same event, same "
                            "inventory slot).")
 
@@ -758,7 +765,7 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
                            "file has them. Two of them changed Tingle's lines (Knuckle found with the Tuner, "
                            "a Tuner message sent); Knuckle appears in HD once the five Tingle Statues are "
                            "found." % ", ".join("0x%04X" % f for f in tuner))
-    if out.event_bit(WHIRLPOOL_HINT) and _item(out, layout.SLOT_BOMBS) == NO_ITEM:
+    if out.event_bit(WHIRLPOOL_HINT) and _owned_item(out, layout.SLOT_BOMBS) == NO_ITEM:
         out.set_event_bit(WHIRLPOOL_HINT, False)
         rep.changes.append("Flag 0x1940 cleared: it selects a line of the King of Red Lions after a whirlpool. "
                            "The GameCube sets it always, HD only when you own bombs, and you do not.")
@@ -834,6 +841,11 @@ def convert(card, options=None):
         out, extra, rep = convert_slot(g, s, options, card.game_code)
         if rep.used and pictures[s]:
             rep.pictures = len(pictures[s])
+        lost = g.u("item_record.picture_num") - len(pictures[s]) if rep.used else 0
+        if lost > 0:
+            rep.warnings.append("%d of the file's %d picture(s) could not be read from the card (damaged or "
+                                "missing picture data) and %s left out" % (
+                                    lost, g.u("item_record.picture_num"), "was" if lost == 1 else "were"))
         slots.append(out)
         extras.append(extra)
         reports.append(rep)

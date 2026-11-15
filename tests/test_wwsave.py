@@ -277,6 +277,8 @@ class CommandLine(unittest.TestCase):
             self.assertEqual(r.returncode, 0, r.stderr)
             back = hd.HdFile.parse(_read(os.path.join(out, "cking.sav")))
             self.assertEqual([back.name(0), back.name(1)], ["Tester", "Zed"])
+            r = self._run("convert", gci, "-o", out, "--force", "--all", "steps", "--name", "1=A", "--name", "1=B")
+            self.assertNotEqual(r.returncode, 0)            # one Quest Log named twice
             r = self._run("convert", gci, "-o", out, "--force", "--all", "steps", "--name", "3=Zed")
             self.assertNotEqual(r.returncode, 0)            # Quest Log 3 is not a used file
             self.assertIn("not a used file", r.stderr)
@@ -519,6 +521,22 @@ class Conversion(unittest.TestCase):
         card = self._card(lenzo)
         self.assertEqual(conv.decisions_for(card.slots()), [])
         self.assertIn(("lenzo", 0), conv.settled_answers(card.slots(), conv.Options(lenzo="rewards")))
+        self.assertEqual(conv.settled_answers(card.slots(), conv.Options(lenzo="steps")), {})
+
+        # a picture the file counts but the card cannot give is reported, not dropped in silence
+        def counted(s):
+            s.set_u("item_record.picture_num", 2)
+        raw = bytearray(gc.build_gci(b"GZLE01", [self._card(counted).slots()[0], hd.fresh_slot(), hd.fresh_slot()]))
+        raw[gc.DENTRY + 3 * gc.BLOCK + 10] = 0xFF           # first picture block of file 1: checksum now wrong
+        _, reports = conv.convert(gc.load(bytes(raw)), conv.Options())
+        self.assertEqual(reports[0].pictures, 1)
+        self.assertTrue(any("1 of the file's 2 picture(s) could not be read" in w for w in reports[0].warnings))
+
+        # bombs owned by their ownership bit only (HD puts the item back on load): flag 0x1940 stays
+        def bombs(s):
+            s.set_event_bit(conv.WHIRLPOOL_HINT)
+            s.set_raw("get_item.slot13", b"\x01")
+        self.assertTrue(conv.convert(self._card(bombs), conv.Options())[0].slots[0].event_bit(conv.WHIRLPOOL_HINT))
         self.assertEqual(conv.convert(card, conv.Options(lenzo="rewards"))[0].slots[0].u("item.slot08"), 0x26)
 
         # Hero's Charm held without Mrs. Marie's event, floor-50 chest open, floor 50 by rewards: the charm
