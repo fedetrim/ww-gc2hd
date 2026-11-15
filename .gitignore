@@ -11,6 +11,8 @@
 /samples/**/*.gz
 /samples/**/*.log
 /samples/**/meta/
+/samples/**/.fetched-*
+/samples/**/*.part
 # ... and what came with the saves but nothing here uses: files that failed validation, practice-ROM
 # files, save states of the native port and their thumbnails, saves modified by an exploit tool, HD
 # side files (play log, Miiverse), attachments that are not archives, tools of the source repositories.

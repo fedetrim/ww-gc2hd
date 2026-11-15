@@ -48,6 +48,19 @@ class Formats(unittest.TestCase):
         raw[gc.DENTRY + 2 * gc.BLOCK + 8 + 5] ^= 0xFF      # and in the second
         self.assertIsNone(gc.load(bytes(raw)).slots()[0])
 
+    def test_gc_file_2_is_restored_as_the_game_does(self):
+        """mDoMemCdRWm_Restore tests the second copy's file 3, not its file 2, before restoring file 2."""
+        save = hd.fresh_slot()
+        save.set_raw("info.player_name", b"Test".ljust(17, b"\0"))
+        raw = bytearray(gc.build_gci(b"GZLE01", [save, save, save]))
+        file2, file3 = 8 + gc.GAMEDATA + 5, 8 + 2 * gc.GAMEDATA + 5
+        raw[gc.DENTRY + gc.BLOCK + file2] ^= 0xFF          # file 2 damaged in the first copy
+        self.assertEqual(bytes(gc.load(bytes(raw)).slots()[1]), bytes(save))        # taken from the second
+        raw[gc.DENTRY + 2 * gc.BLOCK + file3] ^= 0xFF      # second copy: file 3 damaged, file 2 still good
+        slots = gc.load(bytes(raw)).slots()
+        self.assertIsNone(slots[1])                         # the game does not restore file 2 then
+        self.assertEqual(bytes(slots[2]), bytes(save))      # file 3 comes from the first copy
+
     def test_gc_containers(self):
         save = hd.fresh_slot()
         gci = gc.build_gci(b"GZLE01", [save, save, save])
@@ -219,7 +232,31 @@ class CommandLine(unittest.TestCase):
             # an existing file is not replaced without --force
             self.assertNotEqual(self._run("convert", gci, "-o", out, "--all", "steps").returncode, 0)
             self.assertEqual(self._run("convert", gci, "-o", out, "--all", "steps", "--force").returncode, 0)
-            self.assertTrue(os.path.exists(os.path.join(out, "cking.sav.bak")))
+            backups = [n for n in os.listdir(out) if n.startswith("backup-")]
+            self.assertEqual(len(backups), 1)
+            self.assertEqual(os.listdir(os.path.join(out, backups[0])), ["cking.sav"])
+            # --all answers the Quest Logs a per-Quest-Log value does not name
+            r = self._run("convert", gci, "-o", out, "--force", "--all", "steps", "--floor50", "1=rewards")
+            self.assertEqual(r.returncode, 0, r.stderr)
+            back = hd.HdFile.parse(_read(os.path.join(out, "cking.sav")))
+            self.assertEqual([back.slots[i].u("status_a.max_life") for i in (0, 1)], [48, 47])
+            # an album left in the folder by another save does not stay attached to the new Quest Logs,
+            # and a second --force does not destroy the first backup
+            with open(os.path.join(out, "cking_pic_order1.sav"), "wb") as f:
+                f.write(b"old album")
+            self.assertEqual(self._run("convert", gci, "-o", out, "--force", "--all", "steps").returncode, 0)
+            self.assertFalse(os.path.exists(os.path.join(out, "cking_pic_order1.sav")))
+            backups = sorted(n for n in os.listdir(out) if n.startswith("backup-"))
+            self.assertEqual(len(backups), 3)
+            self.assertTrue(any(os.path.exists(os.path.join(out, b, "cking_pic_order1.sav")) for b in backups))
+            # a name goes to one Quest Log; with two used files a bare name is refused
+            r = self._run("convert", gci, "-o", out, "--force", "--all", "steps", "--name", "Zed")
+            self.assertNotEqual(r.returncode, 0)
+            self.assertIn("--name 1=Zed", r.stderr)
+            r = self._run("convert", gci, "-o", out, "--force", "--all", "steps", "--name", "2=Zed")
+            self.assertEqual(r.returncode, 0, r.stderr)
+            back = hd.HdFile.parse(_read(os.path.join(out, "cking.sav")))
+            self.assertEqual([back.name(0), back.name(1)], ["Tester", "Zed"])
 
 
 class Conversion(unittest.TestCase):
@@ -301,11 +338,11 @@ class Conversion(unittest.TestCase):
         self.assertEqual(h.raw("map.complete_map")[3], 0)
         self.assertEqual(h.u("map.triforce_bits"), 0xEB)
         self.assertEqual(h.u("status_a.rupee"), min(500, g_rupees + 3 * 398))   # fee of charts 2, 4, 7 back
-        self.assertEqual((h.u("memory12.tbox"), h.u("memory10.tbox")), (1 << 17, 1 << 23 | 1 << 22))
+        self.assertEqual((h.u("memory12.tbox"), h.u("memory10.tbox")), (1 << 17, 1 << 23))   # HD's one chest
         # by rewards: chart 2 dropped and its chest closed; chart 4 by steps
         h = conv.convert(card, conv.Options(triforce_chart_2="rewards", triforce_chart_4="steps"))[0].slots[0]
         self.assertEqual(h.u("collect.triforce"), 0b01001000)
-        self.assertEqual((h.u("memory12.tbox"), h.u("memory10.tbox")), (0, 1 << 23 | 1 << 22))
+        self.assertEqual((h.u("memory12.tbox"), h.u("memory10.tbox")), (0, 1 << 23))
         h = conv.convert(card, conv.Options.all("rewards"))[0].slots[0]
         self.assertEqual((h.u("memory12.tbox"), h.u("memory10.tbox"), h.u("collect.triforce")), (0, 0, 1 << 6))
         self.assertEqual(h.raw("map.get_map")[3], 0b00000001)
@@ -386,6 +423,15 @@ class Conversion(unittest.TestCase):
             self.assertEqual((st["life"], st["charm"], st["f50"], st["marie"]), (life, charm, f50, marie), (a, b))
             self.assertEqual((st["charts"][46], st["charts"][45]),
                              ("xxx" if a == "rewards" else "---", "x--" if b == "steps" else "---"), (a, b))
+
+    def test_floor50_by_steps_on_a_file_without_hearts(self):
+        def edit(s):
+            s.set_u("memory13.tbox", 1 << 12)
+            s.set_u("status_a.max_life", 0)
+            s.set_u("status_a.life", 0)
+        out, reports = conv.convert(self._card(edit), conv.Options(floor50="steps"))
+        self.assertEqual(out.slots[0].u("status_a.max_life"), 0)
+        self.assertEqual(len(reports[0].warnings), 1)
 
     def test_pawprint_chest(self):
         card = self._swapped(paw=True)

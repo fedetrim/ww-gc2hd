@@ -1,6 +1,7 @@
 """ww-gc2hd: convert a GameCube Wind Waker save into a Wind Waker HD (Wii U) save."""
 import argparse
 import textwrap
+import time
 import os
 import sys
 
@@ -66,10 +67,23 @@ def cmd_convert(a):
     if not any(s is not None and not s.is_new() for s in slots):
         sys.exit("%s holds no used save file." % a.input)
 
-    options = conv.Options(name=a.name,
-                           swift_sail=bool(a.swift_sail), hero_mode=bool(a.hero_mode))
+    used = [s for s, g in enumerate(slots) if g is not None and not g.is_new()]
+    names = {}
+    for value in a.name or []:
+        log, sep, name = value.partition("=")
+        if sep and log in ("1", "2", "3"):
+            names[int(log) - 1] = name
+        elif len(used) == 1:
+            names[used[0]] = value
+        else:
+            sys.exit("--name %s: this card has %d used files. Say which Quest Log gets the name, for example "
+                     "--name %d=%s (the option can be repeated)." % (value, len(used), used[0] + 1, value))
+    options = conv.Options(name=names or None, swift_sail=bool(a.swift_sail), hero_mode=bool(a.hero_mode))
     for key in conv.Options.CASES:
-        setattr(options, key, getattr(a, key) or a.all)
+        value = getattr(a, key)
+        if isinstance(value, dict) and a.all:               # --all answers the Quest Logs not named
+            value = {**{s: a.all for s in range(3)}, **value}
+        setattr(options, key, value or a.all)
     # A case has no default: ask (terminal) or stop and name the options (script).
     while True:
         open_cases = [(d, s) for d in conv.decisions_for(slots, options) for s in d.slots
@@ -94,16 +108,32 @@ def cmd_convert(a):
     data = out_file.serialize()
     hd.HdFile.parse(data)                      # the output must pass the same checks as a real save
 
+    album = {} if a.no_pictures else conv.convert_pictures(card)       # everything is built before writing
+
+    # A save is cking.sav plus its album files. One already in the folder is never mixed with the new one
+    # and never lost: with --force all of it is moved to a backup folder first.
     target = os.path.join(a.output, "cking.sav")
-    if os.path.exists(target) and not a.force:
-        sys.exit("%s already exists. Use --force to replace it (the old file is kept as cking.sav.bak)."
-                 % target)
+    existing = []
+    if os.path.isdir(a.output):
+        existing = sorted(n for n in os.listdir(a.output)
+                          if n == "cking.sav" or (n.startswith("cking_pic") and n.endswith(".sav")))
+    if existing and not a.force:
+        sys.exit("%s already holds a save (%s). Use --force to replace it: the files there are first moved to "
+                 "a backup folder inside it." % (a.output, ", ".join(existing[:3]) +
+                                                 (" and %d more" % (len(existing) - 3) if len(existing) > 3 else "")))
     os.makedirs(a.output, exist_ok=True)
-    if os.path.exists(target):
-        os.replace(target, target + ".bak")
+    backup = None
+    if existing:
+        stamp, n = time.strftime("backup-%Y%m%d-%H%M%S"), 0
+        backup = os.path.join(a.output, stamp)
+        while os.path.exists(backup):
+            n += 1
+            backup = os.path.join(a.output, "%s-%d" % (stamp, n))
+        os.makedirs(backup)
+        for name in existing:
+            os.replace(os.path.join(a.output, name), os.path.join(backup, name))
     with open(target, "wb") as f:
         f.write(data)
-    album = {} if a.no_pictures else conv.convert_pictures(card)
     for name, content in album.items():
         with open(os.path.join(a.output, name), "wb") as f:
             f.write(content)
@@ -136,7 +166,10 @@ def cmd_convert(a):
     print()
     print("Copy %s into the game's save folder (Cemu, USA: %s)." % (
         "cking.sav and the cking_pic* files" if album else "cking.sav", os.path.dirname(CEMU_HINT)))
-    print("It replaces all three Quest Logs, so back up the existing save folder first.")
+    print("It replaces all three Quest Logs and their albums: back up the game's save folder first, and remove "
+          "its cking_pic* files before copying.")
+    if backup:
+        print("The save that was in %s is in %s." % (a.output, backup))
 
 
 def cmd_info(a):
@@ -163,7 +196,7 @@ def cmd_info(a):
         pictures = card.pictures()
         for s, save in enumerate(card.slots()):
             if save is None:
-                print("File %d: damaged (bad checksum in both copies)" % (s + 1))
+                print("File %d: damaged (the game cannot read it: bad checksum)" % (s + 1))
             elif save.is_new():
                 print("File %d: empty" % (s + 1))
             else:
@@ -209,8 +242,11 @@ def main(argv=None):
     c.add_argument("--no-hero-mode", dest="hero_mode", action="store_false")
     c.add_argument("--no-pictures", action="store_true",
                    help="do not write the Picto Box album files (cking_pic*.sav)")
-    c.add_argument("--name", help="player name for the HD save (max 8 characters; default: the GameCube name)")
-    c.add_argument("--force", action="store_true", help="replace an existing cking.sav (kept as .bak)")
+    c.add_argument("--name", action="append", metavar="NAME or N=NAME",
+                   help="player name for the HD save (max 8 characters; default: the GameCube name). With more "
+                        "than one used file, name a Quest Log: --name 2=Zelda (repeatable)")
+    c.add_argument("--force", action="store_true",
+                   help="replace a save already in the output folder (it is moved to a backup folder there)")
     c.add_argument("--allow-region", action="store_true", help="also accept Japanese / European saves (unverified)")
     c.add_argument("--quiet", action="store_true", help="do not print the save summary")
     c.set_defaults(func=cmd_convert)
@@ -226,7 +262,7 @@ def main(argv=None):
     a = ap.parse_args(argv)
     try:
         a.func(a)
-    except (gc.GcError, hd.HdError, conv.ConversionError, OSError) as e:
+    except (gc.GcError, hd.HdError, conv.ConversionError, OSError, OverflowError, ValueError) as e:
         sys.exit("error: %s" % e)
 
 

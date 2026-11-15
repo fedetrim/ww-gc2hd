@@ -130,7 +130,8 @@ Conversion:
 - If chart k is owned and shard k is not, the save is in a state HD does not have. **Option
   `--triforce-chart-k`** (no default, see 3.2): `steps` gives shard k, as HD's chest would have; `rewards`
   drops the chart and closes the chest again, so it gives the shard when opened in HD.
-- A GameCube Ghost Ship chest opened in one of the two copies HD lacks (flags 21, 22) also sets flag 23.
+- A GameCube Ghost Ship chest opened in one of the two copies HD lacks (flags 21, 22) is written as HD's
+  one chest: flag 23 set, flags 21 and 22 cleared.
 
 ### 3.2 Changed rewards [DISC], flags [DISC][AP][DATA][CODE]
 
@@ -302,7 +303,11 @@ three charted from the start (680 sector pairs, no exception).
 - A GameCube file without a player name is unused; it becomes a fresh HD Quest Log
   (`dSv_info_c::initdata_to_card` 025BAC50; equal to the 65 empty Quest Logs of the real HD files, apart from
   bytes the game leaves uninitialised).
-- A file whose two copies both fail their checksum is reported and written as an empty Quest Log.
+- The card file holds two copies of the three files. The converter reads them as the game does
+  (`mDoMemCdRWm_Restore`, `m_Do_MemCardRWmng.cpp:135-146`): the first copy, or the second when the first
+  fails its checksum. For file 2 the game tests the second copy's file 3 before restoring, so a good file 2
+  in the second copy is not used when that copy's file 3 is damaged. A file the game cannot read is
+  reported and written as an empty Quest Log.
 
 ## 6. Known gaps
 - Stage data of both games was compared in full (3.2): chests, actors and player spawn points

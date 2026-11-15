@@ -85,7 +85,7 @@ class Options:
     lenzo: str = None                   # third picture: Joy Pendant / Deluxe Picto Box
     swift_sail: bool = False            # upgrade an owned Sail to the HD Swift Sail
     hero_mode: bool = False             # HD Hero Mode
-    name: str = None                    # player name override (max 8 characters)
+    name: str = None                    # player name override (max 8 characters), or {file index: name}
 
     CASES = ("triforce_chart_2", "triforce_chart_4", "triforce_chart_6", "triforce_chart_7",
              "triforce_chart_8", "horseshoe_chest", "star_belt_chest", "floor50", "pawprint_chest", "marie",
@@ -94,7 +94,7 @@ class Options:
     def for_slot(self, slot):
         """The options of one file: a case may hold {file index: mode} instead of one mode for all."""
         import dataclasses
-        return dataclasses.replace(self, **{k: getattr(self, k).get(slot) for k in self.CASES
+        return dataclasses.replace(self, **{k: getattr(self, k).get(slot) for k in self.CASES + ("name",)
                                             if isinstance(getattr(self, k), dict)})
 
     def answer(self, key, slot, mode):
@@ -363,6 +363,9 @@ def _lenzo_stuck(g):
 def convert_slot(g, slot, options, game_code=b"GZLE01"):
     """One GameCube file -> (HD save block, HD-only records, SlotReport)."""
     options = options.for_slot(slot)
+    for d in decisions_for([g], options):
+        if getattr(options, d.key) not in MODES:
+            raise ConversionError("no choice made for '%s' in file %d (steps or rewards)" % (d.key, slot + 1))
     rep = SlotReport(slot, used=not g.is_new())
     out = g.copy()
     extra = hd.default_extra()
@@ -437,6 +440,8 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
         record, bits = TRIFORCE_CHESTS[k]
         if any(_collected(g, ("tbox", record, b)) for b in bits):
             _set_tbox(out, record, bits[0], True)           # the Ghost Ship copy HD keeps
+            for b in bits[1:]:
+                _set_tbox(out, record, b, False)            # HD has no chest for the other two
         if not _map_bit(g, "map.get_map", k):
             continue
         for f in ("map.get_map", "map.open_map", "map.complete_map"):
@@ -518,7 +523,10 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
             if f50:
                 rep.changes.append("Savage Labyrinth floor-50 chest closed again (floor 50 by rewards): in HD it "
                                    "holds the Hero's Charm, which you do not have. Open it again to get it.")
-    if a == "steps":
+    if a == "steps" and out.u("status_a.max_life") == 0:
+        rep.warnings.append("the floor-50 Piece of Heart could not be removed: the file has no hearts at all "
+                            "(damaged or edited save)")
+    elif a == "steps":
         max_life = out.u("status_a.max_life") - 1
         out.set_u("status_a.max_life", max_life)
         out.set_u("status_a.life", min(out.u("status_a.life"), max_life // 4 * 4))
@@ -562,7 +570,11 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
                                    taken, taken, "" if taken == 200 else " You held fewer than 200."))
     # Tingle's fee for deciphering a Triforce Chart that HD does not have: HD never charges it.
     paid = [k for k in REUSED_CHARTS if g.u("map.triforce_bits") >> (k - 1) & 1]
-    if paid:
+    if paid and out.u("status_a.rupee") >= HD_WALLET[min(out.u("status_a.wallet_size"), 2)]:
+        rep.warnings.append("the %d rupees paid to Tingle for deciphering Triforce Chart(s) %s could not be "
+                            "given back: the wallet is full" % (
+                                DECIPHER_FEE * len(paid), ", ".join(str(k) for k in paid)))
+    elif paid:
         room = HD_WALLET[min(out.u("status_a.wallet_size"), 2)] - out.u("status_a.rupee")
         back = max(0, min(DECIPHER_FEE * len(paid), room))
         out.set_u("status_a.rupee", out.u("status_a.rupee") + back)
@@ -682,8 +694,8 @@ def convert(card, options=None):
     for s, g in enumerate(card.slots()):
         if g is None:
             rep = SlotReport(s, used=False)
-            rep.warnings.append("both copies of this file fail their checksum on the memory card; "
-                                "written as an empty Quest Log")
+            rep.warnings.append("the game cannot read this file (bad checksum on the memory card, and not "
+                                "restorable from the second copy); written as an empty Quest Log")
             slots.append(hd.fresh_slot())
             extras.append(hd.default_extra())
             reports.append(rep)

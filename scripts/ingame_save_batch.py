@@ -31,17 +31,22 @@ for path in sorted(glob.glob(os.path.join(ROOT, "samples/gc/**/*.gci"), recursiv
     if "Hacked_File" in path:
         continue
     card = gc.load(open(path, "rb").read())
-    slots = card.slots()
-    if card.game_code != b"GZLE01" or slots[0] is None or slots[0].is_new():
+    if card.game_code != b"GZLE01":
         continue
-    key = hashlib.md5(bytes(slots[0])).hexdigest()
-    if key in seen:
-        continue
-    seen.add(key)
-    name = "%02d" % len(jobs)
-    sav = os.path.join(out, name + ".sav")
-    open(sav, "wb").write(conv.convert(card, OPTIONS)[0].serialize())
-    jobs.append((name, path, sav))
+    for slot, g in enumerate(card.slots()):                # every used file, each loaded as Quest Log 1
+        if g is None or g.is_new():
+            continue
+        key = hashlib.md5(bytes(g)).hexdigest()
+        if key in seen:
+            continue
+        seen.add(key)
+        name = "%02d" % len(jobs)
+        converted = conv.convert(card, OPTIONS)[0]
+        converted.slots[0], converted.slots[slot] = converted.slots[slot], converted.slots[0]
+        converted.extras[0], converted.extras[slot] = converted.extras[slot], converted.extras[0]
+        sav = os.path.join(out, name + ".sav")
+        open(sav, "wb").write(converted.serialize())
+        jobs.append((name, "%s file %d" % (os.path.relpath(path, ROOT), slot + 1), sav))
 
 
 def run(job):
@@ -70,7 +75,7 @@ def run(job):
 
 with concurrent.futures.ThreadPoolExecutor(workers) as ex, open(os.path.join(out, "summary.txt"), "w") as log:
     for name, path, verdict, lines in ex.map(run, jobs):
-        text = "%s %s\n    %s\n    %s\n" % (name, os.path.relpath(path, ROOT), " | ".join(l.strip() for l in lines), verdict)
+        text = "%s %s\n    %s\n    %s\n" % (name, path, " | ".join(l.strip() for l in lines), verdict)
         log.write(text)
         log.flush()
         print(text, end="", flush=True)

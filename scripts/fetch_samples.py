@@ -88,17 +88,26 @@ def fetch(src):
             f.write(src["commit"] + "\n")
         return "downloaded"
     target = os.path.join(dest, src.get("archive_dir", ""), src["name"])
-    extracted = os.path.join(dest, src.get("extracted", "extracted"))
-    done = extracted if kind == "archive" and src.get("keep_archive", True) is False else target
-    if os.path.exists(done) and (kind == "file" or os.path.isdir(extracted)):
+    extracted = os.path.normpath(os.path.join(dest, src.get("extracted", "extracted")))
+    marker = os.path.join(dest, ".fetched-" + src["name"])      # written last: a failed fetch is retried
+    if os.path.exists(marker) or (kind == "file" and os.path.exists(target)):
         return "present"
     os.makedirs(os.path.dirname(target), exist_ok=True)
-    with open(target, "wb") as f:
-        f.write(download(src["url"]))
-    if kind == "archive":
-        unpack(target, extracted, src.get("members"))
-        if src.get("keep_archive", True) is False:
-            os.remove(target)
+    part = target + ".part"
+    try:
+        with open(part, "wb") as f:
+            f.write(download(src["url"]))
+        if kind == "archive":
+            with tempfile.TemporaryDirectory(dir=dest) as tmp:
+                unpack(part, tmp, src.get("members"))
+                shutil.copytree(tmp, extracted, dirs_exist_ok=True)
+        if kind == "archive" and src.get("keep_archive", True) is False:
+            os.remove(part)
+        else:
+            os.replace(part, target)
+    finally:
+        if os.path.exists(part):
+            os.remove(part)
     if src.get("raw_card"):                     # also cut the game's file out of the raw card image
         from wwsave import gc
         with open(target, "rb") as f:
@@ -107,32 +116,42 @@ def fetch(src):
         os.makedirs(out, exist_ok=True)
         with open(os.path.join(out, "01-GZLE-gczelda.gci"), "wb") as f:
             f.write(card.dentry + card.blocks)
+    if kind == "archive":
+        with open(marker, "w") as f:
+            f.write(src["url"] + "\n")
     return "downloaded"
 
 
+def _digest(path):
+    with open(path, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
+
 def check():
+    """Every expected file must be at its path with its content. Files that are elsewhere, differ, or are
+    save files nobody expects are listed."""
     expected = {}
     with open(os.path.join(SAMPLES, "checksums.sha256")) as f:
         for line in f:
             digest, path = line.rstrip("\n").split("  ", 1)
             expected[path] = digest
-    have = set()
-    for folder, _, files in os.walk(SAMPLES):
-        for name in files:
-            if name.endswith((".gci", ".raw", ".sav")):
-                with open(os.path.join(folder, name), "rb") as f:
-                    have.add(hashlib.sha256(f.read()).hexdigest())
-    same_path = sum(1 for path, digest in expected.items()
-                    if os.path.exists(os.path.join(SAMPLES, path)) and digest in have)
-    by_content = sum(1 for digest in expected.values() if digest in have)
-    print("expected files: %d; present with the same content: %d (%d at the same path)" % (
-        len(expected), by_content, same_path))
-    missing = sorted(path for path, digest in expected.items() if digest not in have)
-    for path in missing[:20]:
-        print("  missing: %s" % path)
-    if len(missing) > 20:
-        print("  ... and %d more" % (len(missing) - 20))
-    return not missing
+    ok, wrong, missing = 0, [], []
+    for path, digest in expected.items():
+        full = os.path.join(SAMPLES, path)
+        if not os.path.exists(full):
+            missing.append(path)
+        elif _digest(full) != digest:
+            wrong.append(path)
+        else:
+            ok += 1
+    print("expected files: %d; present with the expected content: %d; different content: %d; missing: %d" % (
+        len(expected), ok, len(wrong), len(missing)))
+    for label, paths in (("different", wrong), ("missing", missing)):
+        for path in paths[:20]:
+            print("  %s: %s" % (label, path))
+        if len(paths) > 20:
+            print("  ... and %d more" % (len(paths) - 20))
+    return not wrong and not missing
 
 
 def main():

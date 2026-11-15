@@ -6,6 +6,9 @@ scenario runner: the game boots hidden and muted, goes from the title screen int
 END seconds and dumps its in-memory save block (dSv_info_c).
 
 usage: ingame_test.py EXE GAME_DIR CKING.SAV OUT_DIR [END_SECONDS]
+
+Exit code: 0 the game holds every field as in the file; 2 it reached the end but some fields differ (they are
+printed; expected when the scenario plays something); 1 the game did not reach the end of the scenario.
 """
 import os
 import shutil
@@ -70,7 +73,7 @@ def main():
     for line in log.splitlines():
         if any(k in line.lower() for k in ("halt", "crash", "assert", "fatal", "[save]")):
             print("   log:", line[:200])
-    return 0
+    return 2 if diffs else 0
 
 
 if __name__ == "__main__":

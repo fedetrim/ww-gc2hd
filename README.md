@@ -50,10 +50,13 @@ Not done here either: a run on a real Wii U.
 
 Input: `.gci`, `.gcs`, `.sav`, or a raw memory card image (Dolphin `MemoryCardA.USA.raw`, a card dump).
 All three files of the card are converted to Quest Logs 1-3. The input is never modified, and an existing
-`cking.sav` is only replaced with `--force` (the old one is kept as `cking.sav.bak`).
+save in the output folder is only replaced with `--force`, which first moves it (`cking.sav` and its
+`cking_pic*` album files) to a `backup-<date>` folder there.
 
 Install the result as `mlc01/usr/save/00050000/10143500/user/80000001/cking.sav` (Cemu) or with a save
-manager such as SaveMii on a console. It replaces all three Quest Logs, so back up the existing file first.
+manager such as SaveMii on a console, together with the `cking_pic*` files written next to it. It replaces
+all three Quest Logs: back up the game's save folder first and remove its old `cking_pic*` files, which
+are the albums of the Quest Logs being replaced.
 
 ## Choices
 

@@ -80,18 +80,19 @@ class GcCardFile:
         return out
 
     def slots(self):
-        """The three save files as the game's own loader (mDoMemCdRWm_Restore) picks them:
-        the first copy, or the second copy when the first fails its checksum. None if both fail."""
-        status = self.copy_status()
+        """The three save files as the game's own loader picks them (mDoMemCdRWm_Restore,
+        m_Do_MemCardRWmng.cpp:135-146): the first copy, or the second copy when the first fails its checksum.
+        None when the game cannot read the file. For file 2 the game tests the second copy's file 3 instead
+        of its file 2 before restoring (as written in the game), so a good file 2 in the second copy is not
+        used when that copy's file 3 is damaged."""
+        (_, a), (_, b) = self.copy_status()
+        use_second = [not a[0] and b[0], not a[1] and b[2], not a[2] and b[2]]
         out = []
         for s in range(3):
-            chosen = None
-            for k in (0, 1):
-                if status[k][1][s]:
-                    off = 8 + s * GAMEDATA
-                    chosen = Save(self._copy(k + 1)[off:off + SAVE_SIZE])
-                    break
-            out.append(chosen)
+            k = 1 if use_second[s] else 0
+            ok = (b if k else a)[s]
+            off = 8 + s * GAMEDATA
+            out.append(Save(self._copy(k + 1)[off:off + SAVE_SIZE]) if ok else None)
         return out
 
     def save_count(self):
