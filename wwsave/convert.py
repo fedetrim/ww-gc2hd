@@ -846,7 +846,6 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     # --- 2.2 what HD rewrites by itself when it loads a Quest Log -----------------------------------
     # Applied here so that the written file is exactly what the game will hold after loading it.
     settled = hdcheck.load_fixups(out)
-    _hd_buttons(settled, "status_a.select_item", "item.slot%02d")     # the fixups may have restored the Sail
     for name in hdcheck.changed_fields(out, settled):
         rep.changes.append("%s: %s -> %s. HD recomputes this from the ownership flags every time it loads a "
                            "file; it is written as HD will hold it." % (
@@ -862,7 +861,7 @@ def convert(card, options=None):
     pictures = card.pictures()
     for s, g in enumerate(card.slots()):
         if g is None:
-            rep = SlotReport(s, used=False)
+            rep = SlotReport(s, used=False, unhealthy=["the game cannot read this file"])
             rep.warnings.append("the game cannot read this file (bad checksum on the memory card, and not "
                                 "restorable from the second copy); written as an empty Quest Log")
             slots.append(hd.fresh_slot())

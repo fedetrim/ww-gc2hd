@@ -203,6 +203,9 @@ def check():
         # Not an error: a full download brings files the repository leaves out (.gitignore). But the tests
         # and the statistics read every save under samples/, so these take part in them.
         print("save files not in the list: %d (for example %s)" % (len(extra), sorted(extra)[0]))
+    if wrong:
+        print("A file with different content stays as it is: the tests and the statistics would read it. "
+              "Restore it with `git checkout -- samples/`.")
     return not wrong and not missing
 
 

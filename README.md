@@ -49,7 +49,8 @@ Not done here either: a run on a real Wii U.
 ```
 
 Only files that normal play can have written are converted. A file that was edited, made with glitches or
-damaged (for example a Triforce Chart whose chest is still closed) is left out: its Quest Log is written
+damaged (for example a Triforce Chart whose chest is still closed), or that the game itself cannot read,
+is left out: its Quest Log is written
 empty, the report says what is wrong with it, and `convert` ends with exit status 3 instead of 0. The tool
 does not try to repair one
 (`docs/DIFFERENCES.md`, section 5b).

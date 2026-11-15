@@ -70,6 +70,9 @@ if "time" in flags:
     s.set_raw("status_b.time", struct.pack(">f", flags["time"] * 15.0))
 os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
 open(out, "wb").write(f.serialize())
+for name in os.listdir(os.path.dirname(os.path.abspath(out))):     # no album of an earlier run
+    if name.startswith("cking_pic") and name.endswith(".sav"):
+        os.remove(os.path.join(os.path.dirname(os.path.abspath(out)), name))
 if flags.get("album"):      # the converter's own album files for this file, as Quest Log 1
     import re
     for name, data in conv.convert_pictures(card).items():

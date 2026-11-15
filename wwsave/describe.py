@@ -58,8 +58,8 @@ def summarize(save, name=None, hd=False):
         "wallet": (WALLET_HD if hd else WALLET_GC)[min(s.u("status_a.wallet_size"), 2)],
         "magic": "%d/%d" % (s.u("status_a.magic"), s.u("status_a.max_magic")),
         "items": [item_name(b) for b in s.block("item") if b != 0xFF],
-        "buttons": [(SLOT_NAMES[b] if b < 21 else "bag item 0x%02X" % b) for b in s.raw("status_a.select_item")
-                    if b != 0xFF],
+        "buttons": [(SLOT_NAMES[b] if b < 21 else "bag item 0x%02X" % b) for b in s.raw("status_a.select_item")[:3]
+                    if b != 0xFF],      # X, Y, Z or R; HD keeps its fixed buttons in the last two
         "equipment": [item_name(b) for b in s.raw("status_a.select_equip") if b != 0xFF],
         "sword": ["none", "Hero's Sword", "Master Sword", "Master Sword (half)", "Master Sword (full)"][
             4 if sword & 8 else 3 if sword & 4 else 2 if sword & 2 else 1 if sword & 1 else 0],
