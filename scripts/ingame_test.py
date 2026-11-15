@@ -44,7 +44,11 @@ def main():
         if extra.startswith("cking_pic"):
             shutil.copy(os.path.join(os.path.dirname(sav), extra), os.path.join(save_dir, "user", extra))
     env = dict(os.environ, BOOT_TRIES="2")
-    r = subprocess.run(["/bin/zsh", RUNNER, exe, game, save_dir, out, end] + sys.argv[6:], env=env,
+    zsh = shutil.which("zsh")
+    if not zsh:
+        print("FAIL: the port's scenario runner (%s) is a zsh script and zsh was not found" % RUNNER)
+        return 1
+    r = subprocess.run([zsh, RUNNER, exe, game, save_dir, out, end] + sys.argv[6:], env=env,
                        capture_output=True, text=True)
     print(r.stdout.strip())
     log = ""

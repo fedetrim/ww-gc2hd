@@ -51,6 +51,7 @@ class GcCardFile:
         self.dentry = bytes(dentry)
         self.blocks = bytes(blocks)
         self.source = source
+        self._slots = None
         self.game_code = self.dentry[0:6]
         self.code = self.game_code.decode("ascii", "replace")       # for messages: the maker bytes are free
         if self.dentry[0:4] not in REGIONS:
@@ -86,6 +87,8 @@ class GcCardFile:
         None when the game cannot read the file. For file 2 the game tests the second copy's file 3 instead
         of its file 2 before restoring (as written in the game), so a good file 2 in the second copy is not
         used when that copy's file 3 is damaged."""
+        if self._slots is not None:
+            return list(self._slots)
         (_, a), (_, b) = self.copy_status()
         use_second = [not a[0] and b[0], not a[1] and b[2], not a[2] and b[2]]
         out = []
@@ -94,7 +97,8 @@ class GcCardFile:
             ok = (b if k else a)[s]
             off = 8 + s * GAMEDATA
             out.append(Save(self._copy(k + 1)[off:off + SAVE_SIZE]) if ok else None)
-        return out
+        self._slots = out                       # the checksums are not cheap; the files do not change
+        return list(out)
 
     def pictures(self):
         """Per file, the pictures the game itself would load (d_s_name.cpp:1218-1251): it visits the first

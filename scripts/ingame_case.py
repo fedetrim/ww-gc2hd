@@ -10,8 +10,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from wwsave import convert as conv, gc
 src, slot, out, stage, room, point = sys.argv[1:7]
 slot = int(slot) - 1
-kw = dict(a.split("=") for a in sys.argv[7:])
+kw = dict(a.split("=", 1) for a in sys.argv[7:] if "=" in a)
 mode = kw.pop("all", "steps")
+bad = [a for a in sys.argv[7:] if "=" not in a] + [
+    "%s=%s" % (k, v) for k, v in kw.items() if k not in conv.Options.CASES or v not in conv.MODES]
+if bad or mode not in conv.MODES:
+    sys.exit("not a case answer: %s\ncases: %s; answers: steps, rewards" % (
+        ", ".join(bad) or "all=" + mode, ", ".join(conv.Options.CASES)))
 card = gc.load(open(src, "rb").read())
 f, reports = conv.convert(card, conv.Options.all(mode, **kw))
 for c in reports[slot].changes: print("changed:", c)

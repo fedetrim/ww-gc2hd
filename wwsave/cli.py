@@ -110,11 +110,14 @@ def cmd_convert(a):
         return [(d, s) for d in conv.decisions_for(slots, opts) for s in d.slots
                 if getattr(opts.for_slot(s), d.key) is None]
 
-    while open_cases(options):
+    while True:
+        pending = open_cases(options)
+        if not pending:
+            break
         # questions need a terminal on both ends: with the output redirected they would go into the file
         if not (sys.stdin.isatty() and sys.stdout.isatty()):
             listed = {}
-            for d, s in open_cases(options):
+            for d, s in pending:
                 question, choices = d.text(s)
                 dep = d.depends.get(s)
                 note = ""
@@ -130,7 +133,7 @@ def cmd_convert(a):
                 lines.append("  " + question)
                 lines.extend("    %s" % text for _, text in choices)
             sys.exit("\n".join(lines))
-        d, s = open_cases(options)[0]
+        d, s = pending[0]
         options.answer(d.key, s, _ask(d, s))
 
     out_file, reports = conv.convert(card, options)

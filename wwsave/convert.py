@@ -5,7 +5,7 @@ Rules that are not a 1:1 translation are controlled by `Options`; `Decision` obj
 each choice that applies to a card.
 """
 import unicodedata
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from . import hd, hdcheck, layout
 from .layout import NO_ITEM
@@ -45,6 +45,7 @@ HINTS_DONE = 0x2B04         # gossips' hints all told; HD needs the Swift Sail f
 GHOST_SHIP_REG = 0x8803     # 3 once the Ghost Ship chest scene has ended: the ship never appears again
 LOOKOUT_CASES = {"horseshoe_chest": 4, "star_belt_chest": 6}      # option -> collect map of the HD chart
 MODES = ("steps", "rewards")
+MIN_MAX_LIFE = 12                       # three hearts, in quarters: what a new file has
 DECIPHER_FEE = 398                      # what Tingle charges per Triforce Chart, both games
 HD_WALLET = layout.WALLET_HD
 HD_BUTTONS = ("X", "Y", "R (the GameCube's Z)")     # the three item buttons, by index in select_item
@@ -91,8 +92,7 @@ class Options:
 
     def for_slot(self, slot):
         """The options of one file: a case may hold {file index: mode} instead of one mode for all."""
-        import dataclasses
-        return dataclasses.replace(self, **{k: getattr(self, k).get(slot) for k in self.CASES + ("name",)
+        return replace(self, **{k: getattr(self, k).get(slot) for k in self.CASES + ("name",)
                                             if isinstance(getattr(self, k), dict)})
 
     def answer(self, key, slot, mode):
@@ -255,12 +255,12 @@ def gc_name(save, game_code=b"GZLE01"):
 def hd_name_for(name):
     """HD stores up to 8 UTF-16 characters. Returns (name, note or None); the note says whenever the name
     written is not the name given."""
-    folded = unicodedata.normalize("NFKC", name)
-    if not folded.strip() or not all(0x20 <= ord(c) < 0x250 and not 0x7F <= ord(c) < 0xA0 for c in folded):
+    folded = unicodedata.normalize("NFKC", name).strip()
+    if not folded[:hd.NAME_CHARS].strip() or not all(0x20 <= ord(c) < 0x250 and not 0x7F <= ord(c) < 0xA0 for c in folded):
         return "Link", "name %r cannot be shown by the HD font; using 'Link'" % name
     if len(folded) > hd.NAME_CHARS:
-        return folded[:hd.NAME_CHARS], "name %r shortened to %r (HD allows 8 characters)" % (
-            name, folded[:hd.NAME_CHARS])
+        short = folded[:hd.NAME_CHARS].rstrip()
+        return short, "name %r shortened to %r (HD allows 8 characters)" % (name, short)
     if folded != name:
         return folded, "name %r written as %r (characters replaced by their plain form)" % (name, folded)
     return folded, None
@@ -285,7 +285,7 @@ def decisions_for(slots, options=None):
     for s, g in enumerate(slots):
         if g is None or g.is_new():
             continue
-        options = all_options.for_slot(s)
+        opts = all_options.for_slot(s)
         for k in REUSED_CHARTS:
             if _stuck_chart(g, k):
                 has_chart = _map_bit(g, "map.get_map", k)
@@ -326,7 +326,7 @@ def decisions_for(slots, options=None):
                      "The floor-50 chest stays open, because you hold the Hero's Charm that HD keeps in it"
                      if charm else
                      "The floor-50 chest is closed again; open it in HD to get the Hero's Charm"), s)
-        if _collected(g, PAWPRINT_CHEST) and not _pawprint_settled(g, options):
+        if _collected(g, PAWPRINT_CHEST) and not _pawprint_settled(g, opts):
             need("pawprint_chest",
                  "%s is open. In HD it holds Treasure Chart 46 (which leads to a Piece of Heart), and the "
                  "Silver Rupee is the sunken treasure of Treasure Chart 45 (Mrs. Marie's reward)." %
@@ -348,9 +348,9 @@ def decisions_for(slots, options=None):
         elif marie:
             if not f50:
                 lose = "and lose the Hero's Charm until you open the floor-50 chest in HD"
-            elif options.floor50 == "steps":
+            elif opts.floor50 == "steps":
                 lose = "and keep the Hero's Charm (the floor-50 chest stays open)"
-            elif options.floor50 == "rewards":
+            elif opts.floor50 == "rewards":
                 lose = "and the Hero's Charm goes back into the floor-50 chest, which is closed again"
             else:
                 lose = ("and keep the Hero's Charm only with --floor50 steps (with rewards it goes back into "
@@ -396,6 +396,9 @@ def settled_answers(slots, options):
         if _collected(g, PAWPRINT_CHEST) and _pawprint_settled(g, options.for_slot(s)):
             out[("pawprint_chest", s)] = ("floor 50 by rewards already settles that chest (opened, Treasure "
                                           "Chart 46 salvaged)")
+        if _lenzo_stuck(g) and not _couple_on_street(g):
+            out[("lenzo", s)] = ("the couple of the third picture no longer meets on the street in this file, "
+                                 "so only the translation by steps works and it was applied")
     return out
 
 
@@ -557,8 +560,7 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
         out.set_event_reg(GHOST_SHIP_REG, 3)
         rep.changes.append("The Ghost Ship is marked as cleared: its chest is open in the converted file, and "
                            "in HD the ship does not appear again after that.")
-    elif not ghost_chest and out.event_reg(GHOST_SHIP_REG) == 3 \
-            and getattr(options, "triforce_chart_4") != "rewards":
+    elif not ghost_chest and out.event_reg(GHOST_SHIP_REG) == 3:
         out.set_event_reg(GHOST_SHIP_REG, 0)
         rep.changes.append("The Ghost Ship sails again: the file had it marked as cleared with its chest "
                            "closed, and that chest is the only place Triforce Shard 4 comes from in HD.")
@@ -626,13 +628,16 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
             if f50:
                 rep.changes.append("Savage Labyrinth floor-50 chest closed again (floor 50 by rewards): in HD it "
                                    "holds the Hero's Charm, which you do not have. Open it again to get it.")
-    if a == "steps" and out.u("status_a.max_life") == 0:
-        rep.warnings.append("the floor-50 Piece of Heart could not be removed: the file has no hearts at all "
-                            "(damaged or edited save)")
+    if a == "steps" and out.u("status_a.max_life") <= MIN_MAX_LIFE:
+        rep.warnings.append("the floor-50 Piece of Heart could not be removed: the file has only the three "
+                            "hearts every file starts with, or fewer (damaged or edited save)")
     elif a == "steps":
         max_life = out.u("status_a.max_life") - 1
         out.set_u("status_a.max_life", max_life)
-        out.set_u("status_a.life", min(out.u("status_a.life"), max_life // 4 * 4))
+        if out.u("status_a.life") > max_life // 4 * 4:
+            out.set_u("status_a.life", max_life // 4 * 4)
+            rep.changes.append("Current life lowered to %s: it cannot be above the full hearts of the new "
+                               "maximum." % _hearts(max_life // 4 * 4))
         rep.changes.append("One Piece of Heart removed (maximum life -1/4 heart; floor 50 by steps): the "
                            "GameCube gave it in the floor-50 chest. In HD that chest gives the Hero's Charm and "
                            "the piece is the sunken treasure of Treasure Chart 46 (Pawprint Isle Wizzrobe cave "
@@ -803,6 +808,7 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     # --- 2.2 what HD rewrites by itself when it loads a Quest Log -----------------------------------
     # Applied here so that the written file is exactly what the game will hold after loading it.
     settled = hdcheck.load_fixups(out)
+    _hd_buttons(settled, "status_a.select_item", "item.slot%02d")     # the fixups may have restored the Sail
     for name in hdcheck.changed_fields(out, settled):
         rep.changes.append("%s: %s -> %s. HD recomputes this from the ownership flags every time it loads a "
                            "file; it is written as HD will hold it." % (

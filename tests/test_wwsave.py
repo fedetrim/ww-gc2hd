@@ -498,7 +498,28 @@ class Conversion(unittest.TestCase):
 
         # Ghost Ship marked as cleared with its chest closed and no chart or shard: the ship is brought back
         card = self._card(lambda s: s.set_event_reg(conv.GHOST_SHIP_REG, 3))
-        self.assertEqual(conv.convert(card, conv.Options())[0].slots[0].event_reg(conv.GHOST_SHIP_REG), 0)
+        for options in (conv.Options(), conv.Options.all("steps"), conv.Options.all("rewards")):
+            self.assertEqual(conv.convert(card, options)[0].slots[0].event_reg(conv.GHOST_SHIP_REG), 0)
+
+        # floor 50 by steps on a file with only the three starting hearts: nothing below them is taken
+        def three_hearts(s):
+            s.set_u("memory13.tbox", 1 << 12)
+            s.set_u("status_a.max_life", 12)
+            s.set_u("status_a.life", 12)
+        out, reports = conv.convert(self._card(three_hearts), conv.Options(floor50="steps"))
+        self.assertEqual((out.slots[0].u("status_a.max_life"), hdcheck.invariants(out.slots[0])), (12, []))
+        self.assertEqual(len(reports[0].warnings), 1)
+
+        # Lenzo's case when the couple no longer meets: one translation, and an answer for it is settled
+        def lenzo(s):
+            s.set_u("item.slot08", 0x23)
+            s.set_raw("get_item.slot08", b"\x01")
+            s.set_event_reg(conv.LENZO_REG, 6)
+            s.set_event_reg(0xB907, 2)
+        card = self._card(lenzo)
+        self.assertEqual(conv.decisions_for(card.slots()), [])
+        self.assertIn(("lenzo", 0), conv.settled_answers(card.slots(), conv.Options(lenzo="rewards")))
+        self.assertEqual(conv.convert(card, conv.Options(lenzo="rewards"))[0].slots[0].u("item.slot08"), 0x26)
 
         # Hero's Charm held without Mrs. Marie's event, floor-50 chest open, floor 50 by rewards: the charm
         # stays, so the chest stays open
@@ -537,6 +558,9 @@ class Conversion(unittest.TestCase):
         self.assertEqual(conv.hd_name_for("Link"), ("Link", None))
         self.assertIsNotNone(conv.hd_name_for("N\u00ba1")[1])        # written as "No1": said so
         self.assertEqual(conv.hd_name_for("\u0080\u009fab")[0], "Link")    # control characters are refused
+        self.assertEqual(conv.hd_name_for("        x")[0], "x")             # never a name of spaces
+        self.assertEqual(conv.hd_name_for("ab      cd")[0], "ab")
+        self.assertEqual(conv.hd_name_for("   ")[0], "Link")
 
     def test_pawprint_chest(self):
         card = self._swapped(paw=True)
