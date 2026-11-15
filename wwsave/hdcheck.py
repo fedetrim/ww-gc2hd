@@ -75,7 +75,7 @@ def load_fixups(save):
             break
     if collect[2] & 1:
         s.data[equip + 2] = 0x28
-    s.set_u("map.triforce_bits", s.u("map.triforce_bits") | 0xEA)
+    s.set_u("map.triforce_bits", s.u("map.triforce_bits") | layout.HD_TRIFORCE_PRESET)
     return s
 
 
@@ -100,7 +100,7 @@ def invariants(save):
         bad.append("unexpected item on the sail button: %#x" % sel[4])
     if save.u("config.sound_mode") != 2:
         bad.append("sound mode is not 2")
-    if save.u("map.triforce_bits") & 0xEA != 0xEA:
+    if save.u("map.triforce_bits") & layout.HD_TRIFORCE_PRESET != layout.HD_TRIFORCE_PRESET:
         bad.append("Triforce map bits 1,3,5,6,7 not set")
     if save.u("item_record.picture_num") != 0:
         bad.append("picture count not 0")

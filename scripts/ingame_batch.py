@@ -12,6 +12,8 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "scripts"))
+from sample_jobs import sample_jobs  # noqa: E402
 from wwsave import convert as conv, gc  # noqa: E402
 
 exe, game, out = [os.path.abspath(p) for p in sys.argv[1:4]]
@@ -19,26 +21,7 @@ workers = int(sys.argv[4]) if len(sys.argv) > 4 else 3
 MODE = sys.argv[5] if len(sys.argv) > 5 else "steps"      # steps | rewards, for every case
 OPTIONS = conv.Options.all(MODE)
 os.makedirs(out, exist_ok=True)
-jobs, seen = [], set()
-for path in sorted(glob.glob(os.path.join(ROOT, "samples/gc/**/*.gci"), recursive=True)):
-    if "Hacked_File" in path:
-        continue
-    card = gc.load(open(path, "rb").read())
-    if card.game_code != b"GZLE01":
-        continue
-    for slot, g in enumerate(card.slots()):                # every used file, each loaded as Quest Log 1
-        if g is None or g.is_new():
-            continue
-        key = hashlib.md5(bytes(g)).hexdigest()
-        if key in seen:
-            continue
-        seen.add(key)
-        name = "%02d" % len(jobs)
-        converted = conv.convert(card, OPTIONS)[0]
-        converted.move_to_quest_log_1(slot)
-        sav = os.path.join(out, name + ".sav")
-        open(sav, "wb").write(converted.serialize())
-        jobs.append((name, "%s file %d" % (os.path.relpath(path, ROOT), slot + 1), sav))
+jobs = sample_jobs(OPTIONS, out)
 
 
 def run(job):

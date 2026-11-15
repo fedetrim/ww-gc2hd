@@ -1,6 +1,6 @@
 """ww-gc2hd: convert a GameCube Wind Waker save into a Wind Waker HD (Wii U) save."""
 import argparse
-import dataclasses
+import copy
 import textwrap
 import time
 import os
@@ -85,6 +85,9 @@ def cmd_convert(a):
     for value in a.name or []:
         log, sep, name = value.partition("=")
         if sep and log in ("1", "2", "3"):
+            if int(log) - 1 not in used:
+                sys.exit("--name %s: Quest Log %s is not a used file on this card (used: %s)." % (
+                    value, log, ", ".join(str(s + 1) for s in used)))
             names[int(log) - 1] = name
         elif len(used) == 1:
             names[used[0]] = value
@@ -106,7 +109,7 @@ def cmd_convert(a):
         if not sys.stdin.isatty():
             # List everything a script may have to answer: the Pawprint case shows up only once floor 50
             # is answered by steps, so look at that branch too.
-            both = dataclasses.replace(options)
+            both = copy.deepcopy(options)
             for d, s in open_cases(options):
                 if d.key == "floor50":
                     both.answer("floor50", s, "steps")
@@ -129,6 +132,13 @@ def cmd_convert(a):
         options.answer(d.key, s, _ask(d, s))
 
     out_file, reports = conv.convert(card, options)
+    if a.pawprint_chest is not None:            # an answer given by hand that had no effect is said
+        for s, g in enumerate(slots):
+            given = a.pawprint_chest.get(s) if isinstance(a.pawprint_chest, dict) else a.pawprint_chest
+            if given and g is not None and not g.is_new() and options.for_slot(s).floor50 == "rewards" \
+                    and conv._collected(g, conv.SAVAGE_FLOOR_50) and conv._collected(g, conv.PAWPRINT_CHEST):
+                reports[s].warnings.append("--pawprint-chest %s was not used: floor 50 by rewards already "
+                                           "settles that chest (opened, Treasure Chart 46 salvaged)" % given)
     data = out_file.serialize()
     hd.HdFile.parse(data)                      # the output must pass the same checks as a real save
 

@@ -20,7 +20,7 @@ ITEM_SAIL = 0x78
 # Collect maps (charts) whose GameCube item is a Triforce Chart and whose HD item is a new
 # Treasure Chart (DIFFERENCES 3.1): collect map number -> HD Treasure Chart number.
 REUSED_CHARTS = {2: 42, 4: 43, 6: 44, 7: 45, 8: 46}
-HD_TRIFORCE_PRESET = 0xEA   # map.triforce_bits of a new HD file: bits of collect maps 2, 4, 6, 7, 8
+HD_TRIFORCE_PRESET = layout.HD_TRIFORCE_PRESET
 
 # Places whose GameCube reward was replaced by one of those HD charts (DIFFERENCES 3.2):
 # collect map -> (how the save records that the place was already collected, description)
@@ -49,7 +49,7 @@ GHOST_SHIP_REG = 0x8803     # 3 once the Ghost Ship chest scene has ended: the s
 LOOKOUT_CASES = {"horseshoe_chest": 4, "star_belt_chest": 6}      # option -> collect map of the HD chart
 MODES = ("steps", "rewards")
 DECIPHER_FEE = 398                      # what Tingle charges per Triforce Chart, both games
-HD_WALLET = (500, 1000, 5000)           # rupee limit by wallet size (d_meter_02.cpp:282)
+HD_WALLET = layout.WALLET_HD
 BEAST_SLOT_FIRST = 24                   # item-button value of the first Spoils Bag slot
 SKULL_NECKLACE = (0, 0x45)              # Spoils Bag counter, item number
 JOY_PENDANT = (7, 0x1F)
@@ -206,8 +206,12 @@ def _totals(g, h):
 
 
 def _stuck_chart(g, k):
-    """GameCube Triforce Chart k owned, its shard not salvaged yet."""
-    return _map_bit(g, "map.get_map", k) and not g.u("collect.triforce") >> (k - 1) & 1
+    """GameCube Triforce Chart k taken from its chest, its shard not salvaged yet. The chest alone counts
+    too (a file with the chest open and no chart): in HD an open chest without the shard would leave the
+    shard out of reach."""
+    record, bits = TRIFORCE_CHESTS[k]
+    taken = _map_bit(g, "map.get_map", k) or any(_collected(g, ("tbox", record, b)) for b in bits)
+    return taken and not g.u("collect.triforce") >> (k - 1) & 1
 
 
 def _item(save, slot):
@@ -444,7 +448,7 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
             _set_tbox(out, record, bits[0], True)           # the Ghost Ship copy HD keeps
             for b in bits[1:]:
                 _set_tbox(out, record, b, False)            # HD has no chest for the other two
-        if not _map_bit(g, "map.get_map", k):
+        if not _map_bit(g, "map.get_map", k) and not _stuck_chart(g, k):
             continue
         for f in ("map.get_map", "map.open_map", "map.complete_map"):
             _set_map_bit(out, f, k, False)
@@ -538,9 +542,6 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
                            "the piece is the sunken treasure of Treasure Chart 46 (Pawprint Isle Wizzrobe cave "
                            "chest, then Two-Eye Reef): salvage it to get the piece back.")
     if a == "rewards":
-        if paw and options.pawprint_chest in MODES:
-            rep.warnings.append("the answer given for the Pawprint chest was not used: floor 50 by rewards "
-                                "already settles that chest (opened, Treasure Chart 46 salvaged)")
         _set_tbox(out, PAWPRINT_CHEST[1], PAWPRINT_CHEST[2], True)
         give_chart(8, salvaged=True)
         rep.changes.append("Treasure Chart 46 added, already salvaged%s (floor 50 by rewards): its treasure in "
@@ -688,7 +689,9 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     # --- 2.2 what HD rewrites by itself when it loads a Quest Log -----------------------------------
     # Applied here so that the written file is exactly what the game will hold after loading it.
     settled = hdcheck.load_fixups(out)
-    for name in hdcheck.unsettled_fields(out):
+    for name, (off, size) in layout.FIELDS.items():
+        if out.data[off:off + size] == settled.data[off:off + size]:
+            continue
         rep.changes.append("%s: %s -> %s. HD recomputes this from the ownership flags every time it loads a "
                            "file; it is written as HD will hold it." % (
                                name, out.raw(name).hex(), settled.raw(name).hex()))

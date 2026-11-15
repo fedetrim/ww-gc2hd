@@ -80,6 +80,9 @@ class Formats(unittest.TestCase):
         self.assertEqual(bytes(gc.load(bytes(card)).slots()[0]), bytes(save))
         with self.assertRaises(gc.GcError):
             gc.load(b"not a save")
+        # a card image without the game's file says so, not "not a card image"
+        with self.assertRaisesRegex(gc.GcError, "no Wind Waker save"):
+            gc.load(bytes(gc.BLOCK * 16))
 
     def test_hd_real_saves_roundtrip(self):
         for path in HD_FILES:
@@ -258,6 +261,13 @@ class CommandLine(unittest.TestCase):
             self.assertEqual(r.returncode, 0, r.stderr)
             back = hd.HdFile.parse(_read(os.path.join(out, "cking.sav")))
             self.assertEqual([back.name(0), back.name(1)], ["Tester", "Zed"])
+            r = self._run("convert", gci, "-o", out, "--force", "--all", "steps", "--name", "3=Zed")
+            self.assertNotEqual(r.returncode, 0)            # Quest Log 3 is not a used file
+            self.assertIn("not a used file", r.stderr)
+            # a case answered for one Quest Log only: the other is still listed
+            r = self._run("convert", gci, "-o", out, "--force", "--floor50", "1=steps")
+            self.assertNotEqual(r.returncode, 0)
+            self.assertIn("--floor50 steps|rewards   (Quest Log 2)", r.stderr)
 
 
 class Conversion(unittest.TestCase):
@@ -433,6 +443,15 @@ class Conversion(unittest.TestCase):
         out, reports = conv.convert(self._card(edit), conv.Options(floor50="steps"))
         self.assertEqual(out.slots[0].u("status_a.max_life"), 0)
         self.assertEqual(len(reports[0].warnings), 1)
+
+    def test_triforce_chest_open_without_chart_is_a_case(self):
+        """An open chest with neither chart nor shard would leave the shard out of reach in HD."""
+        card = self._card(lambda s: s.set_u("memory13.tbox", 1 << 11))      # Savage Labyrinth floor 30
+        self.assertEqual([d.key for d in conv.decisions_for(card.slots())], ["triforce_chart_6"])
+        h = conv.convert(card, conv.Options(triforce_chart_6="steps"))[0].slots[0]
+        self.assertEqual((h.u("collect.triforce"), h.u("memory13.tbox")), (1 << 5, 1 << 11))
+        h = conv.convert(card, conv.Options(triforce_chart_6="rewards"))[0].slots[0]
+        self.assertEqual((h.u("collect.triforce"), h.u("memory13.tbox")), (0, 0))
 
     def test_rupees_are_one_balance(self):
         """A take-back is not cut short because the refund is listed after it."""

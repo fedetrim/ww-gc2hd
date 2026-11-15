@@ -166,12 +166,11 @@ def load_all(raw):
         if len(body) >= DENTRY + 3 * BLOCK and (len(body) - DENTRY) % BLOCK == 0 \
                 and body[0:4] in REGIONS and body[8:8 + len(FILE_NAME)] == FILE_NAME:
             return [GcCardFile(body[:DENTRY], body[DENTRY:], kind)]
-    try:
-        return _from_raw_card(raw)
-    except GcError:
-        if raw[0:3] == b"GZL" or raw[0x110:0x113] == b"GZL" or raw[0x80:0x83] == b"GZL":
-            raise GcError("damaged or truncated Wind Waker card file (%d bytes)" % len(raw))
+    if raw[0:3] == b"GZL" or raw[0x110:0x113] == b"GZL" or raw[0x80:0x83] == b"GZL":
+        raise GcError("damaged or truncated Wind Waker card file (%d bytes)" % len(raw))
+    if len(raw) % BLOCK not in (0, 0x40) or len(raw) < 5 * BLOCK:
         raise GcError("not a Wind Waker GameCube save (.gci/.gcs/.sav) or memory card image")
+    return _from_raw_card(raw)                  # its own errors say what is wrong with the card image
 
 
 def load(raw):

@@ -144,3 +144,10 @@ class Save:
 
     def __bytes__(self):
         return bytes(self.data)
+
+
+# map.triforce_bits of a new HD file, forced again on every load: the bits of collect maps 2, 4, 6, 7, 8
+HD_TRIFORCE_PRESET = 0xEA
+# rupee limit by wallet size (HD: d_meter_02.cpp:282)
+WALLET_GC = (200, 1000, 5000)
+WALLET_HD = (500, 1000, 5000)

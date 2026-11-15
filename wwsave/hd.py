@@ -114,7 +114,7 @@ def fresh_slot():
     fmap = bytearray(49)
     fmap[0] = fmap[10] = fmap[43] = 3        # Forsaken Fortress, Windfall, Outset
     s.set_raw("map.fmap_bits", bytes(fmap))
-    s.set_u("map.triforce_bits", 0xEA)
+    s.set_u("map.triforce_bits", layout.HD_TRIFORCE_PRESET)
     s.set_u("config.ruby", 1)
     s.set_u("config.sound_mode", 2)
     s.set_u("config.vibration", 1)

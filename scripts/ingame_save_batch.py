@@ -11,6 +11,8 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "scripts"))
+from sample_jobs import sample_jobs  # noqa: E402
 from wwsave import convert as conv, gc, hd, layout  # noqa: E402
 
 args = [a for a in sys.argv[1:] if not a.startswith("--")]
@@ -21,31 +23,21 @@ OPTIONS = (conv.Options.all("rewards", swift_sail=True, hero_mode=True) if ALT
            else conv.Options.all("steps"))
 RUNNER = os.path.join(out, "run_scenario_keep.sh")
 os.makedirs(out, exist_ok=True)
-src = open(os.path.join(ROOT, "research/port-src/tools/gametest/run_scenario.sh")).read()
-open(RUNNER, "w").write(src.replace("\nrm -rf save states\n", "\nrm -rf states\n"))
+# The port's runner deletes the save folder when it ends; this batch needs the file the game wrote, so it
+# runs a copy of the runner without that. WW_RUNNER / WW_RESEARCH point at a port checkout elsewhere.
+RESEARCH = os.environ.get("WW_RESEARCH") or os.path.join(ROOT, "research")
+ORIGINAL = os.environ.get("WW_RUNNER") or os.path.join(RESEARCH, "port-src/tools/gametest/run_scenario.sh")
+with open(ORIGINAL) as f:
+    src = f.read()
+if "\nrm -rf save states\n" not in src:
+    sys.exit("%s no longer has the line 'rm -rf save states': adapt this script to the port's runner, "
+             "otherwise the saves the game writes are deleted before they can be compared." % ORIGINAL)
+with open(RUNNER, "w") as f:
+    f.write(src.replace("\nrm -rf save states\n", "\nrm -rf states\n"))
 EXPECTED = {"status_b.date_ipl", "status_b.time", "status_b.date", "info.save_count", "status_a.life",
             "status_b.tact_wind_x", "status_b.tact_wind_y"}
 
-jobs, seen = [], set()
-for path in sorted(glob.glob(os.path.join(ROOT, "samples/gc/**/*.gci"), recursive=True)):
-    if "Hacked_File" in path:
-        continue
-    card = gc.load(open(path, "rb").read())
-    if card.game_code != b"GZLE01":
-        continue
-    for slot, g in enumerate(card.slots()):                # every used file, each loaded as Quest Log 1
-        if g is None or g.is_new():
-            continue
-        key = hashlib.md5(bytes(g)).hexdigest()
-        if key in seen:
-            continue
-        seen.add(key)
-        name = "%02d" % len(jobs)
-        converted = conv.convert(card, OPTIONS)[0]
-        converted.move_to_quest_log_1(slot)
-        sav = os.path.join(out, name + ".sav")
-        open(sav, "wb").write(converted.serialize())
-        jobs.append((name, "%s file %d" % (os.path.relpath(path, ROOT), slot + 1), sav))
+jobs = sample_jobs(OPTIONS, out)
 
 
 def run(job):

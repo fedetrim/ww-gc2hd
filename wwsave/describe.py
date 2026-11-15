@@ -31,8 +31,7 @@ SONGS = ["Wind's Requiem", "Ballad of Gales", "Command Melody", "Earth God's Lyr
          "Song of Passing"]
 PEARLS = ["Nayru's Pearl", "Din's Pearl", "Farore's Pearl"]
 DUNGEON_BITS = ["map", "compass", "boss key", "boss defeated", "heart container", "boss intro seen"]
-WALLET_GC = [200, 1000, 5000]
-WALLET_HD = [500, 1000, 5000]
+WALLET_GC, WALLET_HD = layout.WALLET_GC, layout.WALLET_HD
 
 
 def item_name(item):
