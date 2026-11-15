@@ -131,9 +131,6 @@ Conversion:
 - If chart k is owned and shard k is not, the save is in a state HD does not have. **Option
   `--triforce-chart-k`** (no default, see 3.2): `steps` gives shard k, as HD's chest would have; `rewards`
   drops the chart and closes the chest again, so it gives the shard when opened in HD.
-- In HD each of these five shards comes from its chest and from nowhere else, so the converted file always
-  has them together: a shard that is held has its chest marked as opened. Some GameCube files hold the
-  chart or the shard with the chest flag unset (practice saves in `samples/`).
 - A GameCube Ghost Ship chest opened in one of the two copies HD lacks (flags 21, 22) is written as HD's
   one chest: flag 23 set, flags 21 and 22 cleared.
 
@@ -315,6 +312,29 @@ three charted from the start (680 sector pairs, no exception).
   fails its checksum. For file 2 the game tests the second copy's file 3 before restoring, so a good file 2
   in the second copy is not used when that copy's file 3 is damaged. A file the game cannot read is
   reported and written as an empty Quest Log.
+
+## 5b. Which files are converted: the health check
+
+The rules of section 3 rely on the GameCube file being one that normal play writes: a reward is held exactly
+when the place that gives it is done. Before anything else each used file is checked for that
+(`wwsave/convert.py`, `health`), and a file that fails is not converted at all: it is written as an empty
+Quest Log and the report says why. The tool does not try to repair such a file; the other files of the card
+are converted. A file fails when:
+
+- maximum life is outside 3 to 20 hearts, current life is above it, the wallet size does not exist or holds
+  more rupees than it can, the targeting mode is not hold or switch, or it counts more than 3 pictures;
+- it holds the Swift Sail (an HD item);
+- for Triforce Chart 2, 4, 6, 7 or 8: the chart is owned and its chest is closed, the chest is open and the
+  chart is not owned, or the shard is held without the chart;
+- the Hero's Charm and Mrs. Marie's reward (event 0x1C04) disagree, or the Savage Labyrinth floor-50 chest
+  is open in a file with only the three starting hearts;
+- the Ghost Ship is marked as cleared (register 0x8803 = 3) with its chest closed, or the reverse;
+- the Deluxe Picto Box is held before Lenzo's third task, or Anton and Linda are a couple without it.
+
+17 of the 477 used GameCube sample files fail: speedrun practice saves that hold a Triforce Chart whose chest
+was never opened, two files of one public card that hold all eight shards and no chart, and the three files
+modified by an exploit tool. An item slot that is empty while its ownership flag is set is not a failure:
+normal play does that (the bow is taken away in the final battle), and HD puts the item back on load.
 
 ## 6. Known gaps
 - Stage data of both games was compared in full (3.2): chests, actors and player spawn points

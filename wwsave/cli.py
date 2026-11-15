@@ -86,7 +86,14 @@ def cmd_convert(a):
         sys.exit("%s already holds a save (%s). Use --force to replace it: the files there are first moved to "
                  "a backup folder inside it." % (a.output, ", ".join(existing[:3]) +
                                                  (" and %d more" % (len(existing) - 3) if len(existing) > 3 else "")))
-    used = [s for s, g in enumerate(slots) if g is not None and not g.is_new()]
+    healthy = [s for s, g in enumerate(slots) if g is not None and not g.is_new() and not conv.health(g)]
+    if not healthy:                             # checked first: nothing is asked or written
+        problems = ["File %d: %s" % (s + 1, p) for s, g in enumerate(slots)
+                    if g is not None and not g.is_new() for p in conv.health(g)]
+        sys.exit("%s is not converted: no file on it is one that normal play can have written (edited, made "
+                 "with glitches, or damaged). The tool translates consistent files only and does not try to "
+                 "repair one.\n  %s" % (a.input, "\n  ".join(problems)))
+    used = healthy
     names = {}
     for value in a.name or []:
         log, sep, name = value.partition("=")
@@ -251,6 +258,8 @@ def cmd_info(a):
                 print("File %d:" % (s + 1))
                 print(describe.format_summary(describe.summarize(save, conv.gc_name(save, card.game_code))))
                 print("  %-22s %d" % ("Pictures:", len(pictures[s])))
+                for p in conv.health(save):
+                    print("  NOT CONVERTIBLE: %s" % p)
 
 
 def cmd_verify(a):

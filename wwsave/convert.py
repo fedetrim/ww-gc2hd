@@ -65,6 +65,8 @@ class ConversionError(Exception):
     pass
 
 
+
+
 @dataclass
 class Options:
     """Every case below is a place whose reward differs between the games. There is no default:
@@ -131,6 +133,7 @@ class SlotReport:
     warnings: list = field(default_factory=list)    # things the user should know
     pictures: int = 0                               # Picto Box pictures on the GameCube card
     totals: list = field(default_factory=list)      # (label, GameCube, HD) where what you hold differs
+    unhealthy: list = field(default_factory=list)   # why the file was not converted (see health)
 
 
 def _map_bit(save, field_name, n):
@@ -217,12 +220,8 @@ def _totals(g, h):
 
 
 def _stuck_chart(g, k):
-    """GameCube Triforce Chart k taken from its chest, its shard not salvaged yet. The chest alone counts
-    too (a file with the chest open and no chart): in HD an open chest without the shard would leave the
-    shard out of reach."""
-    record, bits = TRIFORCE_CHESTS[k]
-    taken = _map_bit(g, "map.get_map", k) or any(_collected(g, ("tbox", record, b)) for b in bits)
-    return taken and not g.u("collect.triforce") >> (k - 1) & 1
+    """GameCube Triforce Chart k owned, its shard not salvaged yet."""
+    return _map_bit(g, "map.get_map", k) and not g.u("collect.triforce") >> (k - 1) & 1
 
 
 _item = layout.item
@@ -296,25 +295,18 @@ def decisions_for(slots, options=None):
         d.per_slot[s] = (question, choices)
 
     for s, g in enumerate(slots):
-        if g is None or g.is_new():
+        if g is None or g.is_new() or health(g):           # an unhealthy file is not converted: no cases
             continue
         g = _with_owned_items(g)
         opts = all_options.for_slot(s)
         for k in REUSED_CHARTS:
             if _stuck_chart(g, k):
-                has_chart = _map_bit(g, "map.get_map", k)
-                chest_open = any(_collected(g, ("tbox", TRIFORCE_CHESTS[k][0], b)) for b in TRIFORCE_CHESTS[k][1])
-                state = ("Triforce Chart %d is owned" % k if has_chart else
-                         "The %s chest is open (the file does not hold Triforce Chart %d)" % (TRIFORCE_PLACES[k], k))
                 need("triforce_chart_%d" % k,
-                     "%s and Triforce Shard %d is not salvaged yet. In HD the %s chest holds the shard itself "
-                     "and the chart does not exist." % (state, k, TRIFORCE_PLACES[k]),
-                     "the chest %s and you get Triforce Shard %d now (no deciphering, no salvage)" % (
-                         "stays open" if chest_open else "is marked as opened", k),
-                     "%s; open it in HD to get the shard" % (
-                         ("the chart is dropped and the chest is closed again" if chest_open else
-                          "the chart is dropped and the chest stays closed") if has_chart else
-                         "the chest is closed again"), s)
+                     "Triforce Chart %d (%s chest) is owned and Triforce Shard %d is not salvaged yet. In HD "
+                     "that chest holds the shard itself and the chart does not exist." % (
+                         k, TRIFORCE_PLACES[k], k),
+                     "the chest stays open and you get Triforce Shard %d now (no deciphering, no salvage)" % k,
+                     "the chart is dropped and the chest is closed again; open it in HD to get the shard", s)
         for key, k in LOOKOUT_CASES.items():
             if _collected(g, HD_CHART_SOURCES[k][0]):
                 need(key,
@@ -324,7 +316,6 @@ def decisions_for(slots, options=None):
                      "the chest is closed again; open it in HD to get the chart. You keep the %s" %
                      GC_LOOKOUT_REWARD[k], s)
         f50, marie = _collected(g, SAVAGE_FLOOR_50), g.event_bit(MARIE_EVENT)
-        charm = bool(g.raw(HEROS_CHARM[0])[HEROS_CHARM[1]] & HEROS_CHARM[2])     # normally the same as marie
         if f50:
             need("floor50",
                  "The Savage Labyrinth floor-50 chest is open: the GameCube gave a Piece of Heart. In HD that "
@@ -336,9 +327,7 @@ def decisions_for(slots, options=None):
                  "Chart 46 owned and salvaged; a Silver Rupee already taken from that chest is treated as in "
                  "the Pawprint case by rewards). " + (
                      "The floor-50 chest then follows the Mrs. Marie case: it stays open if you keep the "
-                     "Hero's Charm there, and is closed again otherwise" if marie and charm else
-                     "The floor-50 chest stays open, because you hold the Hero's Charm that HD keeps in it"
-                     if charm else
+                     "Hero's Charm there, and is closed again otherwise" if marie else
                      "The floor-50 chest is closed again; open it in HD to get the Hero's Charm"), s)
         if _collected(g, PAWPRINT_CHEST) and not _pawprint_settled(g, opts):
             need("pawprint_chest",
@@ -352,14 +341,7 @@ def decisions_for(slots, options=None):
                  "otherwise that treasure stays to be found, a second Silver Rupee", s)
             if f50:
                 out["pawprint_chest"].depends[s] = ("floor50", "steps")
-        if marie and not charm:
-            need("marie",
-                 "Mrs. Marie gave her reward for 40 Joy Pendants, but this file does not hold the Hero's Charm "
-                 "the GameCube gives for it. In HD she gives Treasure Chart 45.",
-                 "her reward stays given: you get Treasure Chart 45",
-                 "her reward is pending again (she gives Treasure Chart 45 the next time you bring her a Joy "
-                 "Pendant); there is no Hero's Charm to keep", s)
-        elif marie:
+        if marie:
             if not f50:
                 lose = "and lose the Hero's Charm until you open the floor-50 chest in HD"
             elif opts.floor50 == "steps":
@@ -376,7 +358,7 @@ def decisions_for(slots, options=None):
                  "you keep the Hero's Charm and the floor-50 chest is %s; Mrs. Marie's reward "
                  "is pending again (she gives Treasure Chart 45 the next time you bring her a Joy Pendant)" % (
                      "open" if f50 else "marked as opened"), s)
-        if _lenzo_stuck(g) and _couple_on_street(g):
+        if _lenzo_stuck(g):
             need("lenzo",
                  "Lenzo accepted the third picture and the Picto Box is not the Deluxe one. On the GameCube "
                  "that gave a Joy Pendant and the Deluxe Picto Box came later for a Forest Firefly; HD gives "
@@ -386,12 +368,6 @@ def decisions_for(slots, options=None):
                  "the third task is pending again; bring Lenzo that picture in HD to get the Deluxe Picto "
                  "Box. You keep the Joy Pendant", s)
     return [out[k] for k in Options.CASES if k in out]
-
-
-def _couple_on_street(g):
-    """The third picture (Anton and Linda looking at each other) can only be taken while register 0xB907 is
-    0 or 1 (d_a_npc_people.cpp:120). Normal play cannot pass that without the Deluxe Picto Box."""
-    return g.event_reg(0xB907) < 2
 
 
 def _pawprint_settled(g, options):
@@ -406,16 +382,61 @@ def settled_answers(slots, options):
     mode that was applied anyway."""
     out = {}
     for s, g in enumerate(slots):
-        if g is None or g.is_new():
+        if g is None or g.is_new() or health(g):
             continue
         g = _with_owned_items(g)
         if _collected(g, PAWPRINT_CHEST) and _pawprint_settled(g, options.for_slot(s)):
             out[("pawprint_chest", s)] = ("floor 50 by rewards already settles that chest (opened, Treasure "
                                           "Chart 46 salvaged)", None)
-        if _lenzo_stuck(g) and not _couple_on_street(g):
-            out[("lenzo", s)] = ("the couple of the third picture no longer meets on the street in this "
-                                 "file, so only the translation by steps works and it was applied", "steps")
     return out
+
+
+def health(g):
+    """What makes a used GameCube file one that normal play cannot have written (empty list: healthy).
+    The conversion rules rely on each of these, so a file that fails one is not converted at all: it would
+    have to be repaired first, and guessing how is not this tool's job."""
+    bad = []
+    if not MIN_MAX_LIFE <= g.u("status_a.max_life") <= 80:
+        bad.append("maximum life is %s (3 to 20 hearts are possible)" % _hearts(g.u("status_a.max_life")))
+    if g.u("status_a.life") > g.u("status_a.max_life"):
+        bad.append("current life is above the maximum")
+    if g.u("status_a.wallet_size") > 2:
+        bad.append("wallet size %d does not exist" % g.u("status_a.wallet_size"))
+    elif g.u("status_a.rupee") > layout.WALLET_GC[g.u("status_a.wallet_size")]:
+        bad.append("%d rupees do not fit in the wallet (%d)" % (
+            g.u("status_a.rupee"), layout.WALLET_GC[g.u("status_a.wallet_size")]))
+    if g.u("config.attention_type") not in (0, 1):
+        bad.append("targeting mode %d does not exist" % g.u("config.attention_type"))
+    if g.u("item_record.picture_num") > 3:
+        bad.append("%d pictures (the Picto Box holds 3)" % g.u("item_record.picture_num"))
+    if _item(g, layout.SLOT_SAIL) == ITEM_SWIFT_SAIL:
+        bad.append("the Swift Sail, which the GameCube game does not have")
+    for k in REUSED_CHARTS:
+        record, bits = TRIFORCE_CHESTS[k]
+        chest = any(_collected(g, ("tbox", record, b)) for b in bits)
+        chart = _map_bit(g, "map.get_map", k)
+        shard = bool(g.u("collect.triforce") >> (k - 1) & 1)
+        if shard and not chart:
+            bad.append("Triforce Shard %d without Triforce Chart %d, which leads to it" % (k, k))
+        if chart != chest:
+            bad.append("Triforce Chart %d is %s but the %s chest that holds it is %s" % (
+                k, "owned" if chart else "not owned", TRIFORCE_PLACES[k], "open" if chest else "closed"))
+    charm = bool(g.raw(HEROS_CHARM[0])[HEROS_CHARM[1]] & HEROS_CHARM[2])
+    if charm != g.event_bit(MARIE_EVENT):
+        bad.append("the Hero's Charm is %s but Mrs. Marie's reward, which is the charm, is %s" % (
+            "held" if charm else "not held", "given" if g.event_bit(MARIE_EVENT) else "not given"))
+    if _collected(g, SAVAGE_FLOOR_50) and g.u("status_a.max_life") <= MIN_MAX_LIFE:
+        bad.append("the Savage Labyrinth floor-50 chest is open but the file has no Piece of Heart from it")
+    ghost = any(_collected(g, ("tbox", TRIFORCE_CHESTS[4][0], b)) for b in TRIFORCE_CHESTS[4][1])
+    if (g.event_reg(GHOST_SHIP_REG) == 3) != ghost:
+        bad.append("the Ghost Ship is %s but its chest is %s" % (
+            "cleared" if g.event_reg(GHOST_SHIP_REG) == 3 else "not cleared", "open" if ghost else "closed"))
+    deluxe = _item(g, layout.SLOT_CAMERA) == ITEM_DELUXE_PICTO_BOX or _get_bits(g, layout.SLOT_CAMERA) & 2
+    if deluxe and g.event_reg(LENZO_REG) < 6:
+        bad.append("the Deluxe Picto Box is held before Lenzo's third task is done")
+    if g.event_reg(0xB907) >= 2 and not deluxe:
+        bad.append("Anton and Linda are a couple (which needs a colour picture) without the Deluxe Picto Box")
+    return bad
 
 
 def _lenzo_stuck(g):
@@ -434,17 +455,21 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     if not rep.used:
         # An unused GameCube file has no name. It becomes an empty HD Quest Log.
         return hd.fresh_slot(), extra, rep
+    problems = health(g)
+    if problems:
+        # Not a file normal play can have written: it is not translated at all (no repair is attempted).
+        rep.used = False
+        rep.unhealthy = problems
+        rep.warnings.append("NOT CONVERTED, written as an empty Quest Log: normal play cannot have written "
+                            "this file (edited, made with glitches, or damaged), and the tool translates "
+                            "consistent files only: " + "; ".join(problems))
+        return hd.fresh_slot(), extra, rep
     card_file, g = g, _with_owned_items(g)                  # see _with_owned_items: one inventory for all rules
     out = g.copy()
     for name in hdcheck.changed_fields(card_file, g):
         rep.changes.append("%s: %s -> %s. The file owns that item (its ownership flag is set) but the slot was "
                            "empty; HD puts the item back every time it loads a file, so it is written that "
                            "way." % (name, card_file.raw(name).hex(), g.raw(name).hex()))
-    # a damaged file can hold more life than its maximum; HD never does
-    if out.u("status_a.life") > out.u("status_a.max_life"):
-        rep.changes.append("Current life lowered from %s to the maximum, %s: the file held more life than its "
-                           "maximum." % (_hearts(out.u("status_a.life")), _hearts(out.u("status_a.max_life"))))
-        out.set_u("status_a.life", out.u("status_a.max_life"))
 
     # --- name ---------------------------------------------------------------------------------
     name = gc_name(g, game_code)
@@ -547,7 +572,7 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
             _set_tbox(out, record, bits[0], True)           # the Ghost Ship copy HD keeps
             for b in bits[1:]:
                 _set_tbox(out, record, b, False)            # HD has no chest for the other two
-        if not _map_bit(g, "map.get_map", k) and not _stuck_chart(g, k):
+        if not _map_bit(g, "map.get_map", k):
             continue
         for f in ("map.get_map", "map.open_map", "map.complete_map"):
             _set_map_bit(out, f, k, False)
@@ -557,46 +582,18 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
                                "shard it led to." % (k, k, hd_chart))
         elif getattr(options, "triforce_chart_%d" % k) == "steps":
             out.set_u("collect.triforce", out.u("collect.triforce") | 1 << (k - 1))
-            rep.changes.append("Triforce Shard %d added (by steps)%s. In HD the %s chest holds the shard "
-                               "itself: an HD player who has been to that chest has the shard." % (
-                                   k, " and Triforce Chart %d removed" % k if _map_bit(g, "map.get_map", k)
-                                   else "", TRIFORCE_PLACES[k]))
+            rep.changes.append("Triforce Shard %d added and Triforce Chart %d removed (by steps). In HD the %s "
+                               "chest, which you opened, holds the shard itself: an HD player with that "
+                               "chest open has the shard." % (k, k, TRIFORCE_PLACES[k]))
         else:
-            was_open = any(_collected(g, ("tbox", record, b)) for b in bits)
             for b in bits:
                 _set_tbox(out, record, b, False)
             if k == 4:
-                out.set_event_reg(GHOST_SHIP_REG, 0)        # the Ghost Ship sails again
-            rep.changes.append("%s (by rewards). In HD that chest holds Triforce Shard %d: open it to get the "
-                               "shard.%s" % (
-                                   "Triforce Chart %d removed%s" % (k, " and the %s chest closed" % TRIFORCE_PLACES[k]
-                                                                    if was_open else "; the %s chest was not "
-                                                                    "open and stays closed" % TRIFORCE_PLACES[k])
-                                   if _map_bit(g, "map.get_map", k) else
-                                   "%s chest closed again" % TRIFORCE_PLACES[k], k,
+                out.set_event_reg(GHOST_SHIP_REG, 0)        # at 3 the ship is gone for good; it sails again
+            rep.changes.append("Triforce Chart %d removed and the %s chest closed again (by rewards). In HD "
+                               "that chest holds Triforce Shard %d: open it again to get the shard.%s" % (
+                                   k, TRIFORCE_PLACES[k], k,
                                    " The Ghost Ship sails again so that you can board it." if k == 4 else ""))
-
-    # In HD a shard of this kind comes from its chest and from nowhere else: they go together. A GameCube
-    # file can hold the chart or the shard with the chest flag unset (seen in practice saves).
-    for k in REUSED_CHARTS:
-        record, bits = TRIFORCE_CHESTS[k]
-        held = bool(out.u("collect.triforce") >> (k - 1) & 1)
-        if held and not _collected(out, ("tbox", record, bits[0])):
-            _set_tbox(out, record, bits[0], True)
-            rep.changes.append("%s chest marked as opened: in HD it is where Triforce Shard %d, which this "
-                               "file has, comes from, so it must not give a second one." % (TRIFORCE_PLACES[k], k))
-
-    # The Ghost Ship is gone for good once its chest scene has ended (register 3); every real HD file with
-    # that chest open has it so.
-    ghost_chest = _collected(out, ("tbox",) + (TRIFORCE_CHESTS[4][0], TRIFORCE_CHESTS[4][1][0]))
-    if ghost_chest and out.event_reg(GHOST_SHIP_REG) != 3:
-        out.set_event_reg(GHOST_SHIP_REG, 3)
-        rep.changes.append("The Ghost Ship is marked as cleared: its chest is open in the converted file, and "
-                           "in HD the ship does not appear again after that.")
-    elif not ghost_chest and out.event_reg(GHOST_SHIP_REG) == 3:
-        out.set_event_reg(GHOST_SHIP_REG, 0)
-        rep.changes.append("The Ghost Ship sails again: the file had it marked as cleared with its chest "
-                           "closed, and that chest is the only place Triforce Shard 4 comes from in HD.")
 
     # --- 3.2 places whose reward differs ------------------------------------------------------------
     def give_chart(k, salvaged=False):
@@ -632,27 +629,23 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     a = options.floor50 if f50 else None
     b = options.marie if marie else None
     charm_off = layout.FIELDS[HEROS_CHARM[0]][0] + HEROS_CHARM[1]
-    had_charm = bool(out.data[charm_off] & HEROS_CHARM[2])
-    if f50 or marie or had_charm:
-        # In HD the Hero's Charm and the floor-50 chest go together. The charm stays when it is held and
-        # Mrs. Marie's case is not answered by steps (also in a file that holds it without her event).
-        f50_open = a == "steps" or (had_charm and b != "steps")
+    if f50 or marie:
+        # In HD the Hero's Charm and the floor-50 chest go together. (A healthy GameCube file holds the charm
+        # exactly when Mrs. Marie gave her reward.)
+        f50_open = a == "steps" or b == "rewards"
         _set_tbox(out, SAVAGE_FLOOR_50[1], SAVAGE_FLOOR_50[2], f50_open)
         if f50_open:
             out.data[charm_off] |= HEROS_CHARM[2]
-            if not had_charm:
+            if not marie:
                 rep.changes.append("Hero's Charm added (floor 50 by steps): in HD it is what the Savage "
                                    "Labyrinth floor-50 chest, which you opened, holds.")
-            if f50 and a == "rewards":
-                rep.changes.append("Savage Labyrinth floor-50 chest left open although floor 50 is by rewards: "
-                                   "you keep the Hero's Charm, and in HD that chest is where it comes from.")
             if not f50:
-                rep.changes.append("Savage Labyrinth floor-50 chest marked as opened (you keep the Hero's Charm): "
+                rep.changes.append("Savage Labyrinth floor-50 chest marked as opened (Mrs. Marie by rewards): "
                                    "in HD the Hero's Charm comes from that chest, and you keep the charm, so "
                                    "the chest must not give a second one. The Piece of Heart the GameCube had "
                                    "there is under Two-Eye Reef in HD (Treasure Chart 46).")
         else:
-            if marie and had_charm:
+            if marie:
                 out.data[charm_off] &= ~(HEROS_CHARM[2] | HEROS_CHARM_ACTIVE) & 0xFF
                 rep.changes.append("Hero's Charm removed (Mrs. Marie by steps): in HD she gives Treasure Chart "
                                    "45 instead, and the charm is in the Savage Labyrinth floor-50 chest (%s). "
@@ -661,10 +654,7 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
             if f50:
                 rep.changes.append("Savage Labyrinth floor-50 chest closed again (floor 50 by rewards): in HD it "
                                    "holds the Hero's Charm, which you do not have. Open it again to get it.")
-    if a == "steps" and out.u("status_a.max_life") <= MIN_MAX_LIFE:
-        rep.warnings.append("the floor-50 Piece of Heart could not be removed: the file has only the three "
-                            "hearts every file starts with, or fewer (damaged or edited save)")
-    elif a == "steps":
+    if a == "steps":
         max_life = out.u("status_a.max_life") - 1
         out.set_u("status_a.max_life", max_life)
         if out.u("status_a.life") > max_life // 4 * 4:
@@ -748,12 +738,7 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
 
     # --- Lenzo's Picto Box quest ------------------------------------------------------------------
     if _lenzo_stuck(g):
-        if options.lenzo == "steps" or not _couple_on_street(g):       # no way back: only "steps" works
-            if not _couple_on_street(g):
-                rep.changes.append("Lenzo's third picture has one translation only in this file, by steps: the "
-                                   "couple of that picture no longer meets on the street (register 0xB907 is "
-                                   "%d), so the picture could not be taken again and the case was not asked." %
-                                   g.event_reg(0xB907))
+        if options.lenzo == "steps":
             _set_item(out, layout.SLOT_CAMERA, ITEM_DELUXE_PICTO_BOX)
             _set_get_bits(out, layout.SLOT_CAMERA, _get_bits(out, layout.SLOT_CAMERA) | 2)
             rep.changes.append("Deluxe Picto Box added (Lenzo by steps): HD gives it when he accepts the third "
@@ -806,16 +791,12 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     # --- 4. state that HD keeps in its own records -------------------------------------------------
     # Z-targeting mode: GameCube config.attention_type, HD options byte 0
     opt = bytearray(extra["options"])
-    # (0 hold, 1 switch; anything else is not a setting). The field of the save block is 0 in every real HD
-    # Quest Log, also in the one whose options record says "switch".
-    lock_on = g.u("config.attention_type") if g.u("config.attention_type") in (0, 1) else 0
-    opt[hd.OPT_LOCK_ON] = lock_on
+    # (0 hold, 1 switch). The field of the save block is 0 in every real HD Quest Log, also in the one whose
+    # options record says "switch".
+    opt[hd.OPT_LOCK_ON] = g.u("config.attention_type")
     extra["options"] = bytes(opt)
     out.set_u("config.attention_type", 0)
-    if g.u("config.attention_type") not in (0, 1):
-        rep.changes.append("Targeting mode set to 'hold': the file held %d, which is not a setting." %
-                           g.u("config.attention_type"))
-    if lock_on:
+    if g.u("config.attention_type"):
         rep.changes.append("Targeting mode 'switch' carried over: HD keeps that setting in its options record.")
 
     inv = bytearray(extra["inventory"])

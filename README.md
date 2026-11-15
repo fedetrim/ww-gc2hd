@@ -48,6 +48,11 @@ Not done here either: a run on a real Wii U.
 ./ww-gc2hd verify  out/cking.sav                 # checksums and structure of an HD save
 ```
 
+Only files that normal play can have written are converted. A file that was edited, made with glitches or
+damaged (for example a Triforce Chart whose chest is still closed) is left out: its Quest Log is written
+empty and the report says what is wrong with it. The tool does not try to repair one
+(`docs/DIFFERENCES.md`, section 5b).
+
 Input: `.gci`, `.gcs`, `.sav`, or a raw memory card image (Dolphin `MemoryCardA.USA.raw`, a card dump).
 All three files of the card are converted to Quest Logs 1-3. The input is never modified, and an existing
 save in the output folder is only replaced with `--force`, which first moves it (`cking.sav` and its

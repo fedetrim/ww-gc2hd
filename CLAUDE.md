@@ -13,6 +13,9 @@ Read `README.md` for what the tool does and `docs/DIFFERENCES.md` for every diff
    reward is held exactly when the place that gives it in HD is done
    (`tests/test_wwsave.py::test_no_duplicate_and_nothing_unobtainable` checks every combination of cases and
    answers; extend it with every new case).
+   The rules assume a GameCube file that normal play wrote. `health()` in `wwsave/convert.py` checks that
+   first, and a file that fails is not converted. Do not add handling for an inconsistent input to a rule:
+   if a rule needs something to hold, add it to the health check.
 2. **No defaults for real choices.** Where the two games give different rewards at the same place, the save
    is in a state HD does not have. Each such case has two exact translations and the user picks:
    `steps` (the place stays done; the GameCube reward is replaced by HD's) or `rewards` (what is held stays;

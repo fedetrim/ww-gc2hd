@@ -350,7 +350,7 @@ class Conversion(unittest.TestCase):
         back = hd.HdFile.parse(data)                       # strict: checksums and CRC
         for s, g in enumerate(card.slots()):
             h = back.slots[s]
-            if g is None or g.is_new():
+            if g is None or g.is_new() or conv.health(g):   # unused, unreadable or not from normal play
                 self.assertEqual(bytes(h), bytes(hd.fresh_slot()), path)
                 continue
             self.assertGreater(h.u("info.save_count"), 0, path)
@@ -402,8 +402,9 @@ class Conversion(unittest.TestCase):
             conv._set_map_bit(s, "map.complete_map", 7, True)
             s.set_u("collect.triforce", 1 << 6)            # shard 7 salvaged
             s.set_u("map.triforce_bits", 0b01001011)       # 1, 2, 4, 7 deciphered
-            s.set_u("memory12.tbox", 1 << 17)              # cabana labyrinth chest (chart 2)
+            s.set_u("memory12.tbox", 1 << 17 | 1 << 10)    # cabana labyrinth chest (chart 2), Stone Watcher (7)
             s.set_u("memory10.tbox", 1 << 22)              # a GameCube copy of the Ghost Ship chest (chart 4)
+            s.set_event_reg(conv.GHOST_SHIP_REG, 3)        # ... after which the ship is gone
         card = self._card(edit)
         g_rupees = card.slots()[0].u("status_a.rupee")
         with self.assertRaises(conv.ConversionError):      # no default
@@ -504,115 +505,66 @@ class Conversion(unittest.TestCase):
             self.assertEqual((st["charts"][46], st["charts"][45]),
                              ("xxx" if a == "rewards" else "---", "x--" if b == "steps" else "---"), (a, b))
 
-    def test_floor50_by_steps_on_a_file_without_hearts(self):
-        def edit(s):
-            s.set_u("memory13.tbox", 1 << 12)
-            s.set_u("status_a.max_life", 0)
-            s.set_u("status_a.life", 0)
-        out, reports = conv.convert(self._card(edit), conv.Options(floor50="steps"))
-        self.assertEqual(out.slots[0].u("status_a.max_life"), 0)
-        self.assertEqual(len(reports[0].warnings), 1)
+    def test_unhealthy_files_are_not_converted(self):
+        """A file normal play cannot have written is left out whole; nothing in it is repaired."""
+        def edits():
+            yield "life above maximum", lambda s: (s.set_u("status_a.max_life", 20), s.set_u("status_a.life", 40))
+            yield "no hearts", lambda s: s.set_u("status_a.max_life", 0)
+            yield "targeting", lambda s: s.set_u("config.attention_type", 0x37)
+            yield "rupees", lambda s: s.set_u("status_a.rupee", 900)
+            yield "chart without chest", lambda s: conv._set_map_bit(s, "map.get_map", 6, True)
+            yield "chest without chart", lambda s: s.set_u("memory13.tbox", 1 << 11)
+            yield "shard without chart", lambda s: s.set_u("collect.triforce", 1 << 5)
+            yield "charm without Marie", lambda s: s.set_raw("collect.collect", bytes([0, 0, 0, 0, 1, 0, 0, 0]))
+            yield "Marie without charm", lambda s: s.set_event_bit(0x1C04)
+            yield "Ghost Ship cleared, chest closed", lambda s: s.set_event_reg(conv.GHOST_SHIP_REG, 3)
+            yield "floor 50 without its piece", lambda s: s.set_u("memory13.tbox", 1 << 12)
+            yield "couple without Deluxe box", lambda s: s.set_event_reg(0xB907, 2)
+            yield "Swift Sail", lambda s: s.set_u("item.slot01", 0x77)
+        for what, edit in edits():
+            card = self._card(edit)
+            self.assertTrue(conv.health(card.slots()[0]), what)
+            self.assertEqual(conv.decisions_for(card.slots()), [], what)
+            out, reports = conv.convert(card, conv.Options.all("steps"))
+            self.assertEqual(bytes(out.slots[0]), bytes(hd.fresh_slot()), what)
+            self.assertTrue(reports[0].unhealthy and any("NOT CONVERTED" in w for w in reports[0].warnings), what)
+        # the healthy files of the same card are converted
+        good = self._card(lambda s: None).slots()[0]
+        bad = self._card(lambda s: s.set_u("status_a.max_life", 0)).slots()[0]
+        out, reports = conv.convert(gc.load(gc.build_gci(b"GZLE01", [bad, good, hd.fresh_slot()])), conv.Options())
+        self.assertEqual((out.slots[0].u("info.save_count"), out.slots[1].u("info.save_count")), (0, 1))
 
-    def test_triforce_chest_open_without_chart_is_a_case(self):
-        """An open chest with neither chart nor shard would leave the shard out of reach in HD."""
-        card = self._card(lambda s: s.set_u("memory13.tbox", 1 << 11))      # Savage Labyrinth floor 30
-        self.assertEqual([d.key for d in conv.decisions_for(card.slots())], ["triforce_chart_6"])
-        h = conv.convert(card, conv.Options(triforce_chart_6="steps"))[0].slots[0]
-        self.assertEqual((h.u("collect.triforce"), h.u("memory13.tbox")), (1 << 5, 1 << 11))
-        h = conv.convert(card, conv.Options(triforce_chart_6="rewards"))[0].slots[0]
-        self.assertEqual((h.u("collect.triforce"), h.u("memory13.tbox")), (0, 0))
-
-    def test_inconsistent_files_still_end_consistent(self):
-        """Files that hold a reward without the flag of its place (seen in practice saves, or edited)."""
-        # Triforce Chart 6 owned, chest flag not set, by steps: the shard is given and the chest is done
-        card = self._card(lambda s: conv._set_map_bit(s, "map.get_map", 6, True))
-        h = conv.convert(card, conv.Options(triforce_chart_6="steps"))[0].slots[0]
-        self.assertEqual((h.u("collect.triforce"), h.u("memory13.tbox") >> 11 & 1), (1 << 5, 1))
-        # shard already held, chest flag not set: the chest is done, no question
-        card = self._card(lambda s: s.set_u("collect.triforce", 1 << 5))
-        self.assertEqual(conv.decisions_for(card.slots()), [])
-        self.assertEqual(conv.convert(card, conv.Options())[0].slots[0].u("memory13.tbox") >> 11 & 1, 1)
-
-        # Ghost Ship marked as cleared with its chest closed and no chart or shard: the ship is brought back
-        card = self._card(lambda s: s.set_event_reg(conv.GHOST_SHIP_REG, 3))
-        for options in (conv.Options(), conv.Options.all("steps"), conv.Options.all("rewards")):
-            self.assertEqual(conv.convert(card, options)[0].slots[0].event_reg(conv.GHOST_SHIP_REG), 0)
-
-        # more life than the maximum (damaged file): lowered; an unused file with a stray flag: no report
-        def too_much(s):
-            s.set_u("status_a.max_life", 20)
-            s.set_u("status_a.life", 40)
-        out, _ = conv.convert(self._card(too_much), conv.Options())
-        self.assertEqual((out.slots[0].u("status_a.life"), hdcheck.invariants(out.slots[0])), (20, []))
-        stray = hd.fresh_slot()
-        stray.set_raw("info.player_name", bytes(17))
-        stray.set_raw("get_item.slot00", b"\x01")
-        tester = hd.fresh_slot()
-        tester.set_raw("info.player_name", b"Tester".ljust(17, b"\0"))
-        _, reports = conv.convert(gc.load(gc.build_gci(b"GZLE01", [tester, stray, hd.fresh_slot()])), conv.Options())
-        self.assertEqual((reports[1].used, reports[1].changes), (False, []))
-
-        # floor 50 by steps on a file with only the three starting hearts: nothing below them is taken
-        def three_hearts(s):
-            s.set_u("memory13.tbox", 1 << 12)
-            s.set_u("status_a.max_life", 12)
-            s.set_u("status_a.life", 12)
-        out, reports = conv.convert(self._card(three_hearts), conv.Options(floor50="steps"))
-        self.assertEqual((out.slots[0].u("status_a.max_life"), hdcheck.invariants(out.slots[0])), (12, []))
-        self.assertEqual(len(reports[0].warnings), 1)
-
-        # Lenzo's case when the couple no longer meets: one translation, and an answer for it is settled
-        def lenzo(s):
-            s.set_u("item.slot08", 0x23)
+    def test_states_normal_play_does_have(self):
+        # an item owned by its ownership bit only (the bow in the final battle): HD puts it back, and the
+        # rules see it; here the Picto Box for Lenzo's case, the Sail for --swift-sail, bombs for flag 0x1940
+        def bit_only(s):
             s.set_raw("get_item.slot08", b"\x01")
+            s.set_raw("get_item.slot01", b"\x01")
+            s.set_raw("get_item.slot13", b"\x01")
             s.set_event_reg(conv.LENZO_REG, 6)
-            s.set_event_reg(0xB907, 2)
-        card = self._card(lenzo)
-        self.assertEqual(conv.decisions_for(card.slots()), [])
-        self.assertIn(("lenzo", 0), conv.settled_answers(card.slots(), conv.Options(lenzo="rewards")))
-        self.assertEqual(conv.settled_answers(card.slots(), conv.Options(lenzo="steps"))[("lenzo", 0)][1], "steps")
+            s.set_event_bit(conv.WHIRLPOOL_HINT)
+        card = self._card(bit_only)
+        self.assertEqual(conv.health(card.slots()[0]), [])
+        self.assertEqual([d.key for d in conv.decisions_for(card.slots())], ["lenzo"])
+        h = conv.convert(card, conv.Options(lenzo="steps", swift_sail=True))[0].slots[0]
+        self.assertEqual((h.u("item.slot08"), h.u("item.slot01")), (0x26, 0x77))
+        self.assertTrue(h.event_bit(conv.WHIRLPOOL_HINT))
 
         # a picture the file counts but the card cannot give is reported, not dropped in silence
-        def counted(s):
-            s.set_u("item_record.picture_num", 2)
-        raw = bytearray(gc.build_gci(b"GZLE01", [self._card(counted).slots()[0], hd.fresh_slot(), hd.fresh_slot()]))
+        counted = self._card(lambda s: s.set_u("item_record.picture_num", 2)).slots()[0]
+        raw = bytearray(gc.build_gci(b"GZLE01", [counted, hd.fresh_slot(), hd.fresh_slot()]))
         raw[gc.DENTRY + 3 * gc.BLOCK + 10] = 0xFF           # first picture block of file 1: checksum now wrong
         _, reports = conv.convert(gc.load(bytes(raw)), conv.Options())
         self.assertEqual(reports[0].pictures, 1)
         self.assertTrue(any("1 of the file's 2 picture(s) could not be read" in w for w in reports[0].warnings))
 
-        # the Picto Box owned by its ownership bit only: still Lenzo's case; the Sail likewise for --swift-sail
-        def bit_only(s):
-            s.set_raw("get_item.slot08", b"\x01")
-            s.set_raw("get_item.slot01", b"\x01")
-            s.set_event_reg(conv.LENZO_REG, 6)
-        card = self._card(bit_only)
-        self.assertEqual([d.key for d in conv.decisions_for(card.slots())], ["lenzo"])
-        h = conv.convert(card, conv.Options(lenzo="steps", swift_sail=True))[0].slots[0]
-        self.assertEqual((h.u("item.slot08"), h.u("item.slot01")), (0x26, 0x77))
-
-        # bombs owned by their ownership bit only (HD puts the item back on load): flag 0x1940 stays
-        def bombs(s):
-            s.set_event_bit(conv.WHIRLPOOL_HINT)
-            s.set_raw("get_item.slot13", b"\x01")
-        self.assertTrue(conv.convert(self._card(bombs), conv.Options())[0].slots[0].event_bit(conv.WHIRLPOOL_HINT))
-        # ... and Lenzo's one-translation file (above) gets the Deluxe Picto Box whatever the answer
-        self.assertEqual(conv.convert(self._card(lenzo), conv.Options(lenzo="rewards"))[0].slots[0].u("item.slot08"),
-                         0x26)
-
-        # Hero's Charm held without Mrs. Marie's event, floor-50 chest open, floor 50 by rewards: the charm
-        # stays, so the chest stays open
-        def edit(s):
-            s.set_u("memory13.tbox", 1 << 12)
-            s.set_raw("collect.collect", bytes([0, 0, 0, 0, 1, 0, 0, 0]))
-        h = conv.convert(self._card(edit), conv.Options(floor50="rewards"))[0].slots[0]
-        self.assertEqual((h.raw("collect.collect")[4] & 1, h.u("memory13.tbox") >> 12 & 1), (1, 1))
-        # Mrs. Marie's event without the charm, by rewards: nothing held, so the chest is left closed
-        card = self._card(lambda s: s.set_event_bit(0x1C04))
-        self.assertIn("no Hero's Charm to keep", conv.decisions_for(card.slots())[0].text(0)[1][1][1])
-        h = conv.convert(card, conv.Options(marie="rewards"))[0].slots[0]
-        self.assertEqual((h.raw("collect.collect")[4] & 1, h.u("memory13.tbox") >> 12 & 1, h.event_bit(0x1C04)),
-                         (0, 0, False))
+        # an unused file with a stray flag is an empty Quest Log with nothing to report
+        stray = hd.fresh_slot()
+        stray.set_raw("info.player_name", bytes(17))
+        stray.set_raw("get_item.slot00", b"\x01")
+        tester = self._card(lambda s: None).slots()[0]
+        _, reports = conv.convert(gc.load(gc.build_gci(b"GZLE01", [tester, stray, hd.fresh_slot()])), conv.Options())
+        self.assertEqual((reports[1].used, reports[1].changes), (False, []))
 
     def test_rupees_are_one_balance(self):
         """A take-back is not cut short because the refund is listed after it."""
@@ -678,6 +630,7 @@ class Conversion(unittest.TestCase):
                 s.set_u("status_a.max_life", 48)
                 s.set_u("status_a.life", 48)
                 s.set_u("status_a.rupee", 1000)
+                s.set_u("status_a.wallet_size", 1)
                 s.set_raw("bag_item.beast", bytes([0x45, 0x1F]) + b"\xff" * 6)
                 s.set_raw("bag_item_record.beast_num", bytes([2, 0, 0, 0, 0, 0, 0, 3]))
                 if lenzo:
