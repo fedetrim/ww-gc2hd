@@ -521,6 +521,8 @@ class Conversion(unittest.TestCase):
             yield "floor 50 without its piece", lambda s: s.set_u("memory13.tbox", 1 << 12)
             yield "couple without Deluxe box", lambda s: s.set_event_reg(0xB907, 2)
             yield "Swift Sail", lambda s: s.set_u("item.slot01", 0x77)
+            yield "Swift Sail by its ownership bit", lambda s: s.set_raw("get_item.slot01", b"\x03")
+            yield "less than three hearts of life", lambda s: s.set_u("status_a.life", 0)
         for what, edit in edits():
             card = self._card(edit)
             self.assertTrue(conv.health(card.slots()[0]), what)
@@ -528,6 +530,9 @@ class Conversion(unittest.TestCase):
             out, reports = conv.convert(card, conv.Options.all("steps"))
             self.assertEqual(bytes(out.slots[0]), bytes(hd.fresh_slot()), what)
             self.assertTrue(reports[0].unhealthy and any("NOT CONVERTED" in w for w in reports[0].warnings), what)
+        # ... and gets no album either
+        pics = self._card(lambda s: (s.set_u("item_record.picture_num", 1), s.set_u("status_a.max_life", 0)))
+        self.assertEqual(conv.convert_pictures(pics), {})
         # the healthy files of the same card are converted
         good = self._card(lambda s: None).slots()[0]
         bad = self._card(lambda s: s.set_u("status_a.max_life", 0)).slots()[0]

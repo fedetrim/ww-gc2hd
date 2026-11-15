@@ -398,6 +398,8 @@ def health(g):
         bad.append("maximum life is %s (3 to 20 hearts are possible)" % _hearts(g.u("status_a.max_life")))
     if g.u("status_a.life") > g.u("status_a.max_life"):
         bad.append("current life is above the maximum")
+    if g.u("status_a.life") < MIN_MAX_LIFE:     # the game saves at least three hearts (d_save.cpp:1710)
+        bad.append("current life is %s (the game never saves less than 3 hearts)" % _hearts(g.u("status_a.life")))
     if g.u("status_a.wallet_size") > 2:
         bad.append("wallet size %d does not exist" % g.u("status_a.wallet_size"))
     elif g.u("status_a.rupee") > layout.WALLET_GC[g.u("status_a.wallet_size")]:
@@ -407,7 +409,7 @@ def health(g):
         bad.append("targeting mode %d does not exist" % g.u("config.attention_type"))
     if g.u("item_record.picture_num") > 3:
         bad.append("%d pictures (the Picto Box holds 3)" % g.u("item_record.picture_num"))
-    if _item(g, layout.SLOT_SAIL) == ITEM_SWIFT_SAIL:
+    if _item(g, layout.SLOT_SAIL) == ITEM_SWIFT_SAIL or _get_bits(g, layout.SLOT_SAIL) & 2:
         bad.append("the Swift Sail, which the GameCube game does not have")
     for k in REUSED_CHARTS:
         record, bits = TRIFORCE_CHESTS[k]
@@ -866,8 +868,8 @@ def convert_pictures(card):
     out = {}
     slots = card.slots()
     for s, blocks in enumerate(card.pictures()):
-        if not blocks or slots[s] is None or slots[s].is_new():
-            continue
+        if not blocks or slots[s] is None or slots[s].is_new() or health(slots[s]):
+            continue                            # no album for a file that is not converted
         for key, data in picture.build_album(blocks).items():
             if key == "order":
                 out["cking_pic_order%d.sav" % s] = data

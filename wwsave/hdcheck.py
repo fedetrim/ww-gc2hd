@@ -12,7 +12,9 @@ from .layout import NO_ITEM
 
 # Item of each inventory slot when its get-item bit 0 is set (bottles excluded): the table behind
 # fopMsgM_getTableByte 025DB5AC, observed in real HD saves; upgrades are handled separately.
-SLOT_ITEM = {0: 0x20, 1: 0x78, 2: 0x22, 3: 0x25, 4: 0x24, 5: 0x2D, 6: 0x34, 7: 0x21, 8: 0x23, 9: 0x29,
+SLOT_ITEM = {0: 0x20, layout.SLOT_SAIL: layout.ITEM_SAIL, layout.SLOT_WIND_WAKER: layout.ITEM_WIND_WAKER,
+             3: 0x25, 4: 0x24, 5: 0x2D, 6: 0x34, layout.SLOT_TINGLE: layout.ITEM_TINGLE,
+             layout.SLOT_CAMERA: layout.ITEM_PICTO_BOX, 9: 0x29,
              10: 0x2A, 11: 0x2C, 12: 0x27, 13: 0x31, 18: 0x30, 19: 0x2F, 20: 0x33}
 BOTTLE_SLOTS = (14, 15, 16, 17)
 
