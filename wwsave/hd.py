@@ -147,6 +147,7 @@ class HdFile:
         self.slots = slots                    # 3 x Save
         self.extras = extras                  # 3 x dict(section -> bytes)
         self.tails = tails or [bytes(SLOT_SUMMED - SAVE_SIZE)] * 3   # bytes 0x768..0xA8C of each slot
+        self.problems = []                    # filled by parse(strict=False): what is wrong with the file
 
     def move_to_quest_log_1(self, slot):
         """Swap file `slot` (0-based) with Quest Log 1, save block and HD records. The test rigs load Quest

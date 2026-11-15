@@ -11,7 +11,8 @@ Everything `ww-gc2hd` does is listed here with its evidence. Evidence tags:
   HD `TWWHD-Randomizer/logic/data/location_data.yaml` and `logic/GameItem.hpp`.
 - **[DISC]** stage data of both games, read from the author's copies with `scripts/gc_stage_dump.py` and
   `scripts/hd_stage_dump.py` (every chest with its save record, open flag and content; every actor with its
-  parameters) and compared with `scripts/stage_diff.py` (result: `docs/research/stage-diff.txt`).
+  parameters) and compared with `scripts/stage_diff.py` (result: `docs/research/stage-diff.txt`; its first section shows
+  that every stage keeps its save record: 131 stages on both discs, none differs).
 - **[AP]** save flag numbers from the Archipelago Wind Waker world (`research/archipelago-tww/Locations.py`).
 
 Longer research notes: `docs/research/hd-save-semantics.md` (code review of every HD/GameCube difference that

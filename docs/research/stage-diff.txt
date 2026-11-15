@@ -1,3 +1,30 @@
+== stages and save records
+  A_R00    only on the GameCube disc
+  Amos_T   only on the GameCube disc
+  H_test   only on the GameCube disc
+  I_TestM  only on the GameCube disc
+  I_TestR  only on the GameCube disc
+  KATA_HB  only on the GameCube disc
+  KATA_RM  only on the GameCube disc
+  K_Test2  only on the GameCube disc
+  K_Test3  only on the GameCube disc
+  K_Test4  only on the GameCube disc
+  K_Test5  only on the GameCube disc
+  K_Test6  only on the GameCube disc
+  K_Test8  only on the GameCube disc
+  K_Test9  only on the GameCube disc
+  K_Testa  only on the GameCube disc
+  K_Testb  only on the GameCube disc
+  K_Testc  only on the GameCube disc
+  K_Testd  only on the GameCube disc
+  K_Teste  only on the GameCube disc
+  SubD45   only on the GameCube disc
+  TEST     only on the GameCube disc
+  TF_05    only on the GameCube disc
+  TF_07    only on the GameCube disc
+  VrTest   only on the GameCube disc
+  morocam  only on the GameCube disc
+  131 stages on both discs; save record differs in 0
 == chests
   Cave07   Stage   rec 13 pos [2500.0, 26.9, 0.0]
       GC (type, flag, switch, item) [(2, 2, 255, '0F')]

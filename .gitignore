@@ -21,6 +21,8 @@
 /samples/gc/github-cgf95_tww-gz/
 /samples/**/Hacked_File_*/
 /samples/**/*.wwstate
+# a raw memory card image holds the saves of other games too; only the game's file cut out of it is kept
+/samples/**/*.raw
 /samples/**/*.png
 /samples/**/*.sav.txt
 /samples/**/cking_playlog.sav

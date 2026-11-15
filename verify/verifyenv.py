@@ -10,7 +10,7 @@ environment variable:
     WW_HD_GAME       $WW_RESEARCH/hd-game/game               extracted Wind Waker HD, USA v0
     WW_HD_STAGES     $WW_RESEARCH/hd-game/stages.json        output of scripts/hd_stage_dump.py (save record per stage)
     WW_VERIFY_OUT    $WW_RESEARCH/out/verify                 where the runs write (chests/CASE/, npcs/NAME/)
-    WW_RUNNER        <repo>/research/port-src/tools/gametest/run_scenario.sh
+    WW_RUNNER        $WW_RESEARCH/port-src/tools/gametest/run_scenario.sh
                                                              the port's scenario runner (read by scripts/ingame_test.py)
 
 The shell scripts of these folders (q.sh, run_marie.sh, run_lenzo.sh) use the same variables and defaults.
@@ -34,7 +34,7 @@ def out_dir(kind):
 
 
 if __name__ == "__main__":
-    runner = os.environ.get("WW_RUNNER") or os.path.join(ROOT, "research/port-src/tools/gametest/run_scenario.sh")
+    runner = os.environ.get("WW_RUNNER") or os.path.join(RES, "port-src/tools/gametest/run_scenario.sh")
     for k, v in (("WW_RESEARCH", RES), ("WW_PORT_EXE", EXE), ("WW_HD_GAME", GAME), ("WW_HD_STAGES", STAGES),
                  ("WW_RUNNER", runner), ("WW_VERIFY_OUT", OUT)):
         print("%-14s %-7s %s" % (k, "ok" if os.path.exists(v) else "MISSING", os.path.relpath(v, ROOT) if v.startswith(ROOT) else v))

@@ -15,6 +15,14 @@ def key(a):
     return (a["arc"], a["layer"], a["name"], tuple(a["pos"]))
 
 
+print("== stages and save records")
+for st in sorted(set(G) ^ set(H)):
+    print("  %-8s only on the %s disc" % (st, "GameCube" if st in G else "HD"))
+moved = [st for st in sorted(set(G) & set(H)) if G[st]["save_table"] != H[st]["save_table"]]
+for st in moved:
+    print("  %-8s save record %s on the GameCube, %s in HD" % (st, G[st]["save_table"], H[st]["save_table"]))
+print("  %d stages on both discs; save record differs in %d" % (len(set(G) & set(H)), len(moved)))
+
 print("== chests")
 for st in sorted(set(G) & set(H)):
     g = collections.defaultdict(list)

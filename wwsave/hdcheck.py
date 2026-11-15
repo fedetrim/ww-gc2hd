@@ -21,8 +21,7 @@ def _item_off(slot):
     return layout.FIELDS["item.slot%02d" % slot][0]
 
 
-def _get(save, slot):
-    return save.data[layout.FIELDS["get_item.slot%02d" % slot][0]]
+_get = layout.get_bits
 
 
 def _bag_item(save, index):
@@ -53,11 +52,11 @@ def load_fixups(save):
                 s.data[sel + 3] = 2
                 refresh(3)
     if _get(s, 1) & 2:
-        s.data[_item_off(1)] = 0x77
+        s.data[_item_off(1)] = layout.ITEM_SWIFT_SAIL
         s.data[sel + 4] = 1
         refresh(4)
     if _get(s, 8) & 2:
-        s.data[_item_off(8)] = 0x26
+        s.data[_item_off(8)] = layout.ITEM_DELUXE_PICTO_BOX
     if _get(s, 12) & 4:
         s.data[_item_off(12)] = 0x36
     elif _get(s, 12) & 2:

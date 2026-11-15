@@ -28,27 +28,13 @@ def events(dz):
 
 def gc_tables(iso):
     f = open(iso, "rb")
-    h = f.read(0x440)
-    fst_off, fst_size = struct.unpack(">II", h[0x424:0x42C])
-    f.seek(fst_off)
-    fst = f.read(fst_size)
-    n = struct.unpack(">I", fst[8:12])[0]
-    dirs, out, i = [(n, "")], {}, 1
-    while i < n:
-        while i >= dirs[-1][0]:
-            dirs.pop()
-        name_off = int.from_bytes(fst[i * 12 + 1:i * 12 + 4], "big")
-        a, b = struct.unpack(">II", fst[i * 12 + 4:i * 12 + 12])
-        name = fst[n * 12 + name_off:fst.index(b"\0", n * 12 + name_off)].decode("latin-1")
-        p = dirs[-1][1] + "/" + name
-        if fst[i * 12]:
-            dirs.append((b, p))
-        elif p.startswith("/res/Stage/") and p.endswith("/Stage.arc"):
+    out = {}
+    for p, (a, b) in G.disc_files(f).items():
+        if p.startswith("/res/Stage/") and p.endswith("/Stage.arc"):
             f.seek(a)
             for fname, data in G.rarc_files(G.yaz0(f.read(b))).items():
                 if fname.endswith(".dzs"):
                     out[p.split("/")[3]] = events(data)
-        i += 1
     return out
 
 

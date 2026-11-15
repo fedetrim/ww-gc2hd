@@ -280,6 +280,12 @@ class CommandLine(unittest.TestCase):
             r = self._run("convert", gci, "-o", out, "--force", "--all", "steps", "--name", "3=Zed")
             self.assertNotEqual(r.returncode, 0)            # Quest Log 3 is not a used file
             self.assertIn("not a used file", r.stderr)
+            # an answer typed for a Quest Log that is not in the case is pointed out; twice is refused
+            r = self._run("convert", gci, "-o", out, "--force", "--all", "steps", "--floor50", "3=rewards")
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("--floor50 3=rewards was not used", r.stderr)
+            r = self._run("convert", gci, "-o", out, "--force", "--floor50", "1=steps,1=rewards")
+            self.assertNotEqual(r.returncode, 0)
             # the Pawprint case alone is not said to depend on floor 50
             paw = hd.fresh_slot()
             paw.set_raw("info.player_name", b"Paw".ljust(17, b"\0"))
@@ -499,6 +505,7 @@ class Conversion(unittest.TestCase):
         self.assertEqual((h.raw("collect.collect")[4] & 1, h.u("memory13.tbox") >> 12 & 1), (1, 1))
         # Mrs. Marie's event without the charm, by rewards: nothing held, so the chest is left closed
         card = self._card(lambda s: s.set_event_bit(0x1C04))
+        self.assertIn("no Hero's Charm to keep", conv.decisions_for(card.slots())[0].text(0)[1][1][1])
         h = conv.convert(card, conv.Options(marie="rewards"))[0].slots[0]
         self.assertEqual((h.raw("collect.collect")[4] & 1, h.u("memory13.tbox") >> 12 & 1, h.event_bit(0x1C04)),
                          (0, 0, False))

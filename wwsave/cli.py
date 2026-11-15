@@ -55,6 +55,8 @@ def _case_value(text):
         log, _, mode = part.partition("=")
         if log not in ("1", "2", "3") or mode not in conv.MODES:
             raise argparse.ArgumentTypeError("use steps, rewards, or per Quest Log like 1=steps,2=rewards")
+        if int(log) - 1 in value:
+            raise argparse.ArgumentTypeError("Quest Log %s is answered twice" % log)
         value[int(log) - 1] = mode
     return value
 
@@ -129,6 +131,17 @@ def cmd_convert(a):
         options.answer(d.key, s, _ask(d, s))
 
     out_file, reports = conv.convert(card, options)
+    # An answer typed for a Quest Log that is not in that case did nothing: say so (a mistyped number
+    # would otherwise leave the intended Quest Log with the --all answer).
+    in_case = {(d.key, s) for d in conv.decisions_for(slots, options) for s in d.slots}
+    in_case |= set(conv.settled_answers(slots, options))
+    for key in conv.Options.CASES:
+        typed = getattr(a, key)
+        if isinstance(typed, dict):
+            for s, mode in sorted(typed.items()):
+                if (key, s) not in in_case:
+                    print("note: %s %d=%s was not used: Quest Log %d is not in that case." % (
+                        _flag(key), s + 1, mode, s + 1), file=sys.stderr)
     for (key, s), why in conv.settled_answers(slots, options).items():
         given = getattr(a, key)                 # an answer typed by hand that had no effect is said
         given = given.get(s) if isinstance(given, dict) else given

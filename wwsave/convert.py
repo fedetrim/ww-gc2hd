@@ -10,12 +10,9 @@ from dataclasses import dataclass, field
 from . import hd, hdcheck, layout
 from .layout import NO_ITEM
 
-ITEM_TINGLE = 0x21          # Tingle Tuner (GameCube) / Tingle Bottle (HD)
-ITEM_WIND_WAKER = 0x22
-ITEM_PICTO_BOX = 0x23
-ITEM_DELUXE_PICTO_BOX = 0x26
-ITEM_SWIFT_SAIL = 0x77
-ITEM_SAIL = 0x78
+ITEM_TINGLE, ITEM_WIND_WAKER, ITEM_PICTO_BOX = layout.ITEM_TINGLE, layout.ITEM_WIND_WAKER, layout.ITEM_PICTO_BOX
+ITEM_DELUXE_PICTO_BOX, ITEM_SWIFT_SAIL, ITEM_SAIL = (layout.ITEM_DELUXE_PICTO_BOX, layout.ITEM_SWIFT_SAIL,
+                                                     layout.ITEM_SAIL)
 
 # Collect maps (charts) whose GameCube item is a Triforce Chart and whose HD item is a new
 # Treasure Chart (DIFFERENCES 3.1): collect map number -> HD Treasure Chart number.
@@ -219,16 +216,14 @@ def _stuck_chart(g, k):
     return taken and not g.u("collect.triforce") >> (k - 1) & 1
 
 
-def _item(save, slot):
-    return save.data[layout.FIELDS["item.slot%02d" % slot][0]]
+_item = layout.item
 
 
 def _set_item(save, slot, item):
     save.data[layout.FIELDS["item.slot%02d" % slot][0]] = item
 
 
-def _get_bits(save, slot):
-    return save.data[layout.FIELDS["get_item.slot%02d" % slot][0]]
+_get_bits = layout.get_bits
 
 
 def _set_get_bits(save, slot, value):
@@ -315,6 +310,7 @@ def decisions_for(slots, options=None):
                      "the chest is closed again; open it in HD to get the chart. You keep the %s" %
                      GC_LOOKOUT_REWARD[k], s)
         f50, marie = _collected(g, SAVAGE_FLOOR_50), g.event_bit(MARIE_EVENT)
+        charm = bool(g.raw(HEROS_CHARM[0])[HEROS_CHARM[1]] & HEROS_CHARM[2])     # normally the same as marie
         if f50:
             need("floor50",
                  "The Savage Labyrinth floor-50 chest is open: the GameCube gave a Piece of Heart. In HD that "
@@ -326,7 +322,9 @@ def decisions_for(slots, options=None):
                  "Chart 46 owned and salvaged; a Silver Rupee already taken from that chest is treated as in "
                  "the Pawprint case by rewards). " + (
                      "The floor-50 chest then follows the Mrs. Marie case: it stays open if you keep the "
-                     "Hero's Charm there, and is closed again otherwise" if marie else
+                     "Hero's Charm there, and is closed again otherwise" if marie and charm else
+                     "The floor-50 chest stays open, because you hold the Hero's Charm that HD keeps in it"
+                     if charm else
                      "The floor-50 chest is closed again; open it in HD to get the Hero's Charm"), s)
         if _collected(g, PAWPRINT_CHEST) and not _pawprint_settled(g, options):
             need("pawprint_chest",
@@ -340,7 +338,14 @@ def decisions_for(slots, options=None):
                  "otherwise that treasure stays to be found, a second Silver Rupee", s)
             if f50:
                 out["pawprint_chest"].depends[s] = ("floor50", "steps")
-        if marie:
+        if marie and not charm:
+            need("marie",
+                 "Mrs. Marie gave her reward for 40 Joy Pendants, but this file does not hold the Hero's Charm "
+                 "the GameCube gives for it. In HD she gives Treasure Chart 45.",
+                 "her reward stays given: you get Treasure Chart 45",
+                 "her reward is pending again (she gives Treasure Chart 45 the next time you bring her a Joy "
+                 "Pendant); there is no Hero's Charm to keep", s)
+        elif marie:
             if not f50:
                 lose = "and lose the Hero's Charm until you open the floor-50 chest in HD"
             elif options.floor50 == "steps":

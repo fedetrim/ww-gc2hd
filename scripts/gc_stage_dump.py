@@ -66,8 +66,9 @@ def chunks(dz):
     return out
 
 
-def main(iso, out_path):
-    f = open(iso, "rb")
+def disc_files(f):
+    """The file table of a GameCube disc image opened as `f`: {path: (offset, size)}."""
+    f.seek(0)
     h = f.read(0x440)
     fst_off, fst_size = struct.unpack(">II", h[0x424:0x42C])
     f.seek(fst_off)
@@ -88,6 +89,12 @@ def main(iso, out_path):
         else:
             paths[p] = (a, b)
         i += 1
+    return paths
+
+
+def main(iso, out_path):
+    f = open(iso, "rb")
+    paths = disc_files(f)
 
     stages = {}
     for p, (off, size) in sorted(paths.items()):

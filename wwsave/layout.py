@@ -151,3 +151,21 @@ HD_TRIFORCE_PRESET = 0xEA
 # rupee limit by wallet size (HD: d_meter_02.cpp:282)
 WALLET_GC = (200, 1000, 5000)
 WALLET_HD = (500, 1000, 5000)
+
+# item numbers the conversion and the load model both name
+ITEM_TINGLE = 0x21          # Tingle Tuner (GameCube) / Tingle Bottle (HD)
+ITEM_WIND_WAKER = 0x22
+ITEM_PICTO_BOX = 0x23
+ITEM_DELUXE_PICTO_BOX = 0x26
+ITEM_SWIFT_SAIL = 0x77
+ITEM_SAIL = 0x78
+
+
+def item(save, slot):
+    """Item number in an inventory slot (0xFF: none)."""
+    return save.data[FIELDS["item.slot%02d" % slot][0]]
+
+
+def get_bits(save, slot):
+    """Ownership bits of an inventory slot."""
+    return save.data[FIELDS["get_item.slot%02d" % slot][0]]
