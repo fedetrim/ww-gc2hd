@@ -79,11 +79,15 @@ def load_fixups(save):
     return s
 
 
+def changed_fields(a, b):
+    """Names of the fields that differ between two save blocks."""
+    return [name for name, (off, size) in layout.FIELDS.items()
+            if a.data[off:off + size] != b.data[off:off + size]]
+
+
 def unsettled_fields(save):
     """Fields the game would rewrite on load (empty for a settled save)."""
-    fixed = load_fixups(save)
-    return [name for name, (off, size) in layout.FIELDS.items()
-            if save.data[off:off + size] != fixed.data[off:off + size]]
+    return changed_fields(save, load_fixups(save))
 
 
 def invariants(save):

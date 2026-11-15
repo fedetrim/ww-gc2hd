@@ -321,8 +321,6 @@ def decisions_for(slots, options=None):
                      "Hero's Charm there, and is closed again otherwise" if marie else
                      "The floor-50 chest is closed again; open it in HD to get the Hero's Charm"), s)
         if _collected(g, PAWPRINT_CHEST) and not _pawprint_settled(g, options):
-            if f50:
-                out.setdefault("pawprint_chest", Decision("pawprint_chest", "", [])).depends[s] = ("floor50", "steps")
             need("pawprint_chest",
                  "%s is open. In HD it holds Treasure Chart 46 (which leads to a Piece of Heart), and the "
                  "Silver Rupee is the sunken treasure of Treasure Chart 45 (Mrs. Marie's reward)." %
@@ -332,6 +330,8 @@ def decisions_for(slots, options=None):
                  "the chest is closed again; open it in HD to get the chart. You keep the Silver Rupee. If "
                  "Treasure Chart 45 is in hand (Mrs. Marie by steps) its treasure is marked as salvaged; "
                  "otherwise that treasure stays to be found, a second Silver Rupee", s)
+            if f50:
+                out["pawprint_chest"].depends[s] = ("floor50", "steps")
         if marie:
             if not f50:
                 lose = "and lose the Hero's Charm until you open the floor-50 chest in HD"
@@ -773,9 +773,7 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     # --- 2.2 what HD rewrites by itself when it loads a Quest Log -----------------------------------
     # Applied here so that the written file is exactly what the game will hold after loading it.
     settled = hdcheck.load_fixups(out)
-    for name, (off, size) in layout.FIELDS.items():
-        if out.data[off:off + size] == settled.data[off:off + size]:
-            continue
+    for name in hdcheck.changed_fields(out, settled):
         rep.changes.append("%s: %s -> %s. HD recomputes this from the ownership flags every time it loads a "
                            "file; it is written as HD will hold it." % (
                                name, out.raw(name).hex(), settled.raw(name).hex()))

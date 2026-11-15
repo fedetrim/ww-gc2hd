@@ -63,11 +63,13 @@ def cmd_convert(a):
     card = _read_gc(a.input)
     if card.game_code != b"GZLE01" and not a.allow_region:
         sys.exit("%s is a %s save (%s). Only USA (GZLE01) saves are supported; --allow-region converts it "
-                 "anyway (unverified)." % (a.input, card.region, card.game_code.decode()))
+                 "anyway (unverified)." % (a.input, card.region, card.code))
     slots = card.slots()
     if not any(s is not None and not s.is_new() for s in slots):
         sys.exit("%s holds no used save file." % a.input)
 
+    if os.path.exists(a.output) and not os.path.isdir(a.output):
+        sys.exit("%s is a file; -o takes the folder to write cking.sav into." % a.output)
     # Checked before any question is asked. A save is cking.sav plus its album files. One already in the folder is never mixed with the new one
     # and never lost: with --force all of it is moved to a backup folder first.
     target = os.path.join(a.output, "cking.sav")
@@ -159,7 +161,7 @@ def cmd_convert(a):
             e, a.output, " The save that was there is untouched in %s." % backup if backup else ""))
 
     print()
-    print("%s (%s, %s) -> %s" % (a.input, card.game_code.decode(), card.source, target))
+    print("%s (%s, %s) -> %s" % (a.input, card.code, card.source, target))
     for rep in reports:
         if not rep.used:
             print("Quest Log %d: empty" % (rep.slot + 1))
@@ -209,7 +211,7 @@ def cmd_info(a):
             print("  %-22s %s" % ("Hero Mode:", "yes" if opt[hd.OPT_HERO_MODE] == 1 else "no"))
     else:
         card = _read_gc(a.file)
-        print("Wind Waker GameCube save (%s, %s)" % (card.game_code.decode(), card.region))
+        print("Wind Waker GameCube save (%s, %s)" % (card.code, card.region))
         for k, (block_ok, slot_ok) in enumerate(card.copy_status()):
             if not block_ok or not all(slot_ok):
                 print("  note: save copy %d has a bad checksum" % (k + 1))

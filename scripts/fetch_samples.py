@@ -101,13 +101,16 @@ def fetch(src):
     target = os.path.join(dest, src.get("archive_dir", ""), src["name"])
     extracted = os.path.normpath(os.path.join(dest, src.get("extracted", "extracted")))
     marker = os.path.join(dest, ".fetched-" + src["name"])      # written last: a failed fetch is retried
-    if os.path.exists(marker) or (kind == "file" and os.path.exists(target)):
+    cut_out = os.path.join(dest, "extracted-gci", "01-GZLE-gczelda.gci")
+    if os.path.exists(marker) or (kind == "file" and os.path.exists(target)
+                                  and (not src.get("raw_card") or os.path.exists(cut_out))):
         return "present"
     os.makedirs(os.path.dirname(target), exist_ok=True)
     part = target + ".part"
     try:
-        with open(part, "wb") as f:
-            f.write(download(src["url"]))
+        if not (kind == "file" and os.path.exists(target)):         # the card image may already be there
+            with open(part, "wb") as f:
+                f.write(download(src["url"]))
         if kind == "archive":
             with tempfile.TemporaryDirectory(dir=dest) as tmp:
                 unpack(part, tmp, src.get("members"))
@@ -115,7 +118,7 @@ def fetch(src):
                 shutil.copytree(tmp, extracted, dirs_exist_ok=True)
         if kind == "archive" and src.get("keep_archive", True) is False:
             os.remove(part)
-        else:
+        elif os.path.exists(part):
             os.replace(part, target)
     finally:
         if os.path.exists(part):

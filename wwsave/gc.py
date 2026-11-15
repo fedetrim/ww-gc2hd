@@ -52,6 +52,7 @@ class GcCardFile:
         self.blocks = bytes(blocks)
         self.source = source
         self.game_code = self.dentry[0:6]
+        self.code = self.game_code.decode("ascii", "replace")       # for messages: the maker bytes are free
         if self.dentry[0:4] not in REGIONS:
             raise GcError("not a Wind Waker save (game code %r)" % self.dentry[0:6])
         name = self.dentry[8:0x28].split(b"\0", 1)[0]
@@ -94,9 +95,6 @@ class GcCardFile:
             off = 8 + s * GAMEDATA
             out.append(Save(self._copy(k + 1)[off:off + SAVE_SIZE]) if ok else None)
         return out
-
-    def save_count(self):
-        return struct.unpack(">I", self._copy(1)[0:4])[0]
 
     def pictures(self):
         """Per file, the pictures the game itself would load (d_s_name.cpp:1218-1251): it visits the first
@@ -172,6 +170,8 @@ def _from_raw_card(raw):
         if e[0:4] not in REGIONS or e[8:0x28].split(b"\0", 1)[0] != FILE_NAME:
             continue
         first, count = struct.unpack(">HH", e[0x36:0x3A])
+        if count > total_blocks - 5:            # also stops a block map that loops
+            raise GcError("corrupt block chain in memory card image")
         data, blk = bytearray(), first
         for _ in range(count):
             if not 5 <= blk < total_blocks:
@@ -193,6 +193,10 @@ def load_all(raw):
             return [GcCardFile(body[:DENTRY], body[DENTRY:], kind)]
     if raw[0:3] == b"GZL" or raw[0x110:0x113] == b"GZL" or raw[0x80:0x83] == b"GZL":
         raise GcError("damaged or truncated Wind Waker card file (%d bytes)" % len(raw))
+    if len(raw) % BLOCK == DENTRY and raw[0:4].isalnum() and raw[0:4] not in REGIONS \
+            and raw[8:9].isalnum():
+        raise GcError("this is a GameCube card file of another game (%s), not The Wind Waker" %
+                      raw[0:4].decode("ascii"))
     if len(raw) % BLOCK not in (0, 0x40) or len(raw) < 5 * BLOCK:
         raise GcError("not a Wind Waker GameCube save (.gci/.gcs/.sav) or memory card image")
     return _from_raw_card(raw)                  # its own errors say what is wrong with the card image

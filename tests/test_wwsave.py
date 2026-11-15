@@ -23,14 +23,6 @@ def _read(path):
         return f.read()
 
 
-def _used_gc_slots():
-    for path in GC_FILES:
-        card = gc.load(_read(path))
-        for s, save in enumerate(card.slots()):
-            if save is not None and not save.is_new():
-                yield path, card, s, save
-
-
 class Formats(unittest.TestCase):
     def test_gc_checksums(self):
         self.assertTrue(GC_FILES or not os.path.isdir(os.path.join(ROOT, "samples", "gc")))
@@ -81,6 +73,17 @@ class Formats(unittest.TestCase):
         self.assertEqual(bytes(gc.load(bytes(card)).slots()[0]), bytes(save))
         with self.assertRaises(gc.GcError):
             gc.load(b"not a save")
+        # a card file of another game is named as such
+        other = bytearray(gci)
+        other[0:4] = b"GZ2E"
+        with self.assertRaisesRegex(gc.GcError, "another game"):
+            gc.load(bytes(other))
+        # a block map that loops does not make the reader run away
+        loop = bytearray(card)
+        loop[gc.BLOCK * 1 + 0x38:gc.BLOCK * 1 + 0x3A] = b"\xff\xff"
+        loop[gc.BLOCK * 2 + 0x38:gc.BLOCK * 2 + 0x3A] = b"\xff\xff"
+        with self.assertRaisesRegex(gc.GcError, "corrupt block chain"):
+            gc.load(bytes(loop))
         # the directory has a backup copy: a newer copy with a bad checksum is not used
         def sums(block, lo, hi, at):
             block[at:at + 4] = struct.pack(">HH", *gc._card_sums(bytes(block[lo:hi])))

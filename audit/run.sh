@@ -50,7 +50,7 @@ rewards() {
 
 undo() {
   mkdir -p "$OUT/undo"
-  py $A/undo/hd_all.py > "$OUT/undo/hd_all.txt"         # -> hd_all.json
+  py "$A/undo/hd_all.py" > "$OUT/undo/hd_all.txt"         # -> hd_all.json
 }
 
 leftovers() {

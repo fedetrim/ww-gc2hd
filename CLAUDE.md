@@ -7,7 +7,9 @@ Read `README.md` for what the tool does and `docs/DIFFERENCES.md` for every diff
 ## Rules that are not negotiable
 
 1. **Exact translation, proved.** A converted file must be a state Wind Waker HD itself could have written.
-   Nothing may become unobtainable, obtainable twice, or leave a quest that cannot be finished. Every unique
+   No unique reward may become unobtainable or obtainable twice, and no quest may be left that cannot be
+   finished. (Rupees and spoils are not unique: both games give them without limit. The one place where a
+   kept rupee can be found again is listed in `docs/DIFFERENCES.md`, Known gaps.) Every unique
    reward is held exactly when the place that gives it in HD is done
    (`tests/test_wwsave.py::test_no_duplicate_and_nothing_unobtainable` checks every combination of cases and
    answers; extend it with every new case).

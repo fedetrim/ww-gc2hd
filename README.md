@@ -32,7 +32,7 @@ This tool was written to make the conversion exact and to prove it:
 |---|---|---|
 | Translation rules | 3 | every difference found between the two games (`docs/DIFFERENCES.md`): 13 fields with other conventions, the HD-only records, and every place whose reward differs |
 | Places whose reward differs | not handled | each is a case with two exact translations, `steps` or `rewards`, chosen by the user, no default |
-| Guarantee | none stated | every unique reward is held exactly when its HD place is done: nothing lost, nothing twice (a test runs every combination of cases and answers) |
+| Guarantee | none stated | every unique reward (shards, charts, Hero's Charm, Pieces of Heart, Deluxe Picto Box) is held exactly when its HD place is done: none lost, none twice (a test runs every combination of cases and answers). Rupees and spoils, which both games give without limit, are translated as far as possible; the exception is in `docs/DIFFERENCES.md`, Known gaps |
 | Picto Box pictures | dropped | converted to the HD album |
 | Report | short notes | every change with its reason, and what you hold before and after |
 | Completeness of the difference list | not stated | both games compared in full: stage data byte by byte, machine code of every save access and item gift, both randomizers' location tables, shops |
