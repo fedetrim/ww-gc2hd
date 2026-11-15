@@ -171,7 +171,7 @@ def main():
     env = dict(os.environ)
     if cache:
         env["SHADER_CACHE"] = os.path.join(out_root, "shadercache%s.bin" % cache)
-    r = subprocess.run([sys.executable, os.path.join(ROOT, "scripts/ingame_test.py"), EXE, GAME, sav,
+    r = subprocess.run([sys.executable, "-I", os.path.join(ROOT, "scripts/ingame_test.py"), EXE, GAME, sav,
                         os.path.join(work, "run"), end] + envs, capture_output=True, text=True, env=env)
     say(r.stdout.strip())
     if r.stderr.strip():

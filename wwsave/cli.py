@@ -92,6 +92,8 @@ def cmd_convert(a):
                 sys.exit("--name %s: Quest Log %s is not a used file on this card (used: %s)." % (
                     value, log, ", ".join(str(s + 1) for s in used)))
             names[int(log) - 1] = name
+        elif sep and log.isdigit():
+            sys.exit("--name %s: there is no Quest Log %s (1 to 3)." % (value, log))
         elif len(used) == 1:
             names[used[0]] = value
         else:
@@ -109,7 +111,8 @@ def cmd_convert(a):
                 if getattr(opts.for_slot(s), d.key) is None]
 
     while open_cases(options):
-        if not sys.stdin.isatty():
+        # questions need a terminal on both ends: with the output redirected they would go into the file
+        if not (sys.stdin.isatty() and sys.stdout.isatty()):
             listed = {}
             for d, s in open_cases(options):
                 question, choices = d.text(s)

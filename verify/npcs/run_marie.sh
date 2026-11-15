@@ -18,12 +18,12 @@ V=${WW_VERIFY_OUT:-$RES/out/verify}/npcs
 name=$1 gci=$2 file=$3 mode=$4; shift 4
 cd $ROOT
 mkdir -p $V/$name
-python3 $here/prep.py $gci $file $V/$name/cking.sav Nitiyou 0 0 all=$mode --pendant-button --time 12 "$@" > $V/$name/prep.txt 2>&1 || { cat $V/$name/prep.txt; exit 1; }
+python3 -I $here/prep.py $gci $file $V/$name/cking.sav Nitiyou 0 0 all=$mode --pendant-button --time 12 "$@" > $V/$name/prep.txt 2>&1 || { cat $V/$name/prep.txt; exit 1; }
 SHOTS=$(python3 -c "print(','.join(str(3400+30*t) for t in range(7,62,3)))")
 PRESS=$(python3 -c "print('8-8.2:2000,'+','.join('%.1f-%.1f:8000'%(t,t+0.2) for t in [12+1.5*i for i in range(32)]))")
 rm -rf $V/$name/shots
-python3 scripts/ingame_test.py $EXE $GAME $V/$name/cking.sav $V/$name/run 62 \
+python3 -I scripts/ingame_test.py $EXE $GAME $V/$name/cking.sav $V/$name/run 62 \
   "WWHD_LINK_WARP=150:-4:0:-175:-32768" "WWHD_TEST_PRESS=$PRESS" "WWHD_TEST_SCREENSHOT=$SHOTS" "WWHD_SCREENSHOT_DIR=$V/$name/shots" > $V/$name/ingame_test.txt 2>&1
-python3 $here/analyze.py $V/$name > $V/$name/result.txt 2>&1
-python3 $here/contact.py $V/$name/shots $V/$name/contact.png 4
+python3 -I $here/analyze.py $V/$name > $V/$name/result.txt 2>&1
+python3 -I $here/contact.py $V/$name/shots $V/$name/contact.png 4
 echo "== $name"; tail -3 $V/$name/prep.txt; cat $V/$name/result.txt

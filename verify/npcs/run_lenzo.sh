@@ -24,7 +24,7 @@ cd $ROOT
 G=${2:-samples/gc/archive-org-memcard-251-us/extracted-gci/01-GZLE-gczelda.gci}
 name=${3:-lenzo-$1}
 mkdir -p $V/$name
-python3 $here/prep.py $G 1 $V/$name/cking.sav Ocmera 0 0 all=$1 --camera-button --album --time 12 > $V/$name/prep.txt 2>&1
+python3 -I $here/prep.py $G 1 $V/$name/cking.sav Ocmera 0 0 all=$1 --camera-button --album --time 12 > $V/$name/prep.txt 2>&1 || { cat $V/$name/prep.txt; exit 1; }
 if [ $1 = rewards ]; then end=60
   PRESS=$(python3 -c "print('8-8.2:2000,'+','.join('%.1f-%.1f:8000'%(t,t+0.2) for t in [12+2.0*i for i in range(24)]))")
   SHOTS=$(python3 -c "print(','.join(str(3400+15*t) for t in range(14,120,3)))")
@@ -33,7 +33,7 @@ else end=45
   SHOTS=$(python3 -c "print(','.join(str(3400+15*t) for t in range(14,90,3)))")
 fi
 rm -rf $V/$name/shots
-python3 scripts/ingame_test.py $EXE $GAME $V/$name/cking.sav $V/$name/run $end \
+python3 -I scripts/ingame_test.py $EXE $GAME $V/$name/cking.sav $V/$name/run $end \
   "WWHD_LINK_WARP=150:-380:0:-259:-16384" "WWHD_TEST_PRESS=$PRESS" "WWHD_TEST_SCREENSHOT=$SHOTS" "WWHD_SCREENSHOT_DIR=$V/$name/shots" > $V/$name/ingame_test.txt 2>&1
-python3 $here/analyze.py $V/$name | tee $V/$name/result.txt
-python3 $here/contact.py $V/$name/shots $V/$name/contact.png 6
+python3 -I $here/analyze.py $V/$name | tee $V/$name/result.txt
+python3 -I $here/contact.py $V/$name/shots $V/$name/contact.png 6

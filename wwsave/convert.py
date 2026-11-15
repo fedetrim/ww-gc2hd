@@ -552,11 +552,16 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
 
     # The Ghost Ship is gone for good once its chest scene has ended (register 3); every real HD file with
     # that chest open has it so.
-    if _collected(out, ("tbox",) + (TRIFORCE_CHESTS[4][0], TRIFORCE_CHESTS[4][1][0])) \
-            and out.event_reg(GHOST_SHIP_REG) != 3:
+    ghost_chest = _collected(out, ("tbox",) + (TRIFORCE_CHESTS[4][0], TRIFORCE_CHESTS[4][1][0]))
+    if ghost_chest and out.event_reg(GHOST_SHIP_REG) != 3:
         out.set_event_reg(GHOST_SHIP_REG, 3)
         rep.changes.append("The Ghost Ship is marked as cleared: its chest is open in the converted file, and "
                            "in HD the ship does not appear again after that.")
+    elif not ghost_chest and out.event_reg(GHOST_SHIP_REG) == 3 \
+            and getattr(options, "triforce_chart_4") != "rewards":
+        out.set_event_reg(GHOST_SHIP_REG, 0)
+        rep.changes.append("The Ghost Ship sails again: the file had it marked as cleared with its chest "
+                           "closed, and that chest is the only place Triforce Shard 4 comes from in HD.")
 
     # --- 3.2 places whose reward differs ------------------------------------------------------------
     def give_chart(k, salvaged=False):
@@ -705,10 +710,10 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     if _lenzo_stuck(g):
         if options.lenzo == "steps" or not _couple_on_street(g):       # no way back: only "steps" works
             if not _couple_on_street(g):
-                rep.warnings.append("Lenzo's case was translated by steps whatever was chosen: the couple of "
-                                    "the third picture no longer meets on the street in this file (register "
-                                    "0xB907 is %d), so the picture could not be taken again" %
-                                    g.event_reg(0xB907))
+                rep.changes.append("Lenzo's third picture has one translation only in this file, by steps: the "
+                                   "couple of that picture no longer meets on the street (register 0xB907 is "
+                                   "%d), so the picture could not be taken again and the case was not asked." %
+                                   g.event_reg(0xB907))
             _set_item(out, layout.SLOT_CAMERA, ITEM_DELUXE_PICTO_BOX)
             _set_get_bits(out, layout.SLOT_CAMERA, _get_bits(out, layout.SLOT_CAMERA) | 2)
             rep.changes.append("Deluxe Picto Box added (Lenzo by steps): HD gives it when he accepts the third "
@@ -767,6 +772,9 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     opt[hd.OPT_LOCK_ON] = lock_on
     extra["options"] = bytes(opt)
     out.set_u("config.attention_type", 0)
+    if g.u("config.attention_type") not in (0, 1):
+        rep.changes.append("Targeting mode set to 'hold': the file held %d, which is not a setting." %
+                           g.u("config.attention_type"))
     if lock_on:
         rep.changes.append("Targeting mode 'switch' carried over: HD keeps that setting in its options record.")
 

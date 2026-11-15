@@ -25,7 +25,7 @@ jobs = sample_jobs(OPTIONS, out)
 def run(job):
     name, path, sav = job
     env = dict(os.environ, SHADER_CACHE=os.path.join(out, name + ".shadercache"))
-    r = subprocess.run([sys.executable, os.path.join(ROOT, "scripts/ingame_test.py"), exe, game, sav,
+    r = subprocess.run([sys.executable, "-I", os.path.join(ROOT, "scripts/ingame_test.py"), exe, game, sav,
                         os.path.join(out, name), "6"], capture_output=True, text=True, env=env)
     return name, path, r.returncode, r.stdout.strip()
 

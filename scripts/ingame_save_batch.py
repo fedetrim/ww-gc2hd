@@ -41,7 +41,7 @@ jobs = sample_jobs(OPTIONS, out)
 def run(job):
     name, path, sav = job
     env = dict(os.environ, SHADER_CACHE=os.path.join(out, name + ".shadercache"), WW_RUNNER=RUNNER)
-    r = subprocess.run([sys.executable, os.path.join(ROOT, "scripts/ingame_test.py"), exe, game, sav,
+    r = subprocess.run([sys.executable, "-I", os.path.join(ROOT, "scripts/ingame_test.py"), exe, game, sav,
                         os.path.join(out, name), "22", "WWHD_TEST_STICK=2-4:0:1",
                         "WWHD_TEST_PRESS=6-6.3:0008,13-13.3:8000,17-17.3:8000",
                         "WWHD_TEST_TOUCH=10-10.4:0.187:0.281"], capture_output=True, text=True, env=env)

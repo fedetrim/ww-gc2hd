@@ -80,7 +80,7 @@ def main():
         press = "%.1f-%.1f:%s,%.1f-%.1f:8000,%s" % (t0, t0 + 0.3, hook, t0 + 3, t0 + 13, ",".join("%d-%d.2:8000" % (t, t) for t in range(32, 48, 3)))
         if os.environ.get("SALVAGE_PRE_PRESS"):
             press = os.environ["SALVAGE_PRE_PRESS"] + "," + press
-        r = subprocess.run([sys.executable, os.path.join(ROOT, "scripts/ingame_test.py"), exe, game, sav,
+        r = subprocess.run([sys.executable, "-I", os.path.join(ROOT, "scripts/ingame_test.py"), exe, game, sav,
                             os.path.join(work, "run"), "50", "WWHD_SHIP_WARP=150:%d:%d,%d:%d:%d" % (x, z, int((t0 + 2.5) * 30), x, z),   # again once stopped
                             "WWHD_TEST_PRESS=" + press, "WWHD_TEST_SCREENSHOT=4250,4340",
                             "WWHD_SCREENSHOT_DIR=" + os.path.join(work, "shots")],

@@ -496,6 +496,10 @@ class Conversion(unittest.TestCase):
         self.assertEqual(conv.decisions_for(card.slots()), [])
         self.assertEqual(conv.convert(card, conv.Options())[0].slots[0].u("memory13.tbox") >> 11 & 1, 1)
 
+        # Ghost Ship marked as cleared with its chest closed and no chart or shard: the ship is brought back
+        card = self._card(lambda s: s.set_event_reg(conv.GHOST_SHIP_REG, 3))
+        self.assertEqual(conv.convert(card, conv.Options())[0].slots[0].event_reg(conv.GHOST_SHIP_REG), 0)
+
         # Hero's Charm held without Mrs. Marie's event, floor-50 chest open, floor 50 by rewards: the charm
         # stays, so the chest stays open
         def edit(s):
@@ -595,8 +599,8 @@ class Conversion(unittest.TestCase):
                 for k in charts:                            # Triforce Shard k <=> its chest
                     self.assertEqual(bool(h.u("collect.triforce") >> (k - 1) & 1),
                                      tbox(chests[k][0], chests[k][1][0]), where)
-                if 4 in charts:                             # the Ghost Ship exists while its chest is closed
-                    self.assertEqual(h.event_reg(conv.GHOST_SHIP_REG) == 3, tbox(0xA, 23), where)
+                # the Ghost Ship exists exactly while its chest is closed
+                self.assertEqual(h.event_reg(conv.GHOST_SHIP_REG) == 3, tbox(0xA, 23), where)
                 self.assertEqual(got(4), tbox(1, 26), where)            # Treasure Chart 43 <=> Horseshoe chest
                 self.assertEqual(got(6), tbox(1, 11), where)            # 44 <=> Star Belt chest
                 self.assertEqual(got(7), h.event_bit(0x1C04), where)    # 45 <=> Mrs. Marie
