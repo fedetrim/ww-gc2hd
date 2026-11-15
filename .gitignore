@@ -2,31 +2,28 @@
 /research/
 /runs/
 /out/
-# Samples: the saves are published with their sources (samples/SOURCES.md). Not published: the original
-# archives they were unpacked from, logs and console metadata that came with them. scripts/fetch_samples.py
-# downloads everything again.
-/samples/**/*.zip
-/samples/**/*.7z
-/samples/**/*.rar
-/samples/**/*.gz
-/samples/**/*.log
-/samples/**/meta/
-/samples/**/.fetched-*
-/samples/**/*.part
-# ... and what came with the saves but nothing here uses: files that failed validation, practice-ROM
-# files, save states of the native port and their thumbnails, saves modified by an exploit tool, HD
-# side files (play log, Miiverse), attachments that are not archives, tools of the source repositories.
+# Samples: only save files and the notes that came with them are published (samples/SOURCES.md lists the
+# sources). Everything else a download brings stays out: archives, logs, videos, fonts, console metadata.
+/samples/**
+!/samples/**/
+!/samples/SOURCES.md
+!/samples/manifest.json
+!/samples/checksums.sha256
+!/samples/**/*.gci
+!/samples/**/cking.sav
+!/samples/**/cking_pic*.sav
+!/samples/**/COMMIT.txt
+!/samples/**/README.md
+!/samples/**/attachments.tsv
+!/samples/gc/cryze/**/*.txt
+!/samples/gc/pack1/**/*.txt
+!/samples/gc/github-pdale-boop_ww-save-editor/presets/presets.json
+# ... and among the save files, those nothing here uses: files that failed validation, practice-ROM files,
+# saves modified by an exploit tool, tools of the source repositories.
 /samples/**/rejected/
 /samples/**/wwstate-only/
 /samples/gc/github-cgf95_tww-gz/
 /samples/**/Hacked_File_*/
-/samples/**/*.wwstate
-# a raw memory card image holds the saves of other games too; only the game's file cut out of it is kept
-/samples/**/*.raw
-/samples/**/*.png
-/samples/**/*.sav.txt
-/samples/**/cking_playlog.sav
-/samples/**/cking_miiverse.sav
 /samples/gc/github-pdale-boop_ww-save-editor/research/
 /samples/gc/github-pdale-boop_ww-save-editor/tools/
 __pycache__/
