@@ -264,9 +264,12 @@ def hd_name_for(name):
         return "Link", "name %r cannot be shown by the HD font; using 'Link'" % name
     if len(folded) > hd.NAME_CHARS:
         short = folded[:hd.NAME_CHARS].rstrip()
-        return short, "name %r shortened to %r (HD allows 8 characters)" % (name, short)
+        return short, "name %r shortened to %r (HD allows 8 characters%s)" % (
+            name, short, "; a space left at the end is dropped" if len(short) < hd.NAME_CHARS else "")
     if folded != name:
-        return folded, "name %r written as %r (characters replaced by their plain form)" % (name, folded)
+        why = ("spaces at the ends removed" if folded == name.strip() else
+               "characters replaced by their plain form")
+        return folded, "name %r written as %r (%s)" % (name, folded, why)
     return folded, None
 
 
@@ -458,7 +461,8 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     if out.u("map.triforce_bits") & HD_TRIFORCE_PRESET != HD_TRIFORCE_PRESET:
         conventions.append("the decipher marks of the five Triforce Charts HD does not have are set, as in "
                            "every HD file")
-    if any(_collected(g, ("tbox", TRIFORCE_CHESTS[4][0], b)) for b in TRIFORCE_CHESTS[4][1][1:]):
+    if any(_collected(g, ("tbox", TRIFORCE_CHESTS[4][0], b)) for b in TRIFORCE_CHESTS[4][1][1:]) \
+            and not (_stuck_chart(g, 4) and options.triforce_chart_4 == "rewards"):
         conventions.append("the Ghost Ship chest is recorded under the one flag HD has for it")
     conventions.append("the inventory snapshots for the boss rematches use HD's button layout")
     if g.raw("return_place.stage").split(b"\0", 1)[0].ljust(8, b"\0") != g.raw("return_place.stage"):
@@ -537,13 +541,16 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
                                    k, " and Triforce Chart %d removed" % k if _map_bit(g, "map.get_map", k)
                                    else "", TRIFORCE_PLACES[k]))
         else:
+            was_open = any(_collected(g, ("tbox", record, b)) for b in bits)
             for b in bits:
                 _set_tbox(out, record, b, False)
             if k == 4:
                 out.set_event_reg(GHOST_SHIP_REG, 0)        # the Ghost Ship sails again
             rep.changes.append("%s (by rewards). In HD that chest holds Triforce Shard %d: open it to get the "
                                "shard.%s" % (
-                                   "Triforce Chart %d removed and the %s chest closed" % (k, TRIFORCE_PLACES[k])
+                                   "Triforce Chart %d removed%s" % (k, " and the %s chest closed" % TRIFORCE_PLACES[k]
+                                                                    if was_open else "; the %s chest was not "
+                                                                    "open and stays closed" % TRIFORCE_PLACES[k])
                                    if _map_bit(g, "map.get_map", k) else
                                    "%s chest closed again" % TRIFORCE_PLACES[k], k,
                                    " The Ghost Ship sails again so that you can board it." if k == 4 else ""))
@@ -592,8 +599,8 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
                                        "one.")
                 else:
                     rupees.append(-20)
-                    rep.changes.append("20 rupees removed (-20 rupees): the Red Rupee the GameCube gave in that "
-                                       "chest, which HD does not give.")
+                    rep.changes.append("20 rupees to take back: the Red Rupee the GameCube gave in that chest, "
+                                       "which HD does not give.")
             else:
                 _set_tbox(out, flag[1], flag[2], False)
                 rep.changes.append("Chest closed again (by rewards): %s. In HD it holds Treasure Chart %d: open "
@@ -682,7 +689,7 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
                                 "collected once more, 200 rupees")
         else:
             rupees.append(-200)
-            rep.changes.append("200 rupees removed (-200 rupees): the Silver Rupee the GameCube gave in the "
+            rep.changes.append("200 rupees to take back: the Silver Rupee the GameCube gave in the "
                                "Pawprint chest. In HD it is the sunken treasure of Treasure Chart 45 (Mrs. "
                                "Marie's reward, then Seven-Star Isles): salvage it to get it back.")
     # Tingle's fee for deciphering a Triforce Chart that HD does not have: HD never charges it.
@@ -690,21 +697,23 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     if paid:
         fee = DECIPHER_FEE * len(paid)
         rupees.append(fee)
-        rep.changes.append("%d rupees added (+%d rupees): what you paid Tingle to decipher Triforce Chart(s) %s. "
-                           "HD has no such chart%s, so an HD player never pays that." % (
-                               fee, fee, ", ".join(str(k) for k in paid), "" if len(paid) == 1 else "s"))
+        rep.changes.append("%d rupees to give back: what you paid Tingle to decipher Triforce Chart(s) %s. HD "
+                           "has no such chart%s, so an HD player never pays that." % (
+                               fee, ", ".join(str(k) for k in paid), "" if len(paid) == 1 else "s"))
     if rupees:
         # One balance: what is taken back and what is given back are applied together, so that neither is
         # cut short by the order they are listed in.
         limit = max(HD_WALLET[min(out.u("status_a.wallet_size"), 2)], out.u("status_a.rupee"))
-        wanted = out.u("status_a.rupee") + sum(rupees)
+        before = out.u("status_a.rupee")
+        wanted = before + sum(rupees)
         out.set_u("status_a.rupee", max(0, min(limit, wanted)))
+        line = "Rupees after the amounts above (%+d in all): %d -> %d." % (
+            sum(rupees), before, out.u("status_a.rupee"))
         if wanted < 0:
-            rep.warnings.append("%d of the rupees to take back were already spent and could not be removed" %
-                                -wanted)
+            line += " %d of the rupees to take back were already spent and could not be removed." % -wanted
         elif wanted > limit:
-            rep.warnings.append("%d of the rupees to give back do not fit: the wallet holds %d" % (
-                wanted - limit, limit))
+            line += " %d of the rupees to give back do not fit: the wallet holds %d." % (wanted - limit, limit)
+        rep.changes.append(line)
     if b == "rewards":
         out.set_event_bit(MARIE_EVENT, False)
         rep.changes.append("Mrs. Marie's reward for 40 Joy Pendants is pending again (by rewards): in HD it is "
