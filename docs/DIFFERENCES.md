@@ -383,10 +383,12 @@ three charted from the start (680 sector pairs, no exception).
     60 charts, the same set as a native 100% HD save minus Treasure Chart 42 (the pig minigame, still
     obtainable).
   - `--swift-sail --hero-mode` on the author's own save: loads with every field intact.
-  - Save cycle in both modes on all 32 samples (the second also with Swift Sail and Hero Mode): 28 of the 32 save in each mode (the other four start in a scene
-    where the menu is not available). In 24 (`steps`) and 23 (`rewards`) the file the game writes differs
-    only in date, time of day, save counter and current life; in the others the game itself changed the
-    return place or a scene flag.
+  - Save cycle in both modes on every used file of the samples (48 distinct files; the second mode also
+    with Swift Sail and Hero Mode): 42 of the 48 save in each mode (the other six start in a scene where
+    the menu is not available). In 36 (`steps`) and 35 (`rewards`) the file the game writes differs only
+    in date, time of day, save counter and current life; in the others the game itself changed the return
+    place or a scene flag. In one file the 18-byte name record differs after the name's terminator only
+    (bytes the game leaves as they were in memory); the name is the same.
   - Three minutes of scripted random movement and button presses on the author's own save: no error or halt.
   - HD Treasure Charts 43-46 played to the end (`scripts/ingame_salvage.py`): a GameCube sample whose
     conversion adds all four was converted by steps; for each chart the file was placed in
@@ -430,9 +432,9 @@ three charted from the start (680 sector pairs, no exception).
       the picture shown is removed from the album (3/3 -> 2/2), as on the GameCube.
   - Every undo of `rewards` read against the HD source for later states (`docs/research/undo-audit.md`):
     each reward stays obtainable exactly once.
-  - All 32 samples converted with `--all steps` and with `--all rewards` load into gameplay with the
-    final rules: in each mode 30 keep every field and two gain a
-    flag the game sets on entering the scene.
+  - Every used file of the USA samples (48 distinct files, each loaded as Quest Log 1) converted with
+    `--all steps` and with `--all rewards` loads into gameplay with the final rules: in each mode 44 keep
+    every field and four gain a flag the game sets on entering the scene.
   - The kidnapping scene on Outset started from a console file made before it (2.1): entering at spawn
     point 203 sets switch 1 and event 0x0E20, as in console files; walking into the trigger sets switch 9.
 - **In Cemu 2.6** (the Wii U emulator, running the author's copy; input sent to its process): six more converted saves at different points of the game (pirate ship, Outset, open sea
