@@ -25,7 +25,9 @@ def _read_hd(path):
 
 
 def _is_hd(path):
-    return os.path.isdir(path) or os.path.getsize(path) == hd.FILE_SIZE
+    # by size, or by the name the game gives its save (a damaged one is then reported as an HD save)
+    return (os.path.isdir(path) or os.path.getsize(path) == hd.FILE_SIZE
+            or os.path.basename(path).lower() == "cking.sav")
 
 
 def _flag(key):

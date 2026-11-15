@@ -50,6 +50,7 @@ def main():
         return 1
     r = subprocess.run([zsh, RUNNER, exe, game, save_dir, out, end] + sys.argv[6:], env=env,
                        capture_output=True, text=True)
+    shutil.rmtree(save_dir, ignore_errors=True)             # the runner worked on its own copy
     print(r.stdout.strip())
     log = ""
     if os.path.exists(os.path.join(out, "log")):

@@ -265,7 +265,8 @@ def hd_name_for(name):
     """HD stores up to 8 UTF-16 characters. Returns (name, note or None); the note says whenever the name
     written is not the name given."""
     folded = unicodedata.normalize("NFKC", name).strip()
-    if not folded[:hd.NAME_CHARS].strip() or not all(0x20 <= ord(c) < 0x250 and not 0x7F <= ord(c) < 0xA0 for c in folded):
+    kept = folded[:hd.NAME_CHARS]               # only what is written has to be in the HD font
+    if not kept.strip() or not all(0x20 <= ord(c) < 0x250 and not 0x7F <= ord(c) < 0xA0 for c in kept):
         return "Link", "name %r cannot be shown by the HD font; using 'Link'" % name
     if len(folded) > hd.NAME_CHARS:
         short = folded[:hd.NAME_CHARS].rstrip()
@@ -429,16 +430,21 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
         if getattr(options, d.key) not in MODES:
             raise ConversionError("no choice made for '%s' in file %d (steps or rewards)" % (d.key, slot + 1))
     rep = SlotReport(slot, used=not g.is_new())
+    extra = hd.default_extra()
+    if not rep.used:
+        # An unused GameCube file has no name. It becomes an empty HD Quest Log.
+        return hd.fresh_slot(), extra, rep
     card_file, g = g, _with_owned_items(g)                  # see _with_owned_items: one inventory for all rules
     out = g.copy()
     for name in hdcheck.changed_fields(card_file, g):
         rep.changes.append("%s: %s -> %s. The file owns that item (its ownership flag is set) but the slot was "
                            "empty; HD puts the item back every time it loads a file, so it is written that "
                            "way." % (name, card_file.raw(name).hex(), g.raw(name).hex()))
-    extra = hd.default_extra()
-    if not rep.used:
-        # An unused GameCube file has no name. It becomes an empty HD Quest Log.
-        return hd.fresh_slot(), extra, rep
+    # a damaged file can hold more life than its maximum; HD never does
+    if out.u("status_a.life") > out.u("status_a.max_life"):
+        rep.changes.append("Current life lowered from %s to the maximum, %s: the file held more life than its "
+                           "maximum." % (_hearts(out.u("status_a.life")), _hearts(out.u("status_a.max_life"))))
+        out.set_u("status_a.life", out.u("status_a.max_life"))
 
     # --- name ---------------------------------------------------------------------------------
     name = gc_name(g, game_code)
@@ -477,6 +483,9 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
             and not (_stuck_chart(g, 4) and options.triforce_chart_4 == "rewards"):
         conventions.append("the Ghost Ship chest is recorded under the one flag HD has for it")
     conventions.append("the inventory snapshots for the boss rematches use HD's button layout")
+    if _item(out, layout.SLOT_WIND_WAKER) == ITEM_WIND_WAKER or _item(out, layout.SLOT_SAIL) in (
+            ITEM_SAIL, ITEM_SWIFT_SAIL):
+        conventions.append("the Wind Waker and the Sail are assigned to the dedicated buttons HD has for them")
     if g.raw("return_place.stage").split(b"\0", 1)[0].ljust(8, b"\0") != g.raw("return_place.stage"):
         conventions.append("the name of the place the file returns to is padded as HD pads it")
     if any(g.raw("map.fmap_bits")[sector] & 1 for sector in range(49) if sector not in hd.PRECHARTED_SECTORS):

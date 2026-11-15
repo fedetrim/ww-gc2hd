@@ -538,6 +538,20 @@ class Conversion(unittest.TestCase):
         for options in (conv.Options(), conv.Options.all("steps"), conv.Options.all("rewards")):
             self.assertEqual(conv.convert(card, options)[0].slots[0].event_reg(conv.GHOST_SHIP_REG), 0)
 
+        # more life than the maximum (damaged file): lowered; an unused file with a stray flag: no report
+        def too_much(s):
+            s.set_u("status_a.max_life", 20)
+            s.set_u("status_a.life", 40)
+        out, _ = conv.convert(self._card(too_much), conv.Options())
+        self.assertEqual((out.slots[0].u("status_a.life"), hdcheck.invariants(out.slots[0])), (20, []))
+        stray = hd.fresh_slot()
+        stray.set_raw("info.player_name", bytes(17))
+        stray.set_raw("get_item.slot00", b"\x01")
+        tester = hd.fresh_slot()
+        tester.set_raw("info.player_name", b"Tester".ljust(17, b"\0"))
+        _, reports = conv.convert(gc.load(gc.build_gci(b"GZLE01", [tester, stray, hd.fresh_slot()])), conv.Options())
+        self.assertEqual((reports[1].used, reports[1].changes), (False, []))
+
         # floor 50 by steps on a file with only the three starting hearts: nothing below them is taken
         def three_hearts(s):
             s.set_u("memory13.tbox", 1 << 12)
@@ -626,6 +640,7 @@ class Conversion(unittest.TestCase):
         self.assertEqual(conv.hd_name_for("        x")[0], "x")             # never a name of spaces
         self.assertEqual(conv.hd_name_for("ab      cd")[0], "ab")
         self.assertEqual(conv.hd_name_for("   ")[0], "Link")
+        self.assertEqual(conv.hd_name_for("ABCDEFGHIJ\u3042")[0], "ABCDEFGH")   # only what is written counts
 
     def test_pawprint_chest(self):
         card = self._swapped(paw=True)
