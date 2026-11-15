@@ -97,7 +97,7 @@ def invariants(save):
         return bad                        # empty Quest Log
     sel = save.raw("status_a.select_item")
     if any(b in (1, 2) for b in sel[:3]):
-        bad.append("Sail or Wind Waker on an X/Y/Z button")
+        bad.append("Sail or Wind Waker on an item button (X/Y/R)")
     if sel[3] not in (NO_ITEM, 2, 3, 0xD):
         bad.append("unexpected item on the GamePad button: %#x" % sel[3])
     if sel[4] not in (NO_ITEM, 1):

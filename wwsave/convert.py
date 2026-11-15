@@ -40,7 +40,7 @@ PAWPRINT_CHEST = HD_CHART_SOURCES[8][0]
 TRIFORCE_CHESTS = {2: (0xC, [17]), 4: (0xA, [23, 21, 22]), 6: (0xD, [11]), 7: (0xC, [10]), 8: (0xC, [11])}
 TRIFORCE_PLACES = {2: "Private Oasis cabana labyrinth", 4: "Ghost Ship", 6: "Savage Labyrinth floor 30",
                    7: "Stone Watcher Island cave", 8: "Overlook Island cave"}
-# Set only through the Tingle Tuner on the GameCube; HD has no setter (0 of 112 real HD Quest Logs):
+# Set only through the Tingle Tuner on the GameCube; HD has no setter (0 of 56 real HD Quest Logs):
 # Knuckle found, Tuner message sent, two Tuner states, Tuner trigger area.
 TUNER_FLAGS = (0x1708, 0x1A20, 0x1A08, 0x1A10, 0x2E08)
 WHIRLPOOL_HINT = 0x1940     # GameCube: set in every whirlpool; HD: only with the bomb bag (d_a_ship.cpp:3481)
@@ -50,6 +50,7 @@ LOOKOUT_CASES = {"horseshoe_chest": 4, "star_belt_chest": 6}      # option -> co
 MODES = ("steps", "rewards")
 DECIPHER_FEE = 398                      # what Tingle charges per Triforce Chart, both games
 HD_WALLET = layout.WALLET_HD
+HD_BUTTONS = ("X", "Y", "R (the GameCube's Z)")     # the three item buttons, by index in select_item
 BEAST_SLOT_FIRST = 24                   # item-button value of the first Spoils Bag slot
 SKULL_NECKLACE = (0, 0x45)              # Spoils Bag counter, item number
 JOY_PENDANT = (7, 0x1F)
@@ -179,7 +180,7 @@ def _take_spoil(save, index, item):
                 for b in range(3):
                     if sel[b] == BEAST_SLOT_FIRST + i:
                         sel[b] = NO_ITEM
-                        note = " It was your last one, so the %s button it was on is now empty." % "XYZ"[b]
+                        note = " It was your last one, so the %s button it was on is now empty." % HD_BUTTONS[b]
         save.set_raw("bag_item.beast", bytes(bag))
         save.set_raw("status_a.select_item", bytes(sel))
     return note
@@ -240,7 +241,7 @@ def _hd_buttons(save, select_field, item_fmt):
     moved = []
     for i in range(3):
         if sel[i] in (layout.SLOT_SAIL, layout.SLOT_WIND_WAKER):
-            moved.append("XYZ"[i])
+            moved.append(HD_BUTTONS[i])
             sel[i] = NO_ITEM
     ww = save.u(item_fmt % layout.SLOT_WIND_WAKER)
     sail = save.u(item_fmt % layout.SLOT_SAIL)
@@ -260,7 +261,7 @@ def hd_name_for(name):
     """HD stores up to 8 UTF-16 characters. Returns (name, note or None); the note says whenever the name
     written is not the name given."""
     folded = unicodedata.normalize("NFKC", name)
-    if not folded or not all(0x20 <= ord(c) < 0x250 and not 0x7F <= ord(c) < 0xA0 for c in folded):
+    if not folded.strip() or not all(0x20 <= ord(c) < 0x250 and not 0x7F <= ord(c) < 0xA0 for c in folded):
         return "Link", "name %r cannot be shown by the HD font; using 'Link'" % name
     if len(folded) > hd.NAME_CHARS:
         return folded[:hd.NAME_CHARS], "name %r shortened to %r (HD allows 8 characters)" % (
@@ -292,12 +293,19 @@ def decisions_for(slots, options=None):
         options = all_options.for_slot(s)
         for k in REUSED_CHARTS:
             if _stuck_chart(g, k):
+                has_chart = _map_bit(g, "map.get_map", k)
+                chest_open = any(_collected(g, ("tbox", TRIFORCE_CHESTS[k][0], b)) for b in TRIFORCE_CHESTS[k][1])
+                state = ("Triforce Chart %d is owned" % k if has_chart else
+                         "The %s chest is open (the file does not hold Triforce Chart %d)" % (TRIFORCE_PLACES[k], k))
                 need("triforce_chart_%d" % k,
-                     "Triforce Chart %d (%s chest) is owned and Triforce Shard %d is not salvaged yet. In HD "
-                     "that chest holds the shard itself and the chart does not exist." % (
-                         k, TRIFORCE_PLACES[k], k),
-                     "the chest stays open and you get Triforce Shard %d now (no deciphering, no salvage)" % k,
-                     "the chart is dropped and the chest is closed again; open it in HD to get the shard", s)
+                     "%s and Triforce Shard %d is not salvaged yet. In HD the %s chest holds the shard itself "
+                     "and the chart does not exist." % (state, k, TRIFORCE_PLACES[k]),
+                     "the chest %s and you get Triforce Shard %d now (no deciphering, no salvage)" % (
+                         "stays open" if chest_open else "is marked as opened", k),
+                     "%s; open it in HD to get the shard" % (
+                         ("the chart is dropped and the chest is closed again" if chest_open else
+                          "the chart is dropped and the chest stays closed") if has_chart else
+                         "the chest is closed again"), s)
         for key, k in LOOKOUT_CASES.items():
             if _collected(g, HD_CHART_SOURCES[k][0]):
                 need(key,
@@ -449,9 +457,11 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
                        "; ".join(conventions))
     out.set_u("config.sound_mode", 2)
     out.set_u("map.triforce_bits", out.u("map.triforce_bits") | HD_TRIFORCE_PRESET)
-    if out.u("item_record.picture_num") or out.event_reg(0x89FF):
-        rep.changes.append("Picture count and the list of erased picture slots set to 0: HD keeps the pictures "
-                           "and their count in the album files, not in the save.")
+    if out.u("item_record.picture_num") or out.event_reg(0x89FF) or any(
+            out.u("status_c%d.picture_num" % i) for i in range(4)):
+        rep.changes.append("Picture counts (also in the inventory snapshots for the boss rematches) and the "
+                           "list of erased picture slots set to 0: HD keeps the pictures and their count in "
+                           "the album files, not in the save.")
     out.set_u("item_record.picture_num", 0)
     out.set_event_reg(0x89FF, 0)       # GameCube: picture slots erased this session; cleared when it loads
     for i in range(4):
@@ -481,7 +491,7 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     moved = _hd_buttons(out, "status_a.select_item", "item.slot%02d")
     if moved:
         rep.changes.append("Button(s) %s emptied: they held the Sail or the Wind Waker. HD has dedicated buttons "
-                           "for both and never keeps them on an item button." % "/".join(moved))
+                           "for both and never keeps them on an item button." % ", ".join(moved))
     # recollection records (inventory snapshots for the boss rematches): GameCube leaves an unused
     # record zeroed, HD fills it with the values of an empty inventory
     for i in range(4):
@@ -509,17 +519,20 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
                                "shard it led to." % (k, k, hd_chart))
         elif getattr(options, "triforce_chart_%d" % k) == "steps":
             out.set_u("collect.triforce", out.u("collect.triforce") | 1 << (k - 1))
-            rep.changes.append("Triforce Shard %d added and Triforce Chart %d removed (by steps). In HD the %s "
-                               "chest, which you opened, holds the shard itself: an HD player with that "
-                               "chest open has the shard." % (k, k, TRIFORCE_PLACES[k]))
+            rep.changes.append("Triforce Shard %d added (by steps)%s. In HD the %s chest holds the shard "
+                               "itself: an HD player who has been to that chest has the shard." % (
+                                   k, " and Triforce Chart %d removed" % k if _map_bit(g, "map.get_map", k)
+                                   else "", TRIFORCE_PLACES[k]))
         else:
             for b in bits:
                 _set_tbox(out, record, b, False)
             if k == 4:
                 out.set_event_reg(GHOST_SHIP_REG, 0)        # the Ghost Ship sails again
-            rep.changes.append("Triforce Chart %d removed and the %s chest closed again (by rewards). In HD "
-                               "that chest holds Triforce Shard %d: open it again to get the shard.%s" % (
-                                   k, TRIFORCE_PLACES[k], k,
+            rep.changes.append("%s (by rewards). In HD that chest holds Triforce Shard %d: open it to get the "
+                               "shard.%s" % (
+                                   "Triforce Chart %d removed and the %s chest closed" % (k, TRIFORCE_PLACES[k])
+                                   if _map_bit(g, "map.get_map", k) else
+                                   "%s chest closed again" % TRIFORCE_PLACES[k], k,
                                    " The Ghost Ship sails again so that you can board it." if k == 4 else ""))
 
     # In HD a shard of this kind comes from its chest and from nowhere else: they go together. A GameCube
@@ -743,9 +756,13 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     # --- 4. state that HD keeps in its own records -------------------------------------------------
     # Z-targeting mode: GameCube config.attention_type, HD options byte 0
     opt = bytearray(extra["options"])
-    opt[hd.OPT_LOCK_ON] = g.u("config.attention_type")
+    # (0 hold, 1 switch; anything else is not a setting). The field of the save block is 0 in every real HD
+    # Quest Log, also in the one whose options record says "switch".
+    lock_on = g.u("config.attention_type") if g.u("config.attention_type") in (0, 1) else 0
+    opt[hd.OPT_LOCK_ON] = lock_on
     extra["options"] = bytes(opt)
-    if g.u("config.attention_type"):
+    out.set_u("config.attention_type", 0)
+    if lock_on:
         rep.changes.append("Targeting mode 'switch' carried over: HD keeps that setting in its options record.")
 
     inv = bytearray(extra["inventory"])

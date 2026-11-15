@@ -73,6 +73,8 @@ class Formats(unittest.TestCase):
         self.assertEqual(bytes(gc.load(bytes(card)).slots()[0]), bytes(save))
         with self.assertRaises(gc.GcError):
             gc.load(b"not a save")
+        # a raw card image behind a 0x40-byte header that happens to start with letters is still a card
+        self.assertEqual(bytes(gc.load(b"ABCD0000X".ljust(0x40, b"\0") + bytes(card)).slots()[0]), bytes(save))
         # a card file of another game is named as such
         other = bytearray(gci)
         other[0:4] = b"GZ2E"
@@ -302,6 +304,7 @@ class Conversion(unittest.TestCase):
                   "item.slot08", "get_item.slot08",
                   "item.slot12", "status_a.select_equip", "collect.collect", "memory00.switch", "map.fmap_bits", "return_place.stage",
                   "status_a.max_life", "status_a.life", "event.flags",      # floor 50, Mrs. Marie, Lenzo
+                  "config.attention_type",                                 # kept in the options record
                   "memory01.tbox", "memory10.tbox", "memory12.tbox", "memory13.tbox",   # chests closed again
                   "status_a.rupee", "bag_item.beast", "bag_item_record.beast_num"}     # GameCube rewards taken back
 
@@ -672,6 +675,12 @@ class Conversion(unittest.TestCase):
                 out, _ = conv.convert(card, options)
                 back = hd.HdFile.parse(out.serialize())
                 self.assertEqual(hdcheck.unsettled_fields(back.slots[0]), [])
+
+    def test_targeting_mode_goes_to_the_options_record(self):
+        for value, expected in ((0, 0), (1, 1), (0x37, 0)):         # 0x37: not a setting
+            out, _ = conv.convert(self._card(lambda s: s.set_u("config.attention_type", value)), conv.Options())
+            self.assertEqual((out.extras[0]["options"][hd.OPT_LOCK_ON], out.slots[0].u("config.attention_type")),
+                             (expected, 0))
 
     def test_buttons(self):
         def edit(s):

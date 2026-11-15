@@ -19,7 +19,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 from wwsave import hd, layout  # noqa: E402
 
-RUNNER = os.environ.get("WW_RUNNER") or os.path.join(ROOT, "research/port-src/tools/gametest/run_scenario.sh")
+RUNNER = os.environ.get("WW_RUNNER") or os.path.join(
+    os.environ.get("WW_RESEARCH") or os.path.join(ROOT, "research"), "port-src/tools/gametest/run_scenario.sh")
 # offset of each packed block inside the in-memory dSv_save_c (alignment padding differs)
 MEM = {"status_a": 0x000, "status_b": 0x018, "return_place": 0x030, "item": 0x03C, "get_item": 0x051,
        "item_record": 0x066, "item_max": 0x06E, "bag_item": 0x076, "get_bag_item": 0x090,

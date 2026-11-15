@@ -193,8 +193,10 @@ def load_all(raw):
             return [GcCardFile(body[:DENTRY], body[DENTRY:], kind)]
     if raw[0:3] == b"GZL" or raw[0x110:0x113] == b"GZL" or raw[0x80:0x83] == b"GZL":
         raise GcError("damaged or truncated Wind Waker card file (%d bytes)" % len(raw))
+    # a .gci of another game: a directory entry whose block count matches the size of what follows it (a
+    # raw card image with a 0x40-byte header has the same length shape but no such entry)
     if len(raw) % BLOCK == DENTRY and raw[0:4].isalnum() and raw[0:4] not in REGIONS \
-            and raw[8:9].isalnum():
+            and struct.unpack(">H", raw[0x38:0x3A])[0] * BLOCK == len(raw) - DENTRY:
         raise GcError("this is a GameCube card file of another game (%s), not The Wind Waker" %
                       raw[0:4].decode("ascii"))
     if len(raw) % BLOCK not in (0, 0x40) or len(raw) < 5 * BLOCK:

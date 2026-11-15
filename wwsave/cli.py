@@ -257,11 +257,8 @@ def main(argv=None):
                    help="Mrs. Marie's 40 Joy Pendant reward given (GameCube: Hero's Charm, HD: Treasure Chart 45)")
     c.add_argument("--lenzo", type=_case_value, metavar="MODE",
                    help="Lenzo's third picture accepted without the Deluxe Picto Box (HD gives it at that step)")
-    c.add_argument("--swift-sail", dest="swift_sail", action="store_true", default=None,
-                   help="upgrade an owned Sail to the HD Swift Sail")
-    c.add_argument("--no-swift-sail", dest="swift_sail", action="store_false")
-    c.add_argument("--hero-mode", dest="hero_mode", action="store_true", default=None, help="enable HD Hero Mode")
-    c.add_argument("--no-hero-mode", dest="hero_mode", action="store_false")
+    c.add_argument("--swift-sail", action="store_true", help="upgrade an owned Sail to the HD Swift Sail")
+    c.add_argument("--hero-mode", action="store_true", help="enable HD Hero Mode")
     c.add_argument("--no-pictures", action="store_true",
                    help="do not write the Picto Box album files (cking_pic*.sav)")
     c.add_argument("--name", action="append", metavar="NAME or N=NAME",

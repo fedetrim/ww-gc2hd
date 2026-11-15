@@ -76,9 +76,9 @@ Flags that HD never sets, or sets under another condition. They are written as a
 
 | Flag | GameCube | HD | Conversion |
 |---|---|---|---|
-| events 0x1708, 0x1A20, 0x1A08, 0x1A10, 0x2E08 | set through the Tingle Tuner (Knuckle found, Tuner message sent, Tuner states, trigger area) | no setter; 0 of 112 real Quest Logs. 0x1708 and 0x1A20 still select lines of Tingle; Knuckle appears from the five Tingle Statue chests | cleared |
+| events 0x1708, 0x1A20, 0x1A08, 0x1A10, 0x2E08 | set through the Tingle Tuner (Knuckle found, Tuner message sent, Tuner states, trigger area) | no setter; 0 of 56 real Quest Logs. 0x1708 and 0x1A20 still select lines of Tingle; Knuckle appears from the five Tingle Statue chests | cleared |
 | event 0x1940 | set in every whirlpool (`d_a_ship.cpp:2825`) | set only with the bomb bag (`d_a_ship.cpp:3481`); selects a line of the King of Red Lions | cleared when no bombs are owned |
-| event 0x2B04 | the two Windfall gossips have told every hint; the last check is the Sail | the last check is the Swift Sail (`d_a_npc_people_event.cpp:233-253`); set in 18 real Quest Logs, all with the Swift Sail | cleared unless the converted file has the Swift Sail |
+| event 0x2B04 | the two Windfall gossips have told every hint; the last check is the Sail | the last check is the Swift Sail (`d_a_npc_people_event.cpp:233-253`); set in 9 real Quest Logs, all with the Swift Sail | cleared unless the converted file has the Swift Sail |
 | `collect.collect[3]` bit 1 | set by the collection menu (`d_menu_collect.cpp:3744`) | never set | cleared |
 | event 0x3940 | set the first time the Deku Tree is asked about the Koroks | set at the end of his explanation; then the sea chart shows the withered-tree icons | copied: who heard the explanation sees the icons |
 
@@ -367,8 +367,8 @@ three charted from the start (680 sector pairs, no exception).
   - The author's own converted save placed at the forest exit on Outset (where the kidnapping scene starts) does
     not replay the scene.
   - Quest Logs 2 and 3 load the same way (cursor moved at file select).
-  - All 32 distinct USA GameCube samples, converted with the final rules, load into
-    gameplay: 30 keep every field; two gain an event flag that the game sets on
+  - An earlier run over file 1 of each distinct USA sample card (32 files; the run over all 48 used files
+    is further down): all load into gameplay, 30 keep every field; two gain an event flag that the game sets on
     entering the scene (boarding the pirate ship; the opening of the second quest). An earlier run exposed
     a wrong rule (a New Game+ file not started yet was written with save counter 0 and the game started a
     plain new game); it was corrected and that file now starts the second quest.
