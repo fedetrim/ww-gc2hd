@@ -60,6 +60,15 @@ def unpack(archive, dest, members=None):
                    + (members or []), check=True)
 
 
+def no_links(folder):
+    """Refuse unpacked content that holds a symbolic link: copying it would follow the link and bring the
+    content of a local file into samples/."""
+    for base, dirs, files in os.walk(folder):
+        for name in dirs + files:
+            if os.path.islink(os.path.join(base, name)):
+                raise RuntimeError("archive holds a symbolic link (%s)" % name)
+
+
 def fetch(src):
     dest = os.path.join(SAMPLES, src["dest"])
     kind = src["kind"]
@@ -72,6 +81,7 @@ def fetch(src):
                 if not all(_safe(n) for n in z.namelist()):
                     raise RuntimeError("archive has entries outside its folder")
                 z.extractall(tmp)
+            no_links(tmp)
             top = os.path.join(tmp, os.listdir(tmp)[0])
             os.makedirs(dest, exist_ok=True)
             if src.get("unpack_zips"):          # a repository of zipped saves: keep and unpack only those
@@ -82,6 +92,7 @@ def fetch(src):
                             kept = os.path.join(dest, "archives", name)
                             shutil.copy(os.path.join(folder, name), kept)
                             unpack(kept, os.path.join(dest, "extracted", name[:-4]))
+                            no_links(os.path.join(dest, "extracted", name[:-4]))
             else:
                 shutil.copytree(top, dest, dirs_exist_ok=True)
         with open(os.path.join(dest, "COMMIT.txt"), "w") as f:
@@ -100,6 +111,7 @@ def fetch(src):
         if kind == "archive":
             with tempfile.TemporaryDirectory(dir=dest) as tmp:
                 unpack(part, tmp, src.get("members"))
+                no_links(tmp)
                 shutil.copytree(tmp, extracted, dirs_exist_ok=True)
         if kind == "archive" and src.get("keep_archive", True) is False:
             os.remove(part)

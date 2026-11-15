@@ -47,7 +47,12 @@ def main():
     r = subprocess.run(["/bin/zsh", RUNNER, exe, game, save_dir, out, end] + sys.argv[6:], env=env,
                        capture_output=True, text=True)
     print(r.stdout.strip())
-    log = open(os.path.join(out, "log"), errors="replace").read()
+    log = ""
+    if os.path.exists(os.path.join(out, "log")):
+        with open(os.path.join(out, "log"), errors="replace") as f:
+            log = f.read()
+    else:
+        print("the runner wrote no log (%s); its output:\n%s" % (RUNNER, (r.stderr or "")[-800:]))
     done = os.path.exists(os.path.join(out, "test_done"))
     si = os.path.join(out, "si.bin")
     if not done or not os.path.exists(si):

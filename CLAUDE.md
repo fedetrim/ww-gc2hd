@@ -27,7 +27,8 @@ Read `README.md` for what the tool does and `docs/DIFFERENCES.md` for every diff
 6. **Say what was not checked.** Reports and docs list what was not reached and why. Do not write "verified"
    for something only read.
 7. The tool, its messages and its docs are in English. No personal data (names, home paths, e-mail) in any
-   published file. No game data and no third-party code in the repository.
+   published file, except the author's name in `LICENSE`. No game data and no third-party code in the
+   repository.
 
 ## Layout
 

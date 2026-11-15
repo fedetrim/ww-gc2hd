@@ -115,7 +115,7 @@ class Options:
 class Decision:
     key: str                # Options attribute
     question: str
-    choices: list           # [(value, description)], first = default
+    choices: list           # [(value, description)]; there is no default
     slots: list = field(default_factory=list)
     per_slot: dict = field(default_factory=dict)    # file index -> (question, choices): the text can differ
 
@@ -407,6 +407,9 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
                            "counter is 0 as empty, so the file would not appear.")
     out.set_u("config.sound_mode", 2)
     out.set_u("map.triforce_bits", out.u("map.triforce_bits") | HD_TRIFORCE_PRESET)
+    if out.u("item_record.picture_num") or out.event_reg(0x89FF):
+        rep.changes.append("Picture count and the list of erased picture slots set to 0: HD keeps the pictures "
+                           "and their count in the album files, not in the save.")
     out.set_u("item_record.picture_num", 0)
     out.set_event_reg(0x89FF, 0)       # GameCube: picture slots erased this session; cleared when it loads
     for i in range(4):
@@ -415,16 +418,22 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     # Outset, after Aryll's kidnapping (event 0x0E20): files from normal HD play carry switch 1 of the
     # sea stage from then on; GameCube never sets it. Switch 9 (the scene's trigger) means the same in
     # both games and is kept.
-    if out.event_bit(OUTSET_KIDNAP_EVENT):
+    if out.event_bit(OUTSET_KIDNAP_EVENT) and not out.u("memory00.switch") >> (96 + HD_OUTSET_SWITCH) & 1:
         out.set_u("memory00.switch", out.u("memory00.switch") | 1 << (96 + HD_OUTSET_SWITCH))
+        rep.changes.append("Sea switch 1 set: in HD the scene of Aryll's kidnapping on Outset, which this file "
+                           "has seen, starts another way and leaves that switch set.")
 
     # sea chart: bit 1 of a sector is the GameCube "arrived" mark kept for the Tingle Tuner. HD never
     # sets it (and has no reader); only the three sectors charted from the start carry it.
     fmap = bytearray(out.raw("map.fmap_bits"))
+    arrived = sum(1 for sector in range(49) if sector not in hd.PRECHARTED_SECTORS and fmap[sector] & 2)
     for sector in range(49):
         if sector not in hd.PRECHARTED_SECTORS:
             fmap[sector] &= ~2 & 0xFF
     out.set_raw("map.fmap_bits", bytes(fmap))
+    if arrived:
+        rep.changes.append("'Arrived' mark cleared in %d sea sectors: the GameCube keeps it for the Tingle "
+                           "Tuner, HD never sets it. What is charted and visited is unchanged." % arrived)
 
     # item buttons: HD has dedicated buttons for the Wind Waker and the sail; X/Y/Z never hold them
     moved = _hd_buttons(out, "status_a.select_item", "item.slot%02d")
@@ -471,6 +480,16 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
                                    k, TRIFORCE_PLACES[k], k,
                                    " The Ghost Ship sails again so that you can board it." if k == 4 else ""))
 
+    # In HD a shard of this kind comes from its chest and from nowhere else: they go together. A GameCube
+    # file can hold the chart or the shard with the chest flag unset (seen in practice saves).
+    for k in REUSED_CHARTS:
+        record, bits = TRIFORCE_CHESTS[k]
+        held = bool(out.u("collect.triforce") >> (k - 1) & 1)
+        if held and not _collected(out, ("tbox", record, bits[0])):
+            _set_tbox(out, record, bits[0], True)
+            rep.changes.append("%s chest marked as opened: in HD it is where Triforce Shard %d, which this "
+                               "file has, comes from, so it must not give a second one." % (TRIFORCE_PLACES[k], k))
+
     # --- 3.2 places whose reward differs ------------------------------------------------------------
     def give_chart(k, salvaged=False):
         _set_map_bit(out, "map.get_map", k, True)
@@ -504,19 +523,22 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     a = options.floor50 if f50 else None
     b = options.marie if marie else None
     charm_off = layout.FIELDS[HEROS_CHARM[0]][0] + HEROS_CHARM[1]
-    if f50 or marie:
-        # In HD the Hero's Charm and the floor-50 chest go together.
-        had_charm = bool(out.data[charm_off] & HEROS_CHARM[2])
-        # "rewards" keeps what is held: it marks the chest opened only for a charm the file really has
-        f50_open = a == "steps" or (b == "rewards" and had_charm)
+    had_charm = bool(out.data[charm_off] & HEROS_CHARM[2])
+    if f50 or marie or had_charm:
+        # In HD the Hero's Charm and the floor-50 chest go together. The charm stays when it is held and
+        # Mrs. Marie's case is not answered by steps (also in a file that holds it without her event).
+        f50_open = a == "steps" or (had_charm and b != "steps")
         _set_tbox(out, SAVAGE_FLOOR_50[1], SAVAGE_FLOOR_50[2], f50_open)
         if f50_open:
             out.data[charm_off] |= HEROS_CHARM[2]
             if not had_charm:
                 rep.changes.append("Hero's Charm added (floor 50 by steps): in HD it is what the Savage "
                                    "Labyrinth floor-50 chest, which you opened, holds.")
+            if f50 and a == "rewards":
+                rep.changes.append("Savage Labyrinth floor-50 chest left open although floor 50 is by rewards: "
+                                   "you keep the Hero's Charm, and in HD that chest is where it comes from.")
             if not f50:
-                rep.changes.append("Savage Labyrinth floor-50 chest marked as opened (Mrs. Marie by rewards): "
+                rep.changes.append("Savage Labyrinth floor-50 chest marked as opened (you keep the Hero's Charm): "
                                    "in HD the Hero's Charm comes from that chest, and you keep the charm, so "
                                    "the chest must not give a second one. The Piece of Heart the GameCube had "
                                    "there is under Two-Eye Reef in HD (Treasure Chart 46).")
@@ -640,6 +662,9 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
 
     # --- flags HD sets under other conditions, or never (found in no real HD file) ---------------------
     off = layout.FIELDS["collect.collect"][0] + 3
+    if out.data[off] & 0x02:
+        rep.changes.append("A flag of the GameCube collection screen cleared (collect byte 3, bit 1): HD "
+                           "never sets it.")
     out.data[off] &= ~0x02 & 0xFF       # set by the GameCube collection menu only (d_menu_collect.cpp:3744)
     tuner = [f for f in TUNER_FLAGS if out.event_bit(f)]
     for f in tuner:
@@ -664,6 +689,8 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     opt = bytearray(extra["options"])
     opt[hd.OPT_LOCK_ON] = g.u("config.attention_type")
     extra["options"] = bytes(opt)
+    if g.u("config.attention_type"):
+        rep.changes.append("Targeting mode 'switch' carried over: HD keeps that setting in its options record.")
 
     inv = bytearray(extra["inventory"])
     # Carlov's figurine being sculpted: GameCube register 0xA9FF, HD queue of up to 12 figures
@@ -675,6 +702,7 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     # auction item re-offered after losing: GameCube register 0xCD03, HD record byte
     if g.event_bit(0x4008):
         inv[hd.INV_AUCTION_ITEM] = g.event_reg(0xCD03)
+        rep.changes.append("The auction item to be offered again after a lost bid moved to HD's record for it.")
     extra["inventory"] = bytes(inv)
 
     # Fishmen: HD remembers the sectors whose Fishman already drew the chart in its play log; GameCube
@@ -702,10 +730,6 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
 def convert(card, options=None):
     """GcCardFile -> (HdFile, [SlotReport])."""
     options = options or Options()
-    for d in decisions_for(card.slots(), options):
-        for s in d.slots:
-            if getattr(options.for_slot(s), d.key) not in MODES:
-                raise ConversionError("no choice made for '%s' in file %d (steps or rewards)" % (d.key, s + 1))
     slots, extras, reports = [], [], []
     pictures = card.pictures()
     for s, g in enumerate(card.slots()):

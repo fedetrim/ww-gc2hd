@@ -48,8 +48,9 @@ def load():
                 seen.add(k)
                 H.append(s)
     for f in sorted(glob.glob(os.path.join(ROOT, "samples/gc/**/*.gci"), recursive=True)):
-        if "Hacked_File" in f:
+        if "Hacked_File" in f or "/rejected/" in f:
             continue
+        # every region on purpose: the save block is the same and the statistics need the numbers
         card = gc.load(open(f, "rb").read())
         slots = card.slots() if RAW else conv.convert(card, conv.Options.all("steps"))[0].slots
         for g, s in zip(card.slots(), slots):

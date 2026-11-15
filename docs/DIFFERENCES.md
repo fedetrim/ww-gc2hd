@@ -130,6 +130,9 @@ Conversion:
 - If chart k is owned and shard k is not, the save is in a state HD does not have. **Option
   `--triforce-chart-k`** (no default, see 3.2): `steps` gives shard k, as HD's chest would have; `rewards`
   drops the chart and closes the chest again, so it gives the shard when opened in HD.
+- In HD each of these five shards comes from its chest and from nowhere else, so the converted file always
+  has them together: a shard that is held has its chest marked as opened. Some GameCube files hold the
+  chart or the shard with the chest flag unset (practice saves in `samples/`).
 - A GameCube Ghost Ship chest opened in one of the two copies HD lacks (flags 21, 22) is written as HD's
   one chest: flag 23 set, flags 21 and 22 cleared.
 

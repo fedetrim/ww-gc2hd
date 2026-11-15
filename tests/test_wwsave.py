@@ -349,13 +349,13 @@ class Conversion(unittest.TestCase):
         self.assertEqual(h.raw("map.complete_map")[3], 0)
         self.assertEqual(h.u("map.triforce_bits"), 0xEB)
         self.assertEqual(h.u("status_a.rupee"), min(500, g_rupees + 3 * 398))   # fee of charts 2, 4, 7 back
-        self.assertEqual((h.u("memory12.tbox"), h.u("memory10.tbox")), (1 << 17, 1 << 23))   # HD's one chest
+        self.assertEqual((h.u("memory12.tbox"), h.u("memory10.tbox")), (1 << 17 | 1 << 10, 1 << 23))   # HD's one chest; shard 7 held
         # by rewards: chart 2 dropped and its chest closed; chart 4 by steps
         h = conv.convert(card, conv.Options(triforce_chart_2="rewards", triforce_chart_4="steps"))[0].slots[0]
         self.assertEqual(h.u("collect.triforce"), 0b01001000)
-        self.assertEqual((h.u("memory12.tbox"), h.u("memory10.tbox")), (0, 1 << 23))
+        self.assertEqual((h.u("memory12.tbox"), h.u("memory10.tbox")), (1 << 10, 1 << 23))
         h = conv.convert(card, conv.Options.all("rewards"))[0].slots[0]
-        self.assertEqual((h.u("memory12.tbox"), h.u("memory10.tbox"), h.u("collect.triforce")), (0, 0, 1 << 6))
+        self.assertEqual((h.u("memory12.tbox"), h.u("memory10.tbox"), h.u("collect.triforce")), (1 << 10, 0, 1 << 6))
         self.assertEqual(h.raw("map.get_map")[3], 0b00000001)
 
     def _swapped(self, f50=False, marie=False, paw=False, lookouts=False):
@@ -453,6 +453,30 @@ class Conversion(unittest.TestCase):
         h = conv.convert(card, conv.Options(triforce_chart_6="rewards"))[0].slots[0]
         self.assertEqual((h.u("collect.triforce"), h.u("memory13.tbox")), (0, 0))
 
+    def test_inconsistent_files_still_end_consistent(self):
+        """Files that hold a reward without the flag of its place (seen in practice saves, or edited)."""
+        # Triforce Chart 6 owned, chest flag not set, by steps: the shard is given and the chest is done
+        card = self._card(lambda s: conv._set_map_bit(s, "map.get_map", 6, True))
+        h = conv.convert(card, conv.Options(triforce_chart_6="steps"))[0].slots[0]
+        self.assertEqual((h.u("collect.triforce"), h.u("memory13.tbox") >> 11 & 1), (1 << 5, 1))
+        # shard already held, chest flag not set: the chest is done, no question
+        card = self._card(lambda s: s.set_u("collect.triforce", 1 << 5))
+        self.assertEqual(conv.decisions_for(card.slots()), [])
+        self.assertEqual(conv.convert(card, conv.Options())[0].slots[0].u("memory13.tbox") >> 11 & 1, 1)
+
+        # Hero's Charm held without Mrs. Marie's event, floor-50 chest open, floor 50 by rewards: the charm
+        # stays, so the chest stays open
+        def edit(s):
+            s.set_u("memory13.tbox", 1 << 12)
+            s.set_raw("collect.collect", bytes([0, 0, 0, 0, 1, 0, 0, 0]))
+        h = conv.convert(self._card(edit), conv.Options(floor50="rewards"))[0].slots[0]
+        self.assertEqual((h.raw("collect.collect")[4] & 1, h.u("memory13.tbox") >> 12 & 1), (1, 1))
+        # Mrs. Marie's event without the charm, by rewards: nothing held, so the chest is left closed
+        card = self._card(lambda s: s.set_event_bit(0x1C04))
+        h = conv.convert(card, conv.Options(marie="rewards"))[0].slots[0]
+        self.assertEqual((h.raw("collect.collect")[4] & 1, h.u("memory13.tbox") >> 12 & 1, h.event_bit(0x1C04)),
+                         (0, 0, False))
+
     def test_rupees_are_one_balance(self):
         """A take-back is not cut short because the refund is listed after it."""
         def edit(s):
@@ -523,8 +547,9 @@ class Conversion(unittest.TestCase):
             keys = [d.key for d in conv.decisions_for(card.slots(), conv.Options(floor50="steps"))]
             for answers in itertools.product(conv.MODES, repeat=len(keys)):
                 opts = conv.Options(**dict(zip(keys, answers)))
-                h = conv.convert(card, opts)[0].slots[0]
-                hd.HdFile.parse(conv.convert(card, opts)[0].serialize())
+                converted = conv.convert(card, opts)[0]
+                h = converted.slots[0]
+                hd.HdFile.parse(converted.serialize())
                 n += 1
                 where = (f50, marie, paw, look, lenzo, charts, dict(zip(keys, answers)))
                 got = lambda k: conv._map_bit(h, "map.get_map", k)
