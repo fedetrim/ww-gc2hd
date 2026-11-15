@@ -521,6 +521,9 @@ class Conversion(unittest.TestCase):
             yield "floor 50 without its piece", lambda s: s.set_u("memory13.tbox", 1 << 12)
             yield "couple without Deluxe box", lambda s: s.set_event_reg(0xB907, 2)
             yield "Swift Sail", lambda s: s.set_u("item.slot01", 0x77)
+            yield "item without its flag", lambda s: s.set_u("item.slot12", 0x27)
+            yield "item that is not what its flags say", lambda s: (s.set_u("item.slot12", 0x36),
+                                                                    s.set_raw("get_item.slot12", b"\x03"))
             yield "Swift Sail by its ownership bit", lambda s: s.set_raw("get_item.slot01", b"\x03")
             yield "less than three hearts of life", lambda s: s.set_u("status_a.life", 0)
         for what, edit in edits():

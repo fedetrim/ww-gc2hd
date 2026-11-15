@@ -184,8 +184,8 @@ def _take_spoil(save, index, item):
 
 def _with_owned_items(g):
     """A copy of a GameCube file with its inventory as HD will hold it: HD puts the item back in every slot
-    whose ownership bit is set when it loads a file (hdcheck.load_fixups). Every rule reads the inventory
-    from this copy, so that none of them decides on an item the written file will not have."""
+    whose ownership bit is set when it loads a file (hdcheck.load_fixups). In a healthy file that only fills
+    empty slots (the bow taken away in the final battle). Every rule reads the inventory from this copy."""
     fixed = hdcheck.load_fixups(g)
     out = g.copy()
     for slot in range(21):
@@ -215,6 +215,13 @@ def _totals(g, h):
         ("Joy Pendants", g.raw("bag_item_record.beast_num")[7], h.raw("bag_item_record.beast_num")[7]),
     ]
     return [r for r in rows if r[1] != r[2]]
+
+
+def _triforce_chest_open(g, k):
+    """The chest that holds Triforce Chart k on the GameCube (for chart 4, any of the Ghost Ship's three
+    copies of it)."""
+    record, bits = TRIFORCE_CHESTS[k]
+    return any(_collected(g, ("tbox", record, b)) for b in bits)
 
 
 def _stuck_chart(g, k):
@@ -411,9 +418,17 @@ def health(g):
         bad.append("%d pictures (the Picto Box holds 3)" % g.u("item_record.picture_num"))
     if _item(g, layout.SLOT_SAIL) == ITEM_SWIFT_SAIL or _get_bits(g, layout.SLOT_SAIL) & 2:
         bad.append("the Swift Sail, which the GameCube game does not have")
+    as_loaded = hdcheck.load_fixups(g)
+    for slot in range(21):
+        if slot in hdcheck.BOTTLE_SLOTS or _item(g, slot) == NO_ITEM:
+            continue                            # an empty slot with its flag set is normal (see below)
+        if not _get_bits(g, slot) & 1:
+            bad.append("inventory slot %d holds item 0x%02X without its ownership flag" % (slot, _item(g, slot)))
+        elif _item(as_loaded, slot) != _item(g, slot):
+            bad.append("inventory slot %d holds item 0x%02X, but its ownership flags (0x%02X) are those of "
+                       "item 0x%02X" % (slot, _item(g, slot), _get_bits(g, slot), _item(as_loaded, slot)))
     for k in REUSED_CHARTS:
-        record, bits = TRIFORCE_CHESTS[k]
-        chest = any(_collected(g, ("tbox", record, b)) for b in bits)
+        chest = _triforce_chest_open(g, k)
         chart = _map_bit(g, "map.get_map", k)
         shard = bool(g.u("collect.triforce") >> (k - 1) & 1)
         if shard and not chart:
@@ -427,7 +442,7 @@ def health(g):
             "held" if charm else "not held", "given" if g.event_bit(MARIE_EVENT) else "not given"))
     if _collected(g, SAVAGE_FLOOR_50) and g.u("status_a.max_life") <= MIN_MAX_LIFE:
         bad.append("the Savage Labyrinth floor-50 chest is open but the file has no Piece of Heart from it")
-    ghost = any(_collected(g, ("tbox", TRIFORCE_CHESTS[4][0], b)) for b in TRIFORCE_CHESTS[4][1])
+    ghost = _triforce_chest_open(g, 4)
     if (g.event_reg(GHOST_SHIP_REG) == 3) != ghost:
         bad.append("the Ghost Ship is %s but its chest is %s" % (
             "cleared" if g.event_reg(GHOST_SHIP_REG) == 3 else "not cleared", "open" if ghost else "closed"))
@@ -568,7 +583,7 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     # --- 3.1 charts whose ids HD reuses --------------------------------------------------------
     for k, hd_chart in REUSED_CHARTS.items():
         record, bits = TRIFORCE_CHESTS[k]
-        if any(_collected(g, ("tbox", record, b)) for b in bits):
+        if _triforce_chest_open(g, k):
             _set_tbox(out, record, bits[0], True)           # the Ghost Ship copy HD keeps
             for b in bits[1:]:
                 _set_tbox(out, record, b, False)            # HD has no chest for the other two
@@ -714,7 +729,7 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     if rupees:
         # One balance: what is taken back and what is given back are applied together, so that neither is
         # cut short by the order they are listed in.
-        limit = max(HD_WALLET[min(out.u("status_a.wallet_size"), 2)], out.u("status_a.rupee"))
+        limit = HD_WALLET[out.u("status_a.wallet_size")]
         before = out.u("status_a.rupee")
         wanted = before + sum(rupees)
         out.set_u("status_a.rupee", max(0, min(limit, wanted)))

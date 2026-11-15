@@ -61,7 +61,7 @@ research/, runs/, out/  local only, git-ignored
 ## Commands
 
 ```
-python3 -m unittest tests.test_wwsave              # about a minute
+python3 -m unittest tests.test_wwsave              # about ten seconds
 python3 scripts/fetch_samples.py --check           # samples match their checksums
 ./ww-gc2hd convert SAVE.gci -o out --all steps     # or rewards; no option = asks
 ./ww-gc2hd info SAVE.gci | out/                    # what a GameCube or HD save holds

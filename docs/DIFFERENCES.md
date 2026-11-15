@@ -323,7 +323,10 @@ are converted. A file fails when:
 
 - maximum life is outside 3 to 20 hearts, current life is above it, the wallet size does not exist or holds
   more rupees than it can, the targeting mode is not hold or switch, or it counts more than 3 pictures;
-- it holds the Swift Sail (an HD item);
+- current life is below three hearts (the game never saves less);
+- it holds the Swift Sail (an HD item), by the item or by its ownership flag;
+- an inventory slot holds an item without its ownership flag, or an item other than the one its flags
+  stand for (HD rebuilds the slot from the flags on load, so the item would change);
 - for Triforce Chart 2, 4, 6, 7 or 8: the chart is owned and its chest is closed, the chest is open and the
   chart is not owned, or the shard is held without the chart;
 - the Hero's Charm and Mrs. Marie's reward (event 0x1C04) disagree, or the Savage Labyrinth floor-50 chest
@@ -331,10 +334,11 @@ are converted. A file fails when:
 - the Ghost Ship is marked as cleared (register 0x8803 = 3) with its chest closed, or the reverse;
 - the Deluxe Picto Box is held before Lenzo's third task, or Anton and Linda are a couple without it.
 
-17 of the 477 used GameCube sample files fail: speedrun practice saves that hold a Triforce Chart whose chest
-was never opened, two files of one public card that hold all eight shards and no chart, and the three files
-modified by an exploit tool. An item slot that is empty while its ownership flag is set is not a failure:
-normal play does that (the bow is taken away in the final battle), and HD puts the item back on load.
+53 of the 477 used GameCube sample files fail (7 of the 53 USA ones): speedrun practice saves, which hold
+items without their ownership flags or a Triforce Chart whose chest was never opened; two files of one
+public card that hold all eight shards and no chart; and the three files modified by an exploit tool. An
+item slot that is empty while its ownership flag is set is not a failure: normal play does that (the bow is
+taken away in the final battle), and HD puts the item back on load.
 
 ## 6. Known gaps
 - Stage data of both games was compared in full (3.2): chests, actors and player spawn points

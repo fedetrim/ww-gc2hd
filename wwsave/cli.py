@@ -71,6 +71,9 @@ def cmd_convert(a):
                  "anyway (unverified)." % (a.input, card.region, card.code))
     slots = card.slots()
     if not any(s is not None and not s.is_new() for s in slots):
+        if any(s is None for s in slots):
+            sys.exit("%s holds no save file the game can read: %s damaged (bad checksum)." % (
+                a.input, " and ".join("file %d is" % (i + 1) for i, s in enumerate(slots) if s is None)))
         sys.exit("%s holds no used save file." % a.input)
 
     if os.path.exists(a.output) and not os.path.isdir(a.output):
