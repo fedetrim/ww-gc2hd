@@ -102,6 +102,8 @@ class Formats(unittest.TestCase):
             gc.load(bytes(gc.BLOCK * 16))
 
     def test_hd_real_saves_roundtrip(self):
+        if not HD_FILES:
+            self.skipTest("no HD samples under samples/hd")
         for path in HD_FILES:
             raw = _read(path)
             f = hd.HdFile.parse(raw)                       # checksums, format word, CRC
@@ -128,9 +130,12 @@ class Formats(unittest.TestCase):
                 self.assertEqual(f.extras[s]["playlog"], hd.default_extra()["playlog"])
         if not HD_FILES:
             self.skipTest("no HD samples under samples/hd")
+        self.assertGreater(n, 0)                    # the samples do hold empty Quest Logs
 
     def test_hd_load_model_on_real_saves(self):
         """the model of HD's load-time rewrites leaves real HD saves unchanged"""
+        if not HD_FILES:
+            self.skipTest("no HD samples under samples/hd")
         for path in HD_FILES:
             f = hd.HdFile.parse(_read(path))
             for save in f.slots:
@@ -157,6 +162,7 @@ class Pictures(unittest.TestCase):
                     self.assertEqual(checksum, picture.record_checksum(size, _read(pic)), pic)
         if not HD_FILES:
             self.skipTest("no HD samples under samples/hd")
+        self.assertGreater(n, 0)                    # and their album pictures are there
 
     def test_cmpr_block(self):
         # one 8x8 block: four sub-blocks, each all colour 0 (red, green, blue, white)
@@ -561,12 +567,24 @@ class Conversion(unittest.TestCase):
         self.assertEqual(reports[0].pictures, 1)
         self.assertTrue(any("1 of the file's 2 picture(s) could not be read" in w for w in reports[0].warnings))
 
+        # the Picto Box owned by its ownership bit only: still Lenzo's case; the Sail likewise for --swift-sail
+        def bit_only(s):
+            s.set_raw("get_item.slot08", b"\x01")
+            s.set_raw("get_item.slot01", b"\x01")
+            s.set_event_reg(conv.LENZO_REG, 6)
+        card = self._card(bit_only)
+        self.assertEqual([d.key for d in conv.decisions_for(card.slots())], ["lenzo"])
+        h = conv.convert(card, conv.Options(lenzo="steps", swift_sail=True))[0].slots[0]
+        self.assertEqual((h.u("item.slot08"), h.u("item.slot01")), (0x26, 0x77))
+
         # bombs owned by their ownership bit only (HD puts the item back on load): flag 0x1940 stays
         def bombs(s):
             s.set_event_bit(conv.WHIRLPOOL_HINT)
             s.set_raw("get_item.slot13", b"\x01")
         self.assertTrue(conv.convert(self._card(bombs), conv.Options())[0].slots[0].event_bit(conv.WHIRLPOOL_HINT))
-        self.assertEqual(conv.convert(card, conv.Options(lenzo="rewards"))[0].slots[0].u("item.slot08"), 0x26)
+        # ... and Lenzo's one-translation file (above) gets the Deluxe Picto Box whatever the answer
+        self.assertEqual(conv.convert(self._card(lenzo), conv.Options(lenzo="rewards"))[0].slots[0].u("item.slot08"),
+                         0x26)
 
         # Hero's Charm held without Mrs. Marie's event, floor-50 chest open, floor 50 by rewards: the charm
         # stays, so the chest stays open

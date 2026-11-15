@@ -181,10 +181,15 @@ def _take_spoil(save, index, item):
     return note
 
 
-def _owned_item(save, slot):
-    """The item of a slot as HD will hold it after loading: HD puts the item back in a slot whose ownership
-    bit is set (hdcheck.load_fixups), so rules that depend on what is owned must look at it that way."""
-    return _item(hdcheck.load_fixups(save), slot)
+def _with_owned_items(g):
+    """A copy of a GameCube file with its inventory as HD will hold it: HD puts the item back in every slot
+    whose ownership bit is set when it loads a file (hdcheck.load_fixups). Every rule reads the inventory
+    from this copy, so that none of them decides on an item the written file will not have."""
+    fixed = hdcheck.load_fixups(g)
+    out = g.copy()
+    for slot in range(21):
+        out.set_raw("item.slot%02d" % slot, fixed.raw("item.slot%02d" % slot))
+    return out
 
 
 def _hearts(quarters):
@@ -292,6 +297,7 @@ def decisions_for(slots, options=None):
     for s, g in enumerate(slots):
         if g is None or g.is_new():
             continue
+        g = _with_owned_items(g)
         opts = all_options.for_slot(s)
         for k in REUSED_CHARTS:
             if _stuck_chart(g, k):
@@ -401,6 +407,7 @@ def settled_answers(slots, options):
     for s, g in enumerate(slots):
         if g is None or g.is_new():
             continue
+        g = _with_owned_items(g)
         if _collected(g, PAWPRINT_CHEST) and _pawprint_settled(g, options.for_slot(s)):
             out[("pawprint_chest", s)] = ("floor 50 by rewards already settles that chest (opened, Treasure "
                                           "Chart 46 salvaged)", None)
@@ -422,7 +429,12 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
         if getattr(options, d.key) not in MODES:
             raise ConversionError("no choice made for '%s' in file %d (steps or rewards)" % (d.key, slot + 1))
     rep = SlotReport(slot, used=not g.is_new())
+    card_file, g = g, _with_owned_items(g)                  # see _with_owned_items: one inventory for all rules
     out = g.copy()
+    for name in hdcheck.changed_fields(card_file, g):
+        rep.changes.append("%s: %s -> %s. The file owns that item (its ownership flag is set) but the slot was "
+                           "empty; HD puts the item back every time it loads a file, so it is written that "
+                           "way." % (name, card_file.raw(name).hex(), g.raw(name).hex()))
     extra = hd.default_extra()
     if not rep.used:
         # An unused GameCube file has no name. It becomes an empty HD Quest Log.
@@ -721,7 +733,7 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
 
     # --- Tingle Tuner ---------------------------------------------------------------------------
     # Same event, slot and item number in both games: the item is HD's Tingle Bottle. Nothing to change.
-    if _owned_item(out, layout.SLOT_TINGLE) == ITEM_TINGLE:
+    if _item(out, layout.SLOT_TINGLE) == ITEM_TINGLE:
         rep.changes.append("The Tingle Tuner is now the Tingle Bottle: HD replaced the item (same event, same "
                            "inventory slot).")
 
@@ -772,7 +784,7 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
                            "file has them. Two of them changed Tingle's lines (Knuckle found with the Tuner, "
                            "a Tuner message sent); Knuckle appears in HD once the five Tingle Statues are "
                            "found." % ", ".join("0x%04X" % f for f in tuner))
-    if out.event_bit(WHIRLPOOL_HINT) and _owned_item(out, layout.SLOT_BOMBS) == NO_ITEM:
+    if out.event_bit(WHIRLPOOL_HINT) and _item(out, layout.SLOT_BOMBS) == NO_ITEM:
         out.set_event_bit(WHIRLPOOL_HINT, False)
         rep.changes.append("Flag 0x1940 cleared: it selects a line of the King of Red Lions after a whirlpool. "
                            "The GameCube sets it always, HD only when you own bombs, and you do not.")
@@ -827,7 +839,7 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
         rep.changes.append("%s: %s -> %s. HD recomputes this from the ownership flags every time it loads a "
                            "file; it is written as HD will hold it." % (
                                name, out.raw(name).hex(), settled.raw(name).hex()))
-    rep.totals = _totals(g, settled)
+    rep.totals = _totals(card_file, settled)
     return settled, extra, rep
 
 

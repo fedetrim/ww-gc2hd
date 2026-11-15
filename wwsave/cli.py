@@ -98,6 +98,8 @@ def cmd_convert(a):
         elif sep and log.isdigit():
             sys.exit("--name %s: there is no Quest Log %s (1 to 3)." % (value, log))
         elif len(used) == 1:
+            if used[0] in names:
+                sys.exit("--name: Quest Log %d is named twice." % (used[0] + 1))
             names[used[0]] = value
         else:
             sys.exit("--name %s: this card has %d used files. Say which Quest Log gets the name, for example "
@@ -306,6 +308,8 @@ def main(argv=None):
             stream.reconfigure(errors="backslashreplace")
     try:
         a.func(a)
+    except KeyboardInterrupt:
+        sys.exit("\ninterrupted")
     except (gc.GcError, hd.HdError, conv.ConversionError, OSError, OverflowError, ValueError, struct.error) as e:
         sys.exit("error: %s" % e)
 
