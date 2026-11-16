@@ -92,6 +92,12 @@ file and the game at the end, except the clock/date block and the return place. 
   00 -> 01. The last two also change in the control `ghost_steps`, so they belong to sailing in that sector at
   night, not to the ship.
 - `salv46_f50steps`, `salv45_given`: `event+0xAD` 31 -> 32 (changes only in the two runs where a treasure came up).
+- The six runs of 2026-11-16: `salv45_f50rewards_taken` changes the rupees (2770 -> 2970), the chart's
+  completed bit (`map+0x33`) and `event+0xAD` 31 -> 32, as the other runs where a treasure came up;
+  `salv45_f50rewards_kept` changes neither. In both, and in `paw_f50rewards`, current life drops: the
+  enemies of the place hit Link during the script (in `salv45_f50rewards_kept` a bottled fairy is used up,
+  `item+0x0F` 57 -> 50). `f50_rewards_marieSteps` changes only the Hero's Charm bit (`collect+0x04`
+  00 -> 01); `salv46_f50rewards` and `f50_rewards_marieRewards` change no byte.
 - A chest flag of the current stage sits in the live stage record until the stage is left, so it shows in the
   `live stage record tbox` line of `result.txt` and not in `memoryNN.tbox`. Sea chests and the Ghost Ship (left at
   the end of the scene) show in the saved record.

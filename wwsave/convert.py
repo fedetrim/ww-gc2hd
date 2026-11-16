@@ -344,7 +344,8 @@ def decisions_for(slots, options=None):
             question = ("%s is open. In HD it holds Treasure Chart 46 (which leads to a Piece of Heart), and "
                         "the Silver Rupee is the sunken treasure of Treasure Chart 45 (Mrs. Marie's reward)." %
                         HD_CHART_SOURCES[8][1])
-            paw_lose = "lose the Silver Rupee (200 rupees, as far as still held) until you salvage it in HD"
+            paw_lose = ("lose the Silver Rupee (200 rupees, as far as still held); in HD you get it by "
+                        "salvaging the treasure of Treasure Chart 45")
             # kept, the rupee's HD place has to be marked done, which needs Treasure Chart 45 in hand
             if marie and opts.marie == "steps":
                 paw_keep = ("keep the Silver Rupee; the treasure of Treasure Chart 45, which you get from "
