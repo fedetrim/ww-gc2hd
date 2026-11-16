@@ -126,7 +126,7 @@ def _confirm(a, card, converted, existing):
     if existing:
         print(term.labelled("", "note:", "the save already in the output folder is first moved to a backup "
                             "folder there (--force).", "yellow"))
-    if a.hd_region != hd.DEFAULT_REGION:
+    if a.hd_region == "europe":
         print(term.labelled("", "note:", "the rules were established on the USA game; the disc of the %s game was "
                             "not compared (docs/DIFFERENCES.md, 4b)." % hd.REGIONS[a.hd_region].game, "yellow"))
     try:
@@ -381,8 +381,9 @@ def main(argv=None):
     c.add_argument("--swift-sail", action="store_true", help="upgrade an owned Sail to the HD Swift Sail")
     c.add_argument("--hero-mode", action="store_true", help="enable HD Hero Mode")
     c.add_argument("--hd-region", choices=list(hd.REGIONS), default=hd.DEFAULT_REGION,
-                   help="the Wind Waker HD game the save is for: usa (title 10143500, the default) or europe "
-                        "(title 10143600)")
+                   help="the Wind Waker HD game the save is for: %s (default: %s)" % (
+                       ", ".join("%s (title %s)" % (k, r.title[8:]) for k, r in hd.REGIONS.items()),
+                       hd.DEFAULT_REGION))
     c.add_argument("--no-pictures", action="store_true",
                    help="do not write the Picto Box album files (cking_pic*.sav)")
     c.add_argument("--name", action="append", metavar="NAME or N=NAME",

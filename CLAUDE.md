@@ -77,8 +77,8 @@ In-game checks need `research/` set up (`docs/SETUP-RESEARCH.md`):
 ```
 python3 scripts/ingame_case.py SAVE.gci FILE out/cking.sav STAGE ROOM POINT all=steps [case=rewards ...]
 python3 scripts/ingame_test.py PORT_EXE GAME_DIR out/cking.sav RUN_DIR SECONDS [WWHD_...=value ...]
-python3 scripts/ingame_batch.py PORT_EXE GAME_DIR OUT_DIR 3 steps|rewards     # every sample loads
-python3 scripts/ingame_save_batch.py PORT_EXE GAME_DIR OUT_DIR 3 [--alt]      # load, save, compare
+python3 scripts/ingame_batch.py PORT_EXE GAME_DIR OUT_DIR 3 steps|rewards [usa|europe]   # every sample loads
+python3 scripts/ingame_save_batch.py PORT_EXE GAME_DIR OUT_DIR 3 [--alt] [--europe]       # load, save, compare
 ```
 
 ## Adding or changing a rule

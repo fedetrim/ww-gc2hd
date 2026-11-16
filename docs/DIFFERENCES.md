@@ -326,7 +326,7 @@ Log when it clears it, and they go together in every Quest Log of every real fil
 
 | Field | USA | Europe | Evidence |
 |---|---|---|---|
-| options byte 3 | 0 | 1 | [DATA] every Quest Log of the three saves whose source states the European game (two uploaders) has 1, every one of the four whose source states the USA game has 0. The USA code sets 0 when it clears a Quest Log (HD `d/hd_save_slot_flags.cpp:23`), keeps the byte across a New Game+ (`d/d_save_5.cpp:55,74-75`) and has no other reader or writer in the decompilation. |
+| options byte 3 | 0 | 1 | [DATA] every Quest Log of the three saves whose source states the European game (two uploaders) has 1, every one of the four whose source states the USA game has 0. The USA code sets 0 when it clears a Quest Log (HD `d/hd_save_slot_flags.cpp:23`), keeps the byte across a New Game+ (`d/d_save_5.cpp:55,74-75`, under the same "below 2" guard as the targeting setting of byte 0) and has no other reader or writer in the decompilation. If the European game has a setting behind it, a Quest Log could carry a pair other than these two; no sample does. |
 | `config.ruby` (reading aid for Japanese text) | 1 | 0 | [DATA] in every HD sample, 0 exactly in the Quest Logs where options byte 3 is 1 (a test checks every Quest Log). [CODE] the GameCube game has the same split: `dSv_player_config_c::init` sets `VERSION_SELECT(0, 0, 1, 0)` (`src/d/d_save.cpp:994`). No reader in the HD decompilation. |
 
 The pair belongs to the Quest Log, not to the file: one sample written by a port

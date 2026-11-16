@@ -15,8 +15,9 @@ the option in 16 bytes: `config.ruby` of each Quest Log with its two checksum by
 of each Quest Log (3) and the CRC of the HD records (4).
 
 Result (2026-11-16, native port built from ZeldaWWHDRecomp 1af1d61, USA game v0): the game goes from the
-title screen into Quest Log 1; after 6 seconds of play its in-memory save holds all 441 compared fields
-as in the file.
+title screen into Quest Log 1; after 6 seconds of play the 441 fields the script compares are as in the
+file, none differs (a field the game changes while playing is left out of the comparison, not counted
+as equal).
 
 This run compares the save block only, which holds `config.ruby` but not the options record. The next run
 covers options byte 3.

@@ -917,7 +917,7 @@ def convert(card, options=None):
     for rep, out in zip(reports, slots):                # `out`: the converted block, before the defaults
         if not rep.used:
             continue
-        if options.hd_region != hd.DEFAULT_REGION:
+        if options.hd_region == "europe":                   # the evidence named below is that game's
             rep.changes.append("File written for the %s game (--hd-region %s), with no effect on what you "
                                "hold: the two settings that game gives every Quest Log differently from "
                                "the USA one are set its way (the reading-aid setting for Japanese text, "
