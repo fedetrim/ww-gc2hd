@@ -50,10 +50,11 @@ PRECHARTED_SECTORS = (0, 10, 43)   # Forsaken Fortress, Windfall, Outset: charte
 
 # The game builds a file can be written for. `build` (options byte OPT_BUILD) and `ruby` (config.ruby) are
 # the defaults the build gives a Quest Log when it clears it; they go together in every real file, per
-# Quest Log. Nothing else in the file depends on the build. The first entry is the default.
+# Quest Log. Nothing else in the file depends on the build.
 Region = collections.namedtuple("Region", "game title build ruby")
 REGIONS = {"usa": Region("USA", "0005000010143500", 0, 1),
            "europe": Region("European", "0005000010143600", 1, 0)}
+DEFAULT_REGION = "usa"
 
 
 def set_region(slots, extras, region):

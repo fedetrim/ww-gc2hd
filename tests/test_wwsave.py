@@ -127,7 +127,8 @@ class Formats(unittest.TestCase):
                 n += 1
                 region = hd.slot_region(save, f.extras[s])  # the build that cleared this Quest Log
                 self.assertIsNotNone(region, path)
-                hd.set_region([fresh], [hd.default_extra()], region)
+                hd.set_region([fresh], [hd.default_extra()], region)     # the options record holds the
+                                                            # player's settings too: not compared
                 diff = [i for i in range(layout.SAVE_SIZE) if i not in skip and save.data[i] != fresh.data[i]]
                 self.assertEqual(diff, [], path)
                 self.assertEqual(f.extras[s]["playlog"], hd.default_extra()["playlog"])
@@ -305,6 +306,11 @@ class CommandLine(unittest.TestCase):
         hd.HdFile.parse(conv.convert(card, conv.Options(hd_region="europe"))[0].serialize())
         with self.assertRaises(conv.ConversionError):
             conv.convert(card, conv.Options(hd_region="japan"))
+        save.set_u("config.ruby", 0)                        # as a Japanese or European GameCube file has it
+        card = gc.load(gc.build_gci(b"GZLE01", [save, hd.fresh_slot(), hd.fresh_slot()]))
+        out, reports = conv.convert(card, conv.Options())
+        self.assertEqual(hd.region_of(out), "usa")
+        self.assertIn("reading-aid setting for Japanese text set to 1", " ".join(reports[0].changes))
 
     def test_convert_info_verify(self):
         import tempfile
@@ -467,7 +473,9 @@ class Conversion(unittest.TestCase):
         for s, g in enumerate(card.slots()):
             h = back.slots[s]
             if not conv.is_converted(g):                    # unused, unreadable or not from normal play
-                self.assertEqual(bytes(h), bytes(hd.fresh_slot()), path)
+                fresh, extra = hd.fresh_slot(), hd.default_extra()
+                hd.set_region([fresh], [extra], options.hd_region)
+                self.assertEqual((bytes(h), back.extras[s]["options"]), (bytes(fresh), extra["options"]), path)
                 continue
             self.assertGreater(h.u("info.save_count"), 0, path)
             self.assertEqual(hdcheck.invariants(h), [], "%s file %d" % (path, s + 1))
@@ -493,7 +501,7 @@ class Conversion(unittest.TestCase):
             self.skipTest("no GameCube samples under samples/gc")
 
     def test_all_samples_other_options(self):
-        opts = conv.Options.all("rewards", swift_sail=True, hero_mode=True)
+        opts = conv.Options.all("rewards", swift_sail=True, hero_mode=True, hd_region="europe")
         if not GC_FILES:
             self.skipTest("no GameCube samples under samples/gc")
         for path in GC_FILES:

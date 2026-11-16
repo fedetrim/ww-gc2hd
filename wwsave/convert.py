@@ -86,7 +86,7 @@ class Options:
     swift_sail: bool = False            # upgrade an owned Sail to the HD Swift Sail
     hero_mode: bool = False             # HD Hero Mode
     name: str = None                    # player name override (max 8 characters), or {file index: name}
-    hd_region: str = "usa"              # the HD game the file is for: "usa" | "europe" (hd.REGIONS)
+    hd_region: str = hd.DEFAULT_REGION  # the HD game the file is for: "usa" | "europe" (hd.REGIONS)
 
     CASES = ("triforce_chart_2", "triforce_chart_4", "triforce_chart_6", "triforce_chart_7",
              "triforce_chart_8", "horseshoe_chest", "star_belt_chest", "floor50", "marie", "pawprint_chest",
@@ -917,7 +917,7 @@ def convert(card, options=None):
     for rep, g in zip(reports, slots):
         if not rep.used:
             continue
-        if options.hd_region != "usa":
+        if options.hd_region != hd.DEFAULT_REGION:
             rep.changes.append("File written for the %s game (--hd-region %s), with no effect on what you "
                                "hold: the two settings that game gives every Quest Log differently from "
                                "the USA one are set its way (the reading-aid setting for Japanese text, "

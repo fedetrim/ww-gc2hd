@@ -336,8 +336,8 @@ builds. Console and Cemu samples have one pair throughout.
 
 The conversion gives all three Quest Logs the pair of the chosen build; nothing else depends on the option
 (a test compares the two outputs). A GameCube file carries its own region's `config.ruby` (USA 1, Japan
-and Europe 0; two USA sample files have 0), so for the USA game the value changes only for those files,
-and the report says so.
+and Europe 0; two USA sample files have 0), so for the USA game the value changes for a Japanese or
+European GameCube file (`--allow-region`) and for those two files, and the report says so.
 
 What this rests on, and what was not checked:
 

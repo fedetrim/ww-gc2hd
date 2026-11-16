@@ -24,15 +24,17 @@ anything about the European build.
 
 The only USA sample card whose files carry `config.ruby` 0 is
 `samples/gc/archive-org-zeldasaves/extracted/NGC/USA/the-legend-of-zelda-the-wind-waker.14259.gci`
-(files 1 and 3). Converted with `--all steps --no-pictures` for the USA game, the report of both files
-says the setting was set to 1. File 1 was loaded as it is, file 3 after moving it to Quest Log 1
+(files 1 and 3). Converted with `--all steps --no-pictures` and with `--all rewards --no-pictures` for the
+USA game, the report of both files says the setting was set to 1. File 1 was loaded as it is, file 3 after moving it to Quest Log 1
 (`HdFile.move_to_quest_log_1`).
 
-Result (2026-11-16, same build): both go into gameplay and keep all 442 compared fields.
+Result (2026-11-16, same build): in both modes both files go into gameplay and keep all 442 compared
+fields.
 
 ## Not run
 
 - The European game, on a console or in an emulator.
-- The reload of every sample (`scripts/ingame_batch.py`) was not repeated for this change. For the USA
-  game the output changes only for the two files above, by that one byte and its checksum; every other
-  USA sample converts to the same bytes as before.
+- The reload of every sample (`scripts/ingame_batch.py`) was not repeated for this change. Instead the
+  conversions for the USA game of all 34 USA sample cards, with `--all steps` and with `--all rewards` (68
+  outputs), were compared with those of the commit before this change: 66 are the same bytes, and the two
+  that differ are the card above, which was played in both modes.

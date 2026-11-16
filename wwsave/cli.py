@@ -127,8 +127,9 @@ def _confirm(a, card, converted, existing):
         print(term.labelled("", "note:", "the save already in the output folder is first moved to a backup "
                             "folder there (--force).", "yellow"))
     try:
-        answer = _prompt("Convert File %s to %s? (y/n): " % (
-            " and ".join(str(s + 1) for s in converted), os.path.join(a.output, "cking.sav"))).lower()
+        answer = _prompt("Convert File %s to %s, for the %s game? (y/n): " % (
+            " and ".join(str(s + 1) for s in converted), os.path.join(a.output, "cking.sav"),
+            hd.REGIONS[a.hd_region].game)).lower()
     except EOFError:
         print()
         answer = ""
@@ -321,8 +322,8 @@ def cmd_info(a):
     if _is_hd(a.file):
         f = _read_hd(a.file)
         region = hd.region_of(f)
-        # the two defaults say which build created each Quest Log; either game reads and keeps both pairs
-        print(paint("Wind Waker HD save" + (" (Quest Logs created by the %s game)" % hd.REGIONS[region].game
+        # the two defaults of a build (hd.REGIONS); they do not prove which game wrote the file
+        print(paint("Wind Waker HD save" + (" (Quest Logs with the defaults of the %s game)" % hd.REGIONS[region].game
                                             if region else ""), "bold"))
         if not region:
             print("  Game whose defaults each Quest Log carries: %s" % ", ".join(
@@ -376,7 +377,7 @@ def main(argv=None):
                    help="Lenzo's third picture accepted without the Deluxe Picto Box (HD gives it at that step)")
     c.add_argument("--swift-sail", action="store_true", help="upgrade an owned Sail to the HD Swift Sail")
     c.add_argument("--hero-mode", action="store_true", help="enable HD Hero Mode")
-    c.add_argument("--hd-region", choices=list(hd.REGIONS), default=next(iter(hd.REGIONS)),
+    c.add_argument("--hd-region", choices=list(hd.REGIONS), default=hd.DEFAULT_REGION,
                    help="the Wind Waker HD game the save is for: usa (title 10143500, the default) or europe "
                         "(title 10143600)")
     c.add_argument("--no-pictures", action="store_true",
