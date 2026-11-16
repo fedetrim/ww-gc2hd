@@ -10,7 +10,7 @@ OUT is a folder for test saves: its cking.sav is replaced and its cking_pic*.sav
 backup. Do not point it at a save you want to keep."""
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from wwsave import convert as conv, gc
+from wwsave import convert as conv, gc, hd
 src, slot, out, stage, room, point = sys.argv[1:7]
 slot = int(slot) - 1
 kw = dict(a.split("=", 1) for a in sys.argv[7:] if "=" in a)
@@ -18,7 +18,7 @@ mode = kw.pop("all", "steps")
 region = kw.pop("hd_region", "usa")
 bad = [a for a in sys.argv[7:] if "=" not in a] + [
     "%s=%s" % (k, v) for k, v in kw.items() if k not in conv.Options.CASES or v not in conv.MODES]
-if region not in ("usa", "europe"):
+if region not in hd.REGIONS:
     bad.append("hd_region=" + region)
 if bad or mode not in conv.MODES:
     sys.exit("not a case answer: %s\ncases: %s; answers: steps, rewards; hd_region: usa, europe" % (

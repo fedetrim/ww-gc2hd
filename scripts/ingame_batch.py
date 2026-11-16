@@ -14,13 +14,13 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 from sample_jobs import sample_jobs  # noqa: E402
-from wwsave import convert as conv  # noqa: E402
+from wwsave import convert as conv, hd  # noqa: E402
 
 exe, game, out = [os.path.abspath(p) for p in sys.argv[1:4]]
 workers = int(sys.argv[4]) if len(sys.argv) > 4 else 3
 MODE = sys.argv[5] if len(sys.argv) > 5 else "steps"      # steps | rewards, for every case
 REGION = sys.argv[6] if len(sys.argv) > 6 else "usa"
-if MODE not in conv.MODES or REGION not in ("usa", "europe"):
+if MODE not in conv.MODES or REGION not in hd.REGIONS:
     sys.exit(__doc__)
 OPTIONS = conv.Options.all(MODE, hd_region=REGION)
 print("every case is answered by %s; files written for the %s game" % (MODE, REGION), flush=True)

@@ -142,7 +142,7 @@ is listed, with evidence, in [docs/DIFFERENCES.md](docs/DIFFERENCES.md).
   `scripts/ingame_salvage.py` salvages the HD Treasure Charts 43-46 of a converted save (needs the port
   built with `scripts/port-ship-warp.patch`); the Triforce (down to Hyrule with eight shards) and Lenzo's
   dialogue after the Deluxe Picto Box rule were also played from converted saves (docs/DIFFERENCES.md,
-  Verification). Not done: a run on a real console.
+  Verification). On a real console one converted save was loaded (European game); nothing was played there.
 
 ## Layout
 

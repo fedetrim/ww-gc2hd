@@ -126,6 +126,9 @@ def _confirm(a, card, converted, existing):
     if existing:
         print(term.labelled("", "note:", "the save already in the output folder is first moved to a backup "
                             "folder there (--force).", "yellow"))
+    if a.hd_region != hd.DEFAULT_REGION:
+        print(term.labelled("", "note:", "the rules were established on the USA game; the disc of the %s game was "
+                            "not compared (docs/DIFFERENCES.md, 4b)." % hd.REGIONS[a.hd_region].game, "yellow"))
     try:
         answer = _prompt("Convert File %s to %s, for the %s game? (y/n): " % (
             " and ".join(str(s + 1) for s in converted), os.path.join(a.output, "cking.sav"),

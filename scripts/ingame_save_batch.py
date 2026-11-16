@@ -16,6 +16,8 @@ from sample_jobs import sample_jobs  # noqa: E402
 from wwsave import convert as conv, hd, layout  # noqa: E402
 
 args = [a for a in sys.argv[1:] if not a.startswith("--")]
+if len(args) < 3 or [a for a in sys.argv[1:] if a.startswith("--") and a not in ("--alt", "--europe")]:
+    sys.exit(__doc__)
 exe, game, out = [os.path.abspath(p) for p in args[:3]]
 workers = int(args[3]) if len(args) > 3 else 3
 ALT = "--alt" in sys.argv
@@ -39,6 +41,7 @@ EXPECTED = {"status_b.date_ipl", "status_b.time", "status_b.date", "info.save_co
 
 if "--europe" in sys.argv:
     OPTIONS.hd_region = "europe"
+print("files written for the %s game" % hd.REGIONS[OPTIONS.hd_region].game, flush=True)
 
 jobs = sample_jobs(OPTIONS, out)
 

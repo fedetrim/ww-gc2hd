@@ -914,7 +914,7 @@ def convert(card, options=None):
     # After everything else: each build of the HD game gives every Quest Log, used or empty, its own two
     # defaults (hd.REGIONS). A GameCube file carries its own region's value of the first.
     target = hd.REGIONS[options.hd_region]
-    for rep, g in zip(reports, slots):
+    for rep, out in zip(reports, slots):                # `out`: the converted block, before the defaults
         if not rep.used:
             continue
         if options.hd_region != hd.DEFAULT_REGION:
@@ -927,7 +927,7 @@ def convert(card, options=None):
                                 "the two programs finds them the same except for language code, and one "
                                 "converted save was loaded on a console with that game "
                                 "(docs/DIFFERENCES.md, 4b)" % target.game)
-        elif g.u("config.ruby") != target.ruby:
+        elif out.u("config.ruby") != target.ruby:
             rep.changes.append("The reading-aid setting for Japanese text set to %d, with no effect on "
                                "what you hold: the %s HD game gives every Quest Log that value." % (
                                    target.ruby, target.game))

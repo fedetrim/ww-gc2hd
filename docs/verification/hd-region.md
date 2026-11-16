@@ -1,7 +1,7 @@
 # `--hd-region`: runs in the game
 
 The runs here use the USA game in the native port. The European game was tested once on a real Wii U (a
-converted save loads and shows what the file holds); that run has no report here.
+converted save loads and shows what the file holds); by the author's decision that run has no report here.
 
 ## The USA game loads a file written for the European game
 

@@ -359,7 +359,11 @@ What this rests on, and what was not checked:
   writes both values back unchanged (every healthy USA sample, 42 files, 36 of which save;
   `docs/verification/hd-region.md`): that build reads and keeps the other build's pair. It says nothing
   about the European build.
-- The language (options byte 4) is rewritten from the console at start-up (4), so it is left at 0.
+- The language (options byte 4) is left at 0, as in every Quest Log of every European sample. In the USA
+  code the console's language is written into the running options at start-up (4); the port's notes say
+  the options of a Quest Log are copied over them when it is selected, which would let byte 4 decide the
+  language. On the console run the text stayed in the console's language, which is not English, at file
+  select and after the Quest Log was loaded, with byte 4 at 0. Other console languages were not tried.
 
 ## 5. Unused and damaged files
 - A GameCube file without a player name is unused; it becomes a fresh HD Quest Log
@@ -559,6 +563,6 @@ taken away in the final battle), and HD puts the item back on load.
 - The ZeldaWWHDRecomp converter (`tools/savegame/gc2hd.py`), written independently, produces
   the same value for every field that the rules above do not touch, on 470 used files.
 
-Limits: not run on a real console; apart from the quests above, the checks load a save and play seconds to
+Limits: on a real console one converted save was loaded and nothing was played; apart from the quests above, the checks load a save and play seconds to
 minutes, not a playthrough. In the salvage runs the chart is marked as opened in the file instead of on the
 chart screen, and the quest runs start from a file placed next to the goal, not sailed there.
