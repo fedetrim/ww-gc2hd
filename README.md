@@ -36,7 +36,7 @@ This tool was written to make the conversion exact and to prove it:
 | Picto Box pictures | dropped | converted to the HD album |
 | Report | short notes | every change with its reason, and what you hold before and after |
 | Completeness of the difference list | not stated | both games compared in full: stage data byte by byte, machine code of every save access and item gift, both randomizers' location tables, shops |
-| Verified in the game | one load in the port, per its README | every case played in both modes in the port; every used file of the USA samples (48) loaded, 42 of them saved from the pause menu (the other six start in a scene without the menu); load and save in Cemu |
+| Verified in the game | one load in the port, per its README | every case played in both modes in the port; every healthy used file of the USA samples (42) loaded, 36 of them saved from the pause menu (the other six start in a scene without the menu); load and save in Cemu |
 | Regions | USA, Japan, Europe | USA (Japan / Europe convert with `--allow-region`, unverified) |
 | HD -> GameCube | `hd2gc.py`, shared fields | no |
 

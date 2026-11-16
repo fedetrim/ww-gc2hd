@@ -412,8 +412,8 @@ taken away in the final battle), and HD puts the item back on load.
   - The author's own converted save placed at the forest exit on Outset (where the kidnapping scene starts) does
     not replay the scene.
   - Quest Logs 2 and 3 load the same way (cursor moved at file select).
-  - An earlier run over file 1 of each distinct USA sample card (32 files; the run over all 48 used files
-    is further down): all load into gameplay, 30 keep every field; two gain an event flag that the game sets on
+  - An earlier run over file 1 of each distinct USA sample card (32 files, before the health check existed; the run
+    over the 42 files that pass it is further down): all load into gameplay, 30 keep every field; two gain an event flag that the game sets on
     entering the scene (boarding the pirate ship; the opening of the second quest). An earlier run exposed
     a wrong rule (a New Game+ file not started yet was written with save counter 0 and the game started a
     plain new game); it was corrected and that file now starts the second quest.
@@ -428,12 +428,12 @@ taken away in the final battle), and HD puts the item back on load.
     60 charts, the same set as a native 100% HD save minus Treasure Chart 42 (the pig minigame, still
     obtainable).
   - `--swift-sail --hero-mode` on the author's own save: loads with every field intact.
-  - Save cycle in both modes on every used file of the samples (48 distinct files; the second mode also
-    with Swift Sail and Hero Mode): 42 of the 48 save in each mode (the other six start in a scene where
-    the menu is not available). In 36 (`steps`) and 35 (`rewards`) the file the game writes differs only
-    in date, time of day, save counter and current life; in the others the game itself changed the return
-    place or a scene flag. In one file the 18-byte name record differs after the name's terminator only
-    (bytes the game leaves as they were in memory); the name is the same.
+  - Save cycle in both modes on every used file of the USA samples that passes the health check (42
+    distinct files; the second mode also with Swift Sail and Hero Mode): 36 of the 42 save in each mode
+    (the other six start in a scene where the menu is not available). In 31 (`steps`) and 30 (`rewards`)
+    the file the game writes differs only in date, time of day, save counter and current life; in the
+    others the game itself changed the return place (in two also the map-view bytes of the play log) or a
+    scene flag. Run at commit 62ba0cf; the commits after it changed no conversion rule.
   - Three minutes of scripted random movement and button presses on the author's own save: no error or halt.
   - HD Treasure Charts 43-46 played to the end (`scripts/ingame_salvage.py`): a GameCube sample whose
     conversion adds all four was converted by steps; for each chart the file was placed in
@@ -477,9 +477,10 @@ taken away in the final battle), and HD puts the item back on load.
       the picture shown is removed from the album (3/3 -> 2/2), as on the GameCube.
   - Every undo of `rewards` read against the HD source for later states (`docs/research/undo-audit.md`):
     each reward stays obtainable exactly once.
-  - Every used file of the USA samples (48 distinct files, each loaded as Quest Log 1) converted with
-    `--all steps` and with `--all rewards` loads into gameplay with the final rules: in each mode 44 keep
-    every field and four gain a flag the game sets on entering the scene.
+  - Every used file of the USA samples that passes the health check (42 distinct files, each loaded as
+    Quest Log 1) converted with `--all steps` and with `--all rewards` loads into gameplay with the final
+    rules: in each mode 38 keep every field and four differ in the event flags, which the game sets on
+    entering the scene. The albums are not loaded in these runs. Run at commit 62ba0cf.
   - The kidnapping scene on Outset started from a console file made before it (2.1): entering at spawn
     point 203 sets switch 1 and event 0x0E20, as in console files; walking into the trigger sets switch 9.
 - **In Cemu 2.6** (the Wii U emulator, running the author's copy; input sent to its process): six more converted saves at different points of the game (pirate ship, Outset, open sea
