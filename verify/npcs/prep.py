@@ -12,7 +12,8 @@ file in Quest Log 1 at STAGE/ROOM/POINT, then applies test-only edits to the HD 
 Prints the converter's changes and the relevant state of the converted file and of the GameCube file.
 
 Inputs:  a GameCube save (the samples used are named in verify/README.md)
-Outputs: OUT/cking.sav (and the album files with --album); text on stdout.
+Outputs: OUT/cking.sav (and the album files with --album); text on stdout. OUT is a folder for test
+         saves: its cking.sav is replaced and its cking_pic*.sav files are removed without a backup.
 Run:     python3 verify/npcs/prep.py SAVE.gci 1 research/out/verify/npcs/NAME/cking.sav Nitiyou 0 0 \
              all=rewards --pendant-button --time 12
          (run_marie.sh and run_lenzo.sh call it)
@@ -71,9 +72,12 @@ if "time" in flags:
     s.set_raw("status_b.time", struct.pack(">f", flags["time"] * 15.0))
 os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
 open(out, "wb").write(f.serialize())
-for name in os.listdir(os.path.dirname(os.path.abspath(out))):     # no album of an earlier run
-    if name.startswith("cking_pic") and name.endswith(".sav"):
-        os.remove(os.path.join(os.path.dirname(os.path.abspath(out)), name))
+old = [name for name in os.listdir(os.path.dirname(os.path.abspath(out)))      # no album of an earlier run
+       if name.startswith("cking_pic") and name.endswith(".sav")]
+for name in old:
+    os.remove(os.path.join(os.path.dirname(os.path.abspath(out)), name))
+if old:
+    print("removed %d album file(s) of an earlier save from %s" % (len(old), os.path.dirname(os.path.abspath(out))))
 if flags.get("album"):      # the converter's own album files for this file, as Quest Log 1
     import re
     for name, data in conv.convert_pictures(card).items():

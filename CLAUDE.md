@@ -47,6 +47,7 @@ ww-gc2hd, wwsave/     the tool (Python 3.8+, standard library only)
   convert.py          every conversion rule, the cases (Options, decisions_for) and the report
   hdcheck.py          model of what HD rewrites when it loads a file
   picture.py          Picto Box pictures -> HD album
+  describe.py         what a save holds, as text (info, and the summary convert prints)
   cli.py              command line, questions
 tests/                unit tests; they also run over every save in samples/
 samples/              real saves with their sources (SOURCES.md, manifest.json, checksums.sha256)

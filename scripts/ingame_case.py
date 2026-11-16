@@ -4,7 +4,9 @@ start it at a given place.
 
 usage: ingame_case.py SAVE.gci FILE(1-3) OUT/cking.sav STAGE ROOM POINT [all=steps|rewards] [CASE=steps|rewards ...]
 CASE is an Options field: floor50, marie, lenzo, pawprint_chest, horseshoe_chest, star_belt_chest,
-triforce_chart_2/4/6/7/8. `all` (default steps) answers the cases not named."""
+triforce_chart_2/4/6/7/8. `all` (default steps) answers the cases not named.
+OUT is a folder for test saves: its cking.sav is replaced and its cking_pic*.sav files are removed without a
+backup. Do not point it at a save you want to keep."""
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from wwsave import convert as conv, gc
@@ -35,9 +37,11 @@ with open(out, "wb") as fh:
     fh.write(f.serialize())
 # The rig copies the album files next to the save into the game: leave there only the album of the file
 # under test, named for Quest Log 1, where the file now is.
-for name in os.listdir(folder):
-    if name.startswith("cking_pic") and name.endswith(".sav"):
-        os.remove(os.path.join(folder, name))
+old = [name for name in os.listdir(folder) if name.startswith("cking_pic") and name.endswith(".sav")]
+for name in old:
+    os.remove(os.path.join(folder, name))
+if old:
+    print("removed %d album file(s) of an earlier save from %s" % (len(old), folder))
 for name, data in conv.convert_pictures(card).items():
     prefix = "cking_pic_order%d" % slot if name.startswith("cking_pic_order") else "cking_pic%d_" % slot
     if name.startswith(prefix):
