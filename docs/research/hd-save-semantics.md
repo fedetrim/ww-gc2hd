@@ -142,7 +142,7 @@ dialogue (GC `:7231-7270`), which I believe is unused content; I did not confirm
 **What differs**
 
 Quest register `0xC407` (byte 0xC4, mask 0x07; packed 0x6DC) has the same values in both games:
-0 none, 1/3/5 task given, 2/4 task done, 6 third task done (7 after New Game+).
+0 none, 1/3/5 task given, 2/4 task done, 6 or 7 third task done (7 also on a first playthrough; what tells 6 from 7 was not worked out).
 
 | Step | GameCube | HD |
 |---|---|---|

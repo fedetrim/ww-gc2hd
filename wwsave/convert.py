@@ -678,6 +678,9 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
         else:
             if marie:
                 out.data[charm_off] &= ~(HEROS_CHARM[2] | HEROS_CHARM_ACTIVE) & 0xFF
+                for i in range(4):              # the boss-rematch records copy the field: a record cannot
+                    rec = layout.FIELDS["status_c%d.collect" % i][0] + HEROS_CHARM[1]      # hold a charm
+                    out.data[rec] &= ~(HEROS_CHARM[2] | HEROS_CHARM_ACTIVE) & 0xFF         # the file lacks
                 rep.changes.append("Hero's Charm removed (Mrs. Marie by steps): in HD she gives Treasure Chart "
                                    "45 instead, and the charm is in the Savage Labyrinth floor-50 chest (%s). "
                                    "Open it to get the charm back." % (

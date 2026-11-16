@@ -197,6 +197,10 @@ marked as salvaged before it is owned (see below). The report says so.
 
 In HD the Hero's Charm and the floor-50 chest go together, so the two options combine as:
 floor-50 chest open and charm owned <=> `--floor50 steps` or `--marie rewards`.
+Where the charm is removed it is also removed from the four boss-rematch records, which copy the field
+(the GameCube exchanges the five collect bytes with a record for a rematch, `d_com_inf_game.cpp:1602-1606`;
+the HD code for this was not read, and the rematch was not played after this change; in
+the real saves of both games no record holds a charm its file lacks [DATA]).
 
 | GameCube state | `--floor50` | `--marie` | Piece of Heart | Hero's Charm | floor-50 chest | Mrs. Marie | Chart 45 | Chart 46 |
 |---|---|---|---|---|---|---|---|---|
@@ -245,9 +249,12 @@ each (record, flag) pair belongs to that one chest only (plus unused test stages
 Lookout-platform chests are stored in record 1, not in the sea record (`d_a_tbox.cpp:314-320`).
 
 ### 3.4 Lenzo's Picto Box quest [CODE]
-Register 0xC407: 0 none, 1/3/5 task given, 2/4 done, 6 third task done. GameCube state "register >= 6, Picto
+Register 0xC407: 0 none, 1/3/5 task given, 2/4 done, 6 or 7 third task done (the GameCube raises
+the register at six points of Lenzo's talk, `d_a_npc_photo.cpp:1667-1679`; 85 healthy sample files hold 7, 73
+of them on a first playthrough [DATA]; what tells 6 from 7 was not worked out, the rule treats both alike).
+GameCube state "register >= 6, Picto
 Box not Deluxe" has no way to the Deluxe Picto Box in HD. **Option `--lenzo`** (3.2): `steps` gives it
-(slot 8 = 0x26, ownership bit 1); `rewards` sets the register back to 5, where Lenzo accepts the third picture
+(slot 8 = 0x26, ownership bit 1); `rewards` sets the register (6 or 7) back to 5, where Lenzo accepts the third picture
 and gives the Deluxe Picto Box (`d_a_npc_photo_msg.cpp:197-204`, `d_a_npc_photo_exec.cpp:414-424`). In HD a
 Forest Firefly shown at register >= 6 gives a Joy Pendant every time (no flag).
 

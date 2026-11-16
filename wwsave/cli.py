@@ -182,9 +182,13 @@ def cmd_convert(a):
         while os.path.exists(backup):
             n += 1
             backup = os.path.join(a.output, "%s-%d" % (stamp, n))
-        os.makedirs(backup)
-        for name in existing:
-            os.replace(os.path.join(a.output, name), os.path.join(backup, name))
+        try:
+            os.makedirs(backup)
+            for name in existing:
+                os.replace(os.path.join(a.output, name), os.path.join(backup, name))
+        except OSError as e:
+            sys.exit("error: %s\nNothing was converted. The save that was in %s may be partly in %s: move "
+                     "its files back." % (e, a.output, backup))
     try:
         with open(target, "wb") as f:
             f.write(data)

@@ -511,6 +511,13 @@ class Conversion(unittest.TestCase):
         card = self._swapped(marie=True)
         st = self._state(card, marie="steps")
         self.assertEqual((st["charm"], st["f50"], st["marie"], st["charts"][45]), (0, 0, True, "x--"))
+        # ... also in a boss-rematch record that holds the charm: no record holds what the file lacks
+        g = card.slots()[0]
+        g.set_raw("status_c1.collect", bytes([1, 1, 0, 0, 3, 0, 0, 0]))
+        with_record = gc.load(gc.build_gci(b"GZLE01", [g, hd.fresh_slot(), hd.fresh_slot()]))
+        for mode, charm in (("steps", 0), ("rewards", 3)):
+            h = conv.convert(with_record, conv.Options(marie=mode))[0].slots[0]
+            self.assertEqual(h.raw("status_c1.collect")[4], charm, mode)
         st = self._state(card, marie="rewards")
         self.assertEqual((st["charm"], st["f50"], st["marie"], st["charts"][45]), (3, 1, False, "---"))
         # both: the chest stays open with the same mode, and follows the charm when the modes differ
