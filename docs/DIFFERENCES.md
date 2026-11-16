@@ -191,8 +191,8 @@ marked as salvaged before it is owned (see below). The report says so.
 | `--triforce-chart-2/4/6/7/8` | chart owned, shard not | shard given | chart dropped, chest closed again; for chart 4 the Ghost Ship register 0x8803 is also set from 3 to 0 (at 3 the ship no longer exists, `d_a_ghostship.cpp:275`) |
 | `--horseshoe-chest`, `--star-belt-chest` | lookout chest open | Treasure Chart 43 / 44 given; Skull Necklace / 20 rupees taken back | chest closed again |
 | `--floor50` | floor-50 chest open (Piece of Heart held) | Piece of Heart removed (maximum life -1, a full heart becomes three pieces); chest stays open, Hero's Charm given | Piece of Heart kept; Pawprint chest marked opened, Treasure Chart 46 owned, opened and salvaged; floor-50 chest closed again unless the Hero's Charm is held by `--marie rewards` |
-| `--pawprint-chest` | Pawprint chest open | Treasure Chart 46 given; 200 rupees taken back | chest closed again; Silver Rupee kept, and Chart 45 marked salvaged if `--marie steps` |
-| `--pawprint-chest` with `--floor50 rewards` | both chests open | chest open, Chart 46 salvaged (by floor 50); 200 rupees taken back | chest open, Chart 46 salvaged (by floor 50); Silver Rupee kept, and Chart 45 marked salvaged if `--marie steps` |
+| `--pawprint-chest` | Pawprint chest open, floor 50 not by `rewards` | Treasure Chart 46 given; 200 rupees taken back | chest closed again; Silver Rupee kept, and Chart 45 marked salvaged if `--marie steps` |
+| `--pawprint-chest` | Pawprint chest open, floor 50 by `rewards` | chest open, Chart 46 salvaged (by floor 50); 200 rupees taken back | chest open, Chart 46 salvaged (by floor 50); Silver Rupee kept, and Chart 45 marked salvaged if `--marie steps` |
 | `--marie` | event 0x1C04 set (Hero's Charm held) | Treasure Chart 45 given; Hero's Charm removed unless the floor-50 chest is open by `--floor50 steps` | Hero's Charm kept, floor-50 chest marked opened; 0x1C04 cleared: Mrs. Marie gives Treasure Chart 45 the next time she receives a Joy Pendant (`d_a_npc_ho.cpp:345`, total given stays >= 40) |
 | `--lenzo` | register 0xC407 >= 6, Picto Box not Deluxe | Deluxe Picto Box given; one Joy Pendant taken back | register set to 5: the third task is pending again |
 
@@ -390,7 +390,8 @@ taken away in the final battle), and HD puts the item back on load.
   `--pawprint-chest steps` avoids it as far as the 200 rupees are still held, also with `--floor50 rewards`, where the chest
   stays open and the answer decides about the rupee only. That combination (`--floor50 rewards` with each
   answer to `--pawprint-chest`) was played in the game in both answers [in-game]: with the rupee kept
-  the crane at Seven-Star Isles brings up nothing, with it taken back the crane brings the Silver Rupee
+  the crane at Seven-Star Isles brings up nothing, with it taken back the file loads with 200 rupees less and
+  the crane brings the Silver Rupee
   (`docs/verification/chests.md`, `salv45_f50rewards_kept`, `salv45_f50rewards_taken`). Both runs have
   Treasure Chart 45 in hand (`--marie steps`). The rupee kept without the chart, the state the warning is
   about, was not played to the second rupee: that needs Mrs. Marie's reward and then the salvage.

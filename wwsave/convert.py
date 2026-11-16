@@ -713,8 +713,9 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
         rep.changes.append("Treasure Chart 45 added (Mrs. Marie by steps): in HD it is her reward for 40 Joy "
                            "Pendants, which she already gave you.")
     if paw:
-        # The Pawprint chest's Silver Rupee is the sunken treasure of Treasure Chart 45 in HD. It can be kept
-        # only if that treasure can be marked as salvaged, which needs the chart in hand.
+        # The Pawprint chest's Silver Rupee is the sunken treasure of Treasure Chart 45 in HD. Kept, that
+        # treasure is marked as salvaged, which needs the chart in hand; without the chart the rupee is kept
+        # all the same (the answer says so) and the report warns that it can be found a second time.
         keep = options.pawprint_chest == "rewards"
         if keep:
             if a == "rewards":                  # otherwise said with the chest, above
