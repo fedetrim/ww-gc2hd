@@ -386,6 +386,10 @@ taken away in the final battle), and HD puts the item back on load.
   treasure of Treasure Chart 45, cannot be marked as salvaged yet: that rupee can be collected a second
   time. Rupees are not a unique reward (both games give them without limit), so the file is still one HD
   could have written; the report states it.
+  The same holds with `--floor50 rewards` on a file whose Pawprint chest is open: that answer settles the
+  chest (open, Treasure Chart 46 salvaged) and the Silver Rupee is kept with it, whatever
+  `--pawprint-chest` says (the tool says that the answer was not used). Taking the 200 rupees back there
+  on `--pawprint-chest steps` would also be an exact translation; it is not offered.
 - A consumable already used on the GameCube cannot be taken back by `steps` (the report says so when it
   happens).
 - Japanese and European GameCube saves convert (`--allow-region`) but were not analysed. A Japanese name is

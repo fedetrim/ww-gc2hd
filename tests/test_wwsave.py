@@ -666,7 +666,7 @@ class Conversion(unittest.TestCase):
                 s.set_raw("collect.collect", bytes([0, 0, 0, 0, 3 if marie else 0, 0, 0, 0]))
                 s.set_u("status_a.max_life", 48)
                 s.set_u("status_a.life", 48)
-                s.set_u("status_a.rupee", 1000)
+                s.set_u("status_a.rupee", 300)
                 s.set_u("status_a.wallet_size", 1)
                 s.set_raw("bag_item.beast", bytes([0x45, 0x1F]) + b"\xff" * 6)
                 s.set_raw("bag_item_record.beast_num", bytes([2, 0, 0, 0, 0, 0, 0, 3]))
@@ -677,6 +677,7 @@ class Conversion(unittest.TestCase):
                 for k in charts:                            # chart owned and deciphered, shard not salvaged
                     conv._set_map_bit(s, "map.get_map", k, True)
                     conv._set_map_bit(s, "map.open_map", k, True)
+                    s.set_u("map.triforce_bits", s.u("map.triforce_bits") | 1 << (k - 1))
                     conv._set_tbox(s, chests[k][0], chests[k][1][-1], True)
                 if 4 in charts:
                     s.set_event_reg(conv.GHOST_SHIP_REG, 3)
@@ -713,9 +714,9 @@ class Conversion(unittest.TestCase):
                 self.assertEqual(done(7) and not paw, False, where)
                 kept = ans.get("pawprint_chest") == "rewards" or (f50 and ans.get("floor50") == "rewards")
                 self.assertEqual(done(7), bool(paw and kept and ans.get("marie") == "steps"), where)
-                rupees = 1000 - (20 if ans.get("star_belt_chest") == "steps" else 0) - (
-                    200 if paw and not kept else 0)
-                self.assertEqual(h.u("status_a.rupee"), rupees, where)
+                rupees = 300 - (20 if ans.get("star_belt_chest") == "steps" else 0) - (
+                    200 if paw and not kept else 0) + 398 * len(charts)     # Tingle's fee comes back
+                self.assertEqual(h.u("status_a.rupee"), min(1000, rupees), where)
                 spoils = h.raw("bag_item_record.beast_num")
                 self.assertEqual(spoils[0], 2 - (ans.get("horseshoe_chest") == "steps"), where)
                 self.assertEqual(spoils[7], 3 - (ans.get("lenzo") == "steps"), where)
