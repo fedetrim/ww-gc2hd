@@ -349,8 +349,9 @@ item slot that is empty while its ownership flag is set is not a failure: normal
 taken away in the final battle), and HD puts the item back on load.
 
 ## 6. Known gaps
-- Stage data of both games was compared in full (3.2): chests, actors and player spawn points
-  (`scripts/stage_diff.py`), the stage event tables (`scripts/evnt_diff.py`, identical in all 93 stages HD
+- Stage data of both games was compared (3.2): chests, actors and player spawn points (`scripts/stage_diff.py`
+  reads the TRE*, ACT*, SCO* and PLYR chunks; doors and tag actors, the TGOB, TGSC, TGDR and DOOR chunks, are
+  covered only by the reward audit, `docs/research/reward-audit.md`), the stage event tables (`scripts/evnt_diff.py`, identical in all 93 stages HD
   keeps) and the event scripts of all 130 stages that have them (`scripts/event_diff.py`, byte-identical).
   The statistics on real saves would still miss a flag that only matters in a state none of the 53 HD
   Quest Logs is in.

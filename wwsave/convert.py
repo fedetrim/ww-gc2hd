@@ -808,9 +808,11 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
         out.set_event_bit(f, False)
     if tuner:
         rep.changes.append("Tingle Tuner flags cleared (%s): only the Game Boy Advance link sets them, so no HD "
-                           "file has them. Two of them changed Tingle's lines (Knuckle found with the Tuner, "
-                           "a Tuner message sent); Knuckle appears in HD once the five Tingle Statues are "
-                           "found." % ", ".join("0x%04X" % f for f in tuner))
+                           "file has them.%s" % (
+                               ", ".join("0x%04X" % f for f in tuner),
+                               " Tingle's lines for Knuckle found with the Tuner (0x1708) and for a Tuner "
+                               "message sent (0x1A20) are not said in HD, where Knuckle appears once the five "
+                               "Tingle Statues are found." if set(tuner) & {0x1708, 0x1A20} else ""))
     if out.event_bit(WHIRLPOOL_HINT) and _item(out, layout.SLOT_BOMBS) == NO_ITEM:
         out.set_event_bit(WHIRLPOOL_HINT, False)
         rep.changes.append("Flag 0x1940 cleared: it selects a line of the King of Red Lions after a whirlpool. "

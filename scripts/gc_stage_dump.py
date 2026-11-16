@@ -122,6 +122,8 @@ def main(iso, out_path):
                         esize = 0x24 if tag.startswith("SCO") else 0x20
                         for k in range(count):
                             e = data[coff + k * esize:coff + (k + 1) * esize]
+                            if len(e) < 0x20:           # a count that runs past the end of the file
+                                break
                             name = e[:8].split(b"\0")[0].decode("latin-1")
                             params = struct.unpack(">I", e[8:12])[0]
                             pos = [round(v, 1) for v in struct.unpack(">fff", e[12:24])]

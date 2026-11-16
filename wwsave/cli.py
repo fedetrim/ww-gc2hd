@@ -164,6 +164,9 @@ def cmd_convert(a):
                 if (key, s) not in in_case:
                     print("note: %s %d=%s was not used: Quest Log %d is not in that case." % (
                         _flag(key), s + 1, mode, s + 1), file=sys.stderr)
+        elif typed and not any(k == key for k, _ in in_case):
+            print("note: %s %s was not used: no Quest Log is in that case." % (_flag(key), typed),
+                  file=sys.stderr)
     for (key, s), (why, applied) in conv.settled_answers(slots, options).items():
         given = getattr(a, key)                 # an answer typed by hand that had no effect is said
         given = given.get(s) if isinstance(given, dict) else given
