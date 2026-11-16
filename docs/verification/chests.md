@@ -4,8 +4,13 @@
 > `verify/README.md`); paths such as `runs/verify-...` are the author's local output folders. Rules added to
 > the converter afterwards (for example giving back Tingle's deciphering fee) change some rupee counts
 > quoted here; the fields each case is about are unchanged.
+> On 2026-11-16 the Silver Rupee of the Pawprint chest began to follow `--pawprint-chest` also with
+> `floor50=rewards`. Four runs were made that day with that rule: `salv45_f50rewards_kept`,
+> `salv45_f50rewards_taken`, and `paw_f50rewards` and `salv46_f50rewards` again, with
+> `pawprint_chest=rewards` named (the answer they had implied before). The two `f50_rewards_marie...` runs
+> were not repeated: their command now takes the 200 rupees back, which is not what they are about.
 
-Date: 2026-11-15. Everything below was observed in the running native port of Wind Waker HD: each run converts a
+Date: 2026-11-15 (four runs on 2026-11-16, see above). Everything below was observed in the running native port of Wind Waker HD: each run converts a
 GameCube sample with the stated options, boots the game hidden, loads Quest Log 1, drives it with scripted input
 and reads the game's save block at the end. No result here comes from code reading.
 
@@ -15,7 +20,7 @@ Root of all paths: `runs/verify-chests/ of the author's working copy, not in thi
 
 No rule was contradicted. Every chest that `rewards` closes again was reachable, present, closed, and gave HD's item
 exactly once; every chest that `steps` leaves open is shown open and the converted save holds the item. No run
-halted (29 of 29 logs: 0 halt/crash/assert/fatal lines, scenario finished).
+halted (31 of 31 logs: 0 halt/crash/assert/fatal lines, scenario finished).
 
 | Chest | rewards | steps |
 |---|---|---|
@@ -331,7 +336,7 @@ log: 303 lines, halt/crash/assert/fatal lines: 0, test_done: True
 python3 vc.py paw_f50rewards ../../samples/gc/archive-org-zeldasaves/extracted/NGC/USA/the-legend-of-zelda-the-wind-waker.14259.gci 1 Cave07 0 0 50 --opt all=steps --opt floor50=rewards --opt pawprint_chest=rewards --shots 4,8,12,16,20,24,26,30,34,38,42,48 WWHD_KILL_ENEMIES=300,400,500 WWHD_LINK_WARP=150:2000:60:0:16384,750:2420:27:0:16384 WWHD_TEST_PRESS=27-27.2:8000,33-33.2:8000,36-36.2:8000,39-39.2:8000,42-42.2:8000,45-45.2:8000 --cache paw_f50rewards
 ```
 
-log: 303 lines, halt/crash/assert/fatal lines: 0, test_done: True
+log: 275 lines, halt/crash/assert/fatal lines: 0, test_done: True
 
 ### salv46_f50rewards
 
@@ -339,7 +344,7 @@ log: 303 lines, halt/crash/assert/fatal lines: 0, test_done: True
 python3 vc.py salv46_f50rewards ../../samples/gc/archive-org-zeldasaves/extracted/NGC/USA/the-legend-of-zelda-the-wind-waker.14259.gci 1 sea 46 0 50 --opt all=steps --opt floor50=rewards --opt pawprint_chest=rewards --hd 's.data[layout.FIELDS['status_a.select_item'][0]] = 3; mapbit(s,'map.open_map',8,True)' WWHD_SHIP_WARP=150:8300:285300,315:8300:285300 WWHD_TEST_PRESS=8-8.3:2000,11-21:8000,32-32.2:8000,35-35.2:8000,38-38.2:8000,41-41.2:8000,44-44.2:8000,47-47.2:8000 --shots 9,14,20,26,31,34,40,49 --cache salv46_f50rewards
 ```
 
-log: 271 lines, halt/crash/assert/fatal lines: 0, test_done: True
+log: 253 lines, halt/crash/assert/fatal lines: 0, test_done: True
 
 ### salv46_f50steps
 

@@ -391,7 +391,9 @@ taken away in the final battle), and HD puts the item back on load.
   stays open and the answer decides about the rupee only. That combination (`--floor50 rewards` with each
   answer to `--pawprint-chest`) was played in the game in both answers [in-game]: with the rupee kept
   the crane at Seven-Star Isles brings up nothing, with it taken back the crane brings the Silver Rupee
-  (`docs/verification/chests.md`, `salv45_f50rewards_kept`, `salv45_f50rewards_taken`).
+  (`docs/verification/chests.md`, `salv45_f50rewards_kept`, `salv45_f50rewards_taken`). Both runs have
+  Treasure Chart 45 in hand (`--marie steps`). The rupee kept without the chart, the state the warning is
+  about, was not played to the second rupee: that needs Mrs. Marie's reward and then the salvage.
 - A consumable already used on the GameCube cannot be taken back by `steps` (the report says so when it
   happens).
 - Japanese and European GameCube saves convert (`--allow-region`) but were not analysed. A Japanese name is

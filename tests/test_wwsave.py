@@ -326,6 +326,23 @@ class CommandLine(unittest.TestCase):
                 f.write(gc.build_gci(b"GZLE01", [paw, hd.fresh_slot(), hd.fresh_slot()]))
             r = self._run("convert", gci2, "-o", os.path.join(tmp, "out2"))
             self.assertIn("--pawprint-chest steps|rewards   (Quest Log 1)\n", r.stderr)
+            # floor 50 by rewards does not answer the Pawprint case: it is listed, as about the rupee only
+            both = paw.copy()
+            both.set_u("memory13.tbox", 1 << 2 | 1 << 12)
+            both.set_u("status_a.max_life", 48)
+            both.set_u("status_a.life", 48)
+            gci4 = os.path.join(tmp, "both.gci")
+            with open(gci4, "wb") as f:
+                f.write(gc.build_gci(b"GZLE01", [both, hd.fresh_slot(), hd.fresh_slot()]))
+            r = self._run("convert", gci4, "-o", os.path.join(tmp, "out4"), "--floor50", "rewards")
+            self.assertNotEqual(r.returncode, 0)
+            self.assertIn("--pawprint-chest steps|rewards   (Quest Log 1)\n", r.stderr)
+            self.assertIn("about the Silver Rupee only", r.stderr)
+            self.assertFalse(os.path.exists(os.path.join(tmp, "out4", "cking.sav")))
+            r = self._run("convert", gci4, "-o", os.path.join(tmp, "out4"), "--floor50", "rewards",
+                          "--pawprint-chest", "steps")
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("200 rupees to take back", r.stdout)
             # a case answered for one Quest Log only: the other is still listed
             r = self._run("convert", gci, "-o", out, "--force", "--floor50", "1=steps")
             self.assertNotEqual(r.returncode, 0)
