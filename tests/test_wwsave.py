@@ -316,7 +316,7 @@ class CommandLine(unittest.TestCase):
             self.assertEqual(r.returncode, 3, r.stderr)     # 2 is argparse's status for wrong arguments
             self.assertIn("Quest Log 2: NOT CONVERTED", r.stdout)
             self.assertTrue(os.path.exists(os.path.join(tmp, "out3", "cking.sav")))
-            # the Pawprint case alone is not said to depend on floor 50
+            # a case is listed with its flag and the Quest Logs it applies to
             paw = hd.fresh_slot()
             paw.set_raw("info.player_name", b"Paw".ljust(17, b"\0"))
             paw.set_u("memory13.tbox", 1 << 2)
@@ -636,20 +636,26 @@ class Conversion(unittest.TestCase):
         self.assertEqual(self._state(card, pawprint_chest="steps")["charts"][46], "x--")
         st = self._state(card, pawprint_chest="rewards")
         self.assertEqual((st["charts"][46], st["paw"]), ("---", 0))
-        # with the floor-50 Piece of Heart kept, the Pawprint chest is settled and not asked about
+        # with the floor-50 Piece of Heart kept the chest stays open with its chart salvaged, and the case
+        # is still asked: its answer decides about the Silver Rupee
         card = self._swapped(f50=True, paw=True)
         keys = lambda o: [d.key for d in conv.decisions_for(card.slots(), o)]
-        self.assertEqual(keys(conv.Options()), ["floor50", "pawprint_chest"])
-        d = conv.decisions_for(card.slots(), conv.Options())[1]
-        self.assertEqual(d.depends, {0: ("floor50", "steps")})     # a case only if floor 50 is by steps
-        self.assertEqual(conv.settled_answers(card.slots(), conv.Options(floor50="rewards")).keys(),
-                         {("pawprint_chest", 0)})
         card.slots()[0].set_u("memory13.tbox", 0)           # a caller's edit does not reach the card
         self.assertEqual(card.slots()[0].u("memory13.tbox"), 1 << 12 | 1 << 2)
-        self.assertEqual(keys(conv.Options(floor50="steps")), ["floor50", "pawprint_chest"])
-        self.assertEqual(keys(conv.Options(floor50="rewards")), ["floor50"])
-        st = self._state(card, floor50="rewards")
-        self.assertEqual((st["charts"][46], st["paw"]), ("xxx", 1))
+        for answer in (None, "steps", "rewards"):
+            self.assertEqual(keys(conv.Options(floor50=answer)), ["floor50", "pawprint_chest"])
+        d = conv.decisions_for(card.slots(), conv.Options(floor50="rewards"))[1]
+        self.assertIn("about the Silver Rupee only", d.text(0)[0])
+        with self.assertRaises(conv.ConversionError):
+            conv.convert(card, conv.Options(floor50="rewards"))
+        before = card.slots()[0].u("status_a.rupee")
+        for answer, rupees in (("steps", max(0, before - 200)), ("rewards", before)):
+            out, reports = conv.convert(card, conv.Options(floor50="rewards", pawprint_chest=answer))
+            h = out.slots[0]
+            self.assertEqual((h.u("memory13.tbox") >> 2 & 1, h.u("status_a.rupee")), (1, rupees), answer)
+            self.assertTrue(conv._map_bit(h, "map.get_map", 8) and conv._map_bit(h, "map.complete_map", 8))
+            # kept without Treasure Chart 45 in hand: the report says it can be found a second time
+            self.assertEqual(any("once more" in w for w in reports[0].warnings), answer == "rewards")
 
     def test_no_duplicate_and_nothing_unobtainable(self):
         """Every combination of cases and answers: each unique reward is held exactly when the place that
@@ -712,7 +718,7 @@ class Conversion(unittest.TestCase):
                 # consumables: taken back by steps; the Silver Rupee is held <=> Chart 45's treasure is salvaged
                 ans = dict(zip(keys, answers))
                 self.assertEqual(done(7) and not paw, False, where)
-                kept = ans.get("pawprint_chest") == "rewards" or (f50 and ans.get("floor50") == "rewards")
+                kept = ans.get("pawprint_chest") == "rewards"
                 self.assertEqual(done(7), bool(paw and kept and ans.get("marie") == "steps"), where)
                 rupees = 300 - (20 if ans.get("star_belt_chest") == "steps" else 0) - (
                     200 if paw and not kept else 0) + 398 * len(charts)     # Tingle's fee comes back

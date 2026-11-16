@@ -85,7 +85,7 @@ Log (`--floor50 1=steps,3=rewards`).
 | `--triforce-chart-2`, `-4`, `-6`, `-7`, `-8` | that Triforce Chart is owned and its shard is not salvaged (HD: the chest holds the shard) |
 | `--horseshoe-chest`, `--star-belt-chest` | that lookout chest is open (HD: Treasure Chart 43 / 44) |
 | `--floor50` | the Savage Labyrinth floor-50 chest is open (GameCube: Piece of Heart; HD: Hero's Charm) |
-| `--pawprint-chest` | the Pawprint Isle Wizzrobe cave chest is open (HD: Treasure Chart 46) |
+| `--pawprint-chest` | the Pawprint Isle Wizzrobe cave chest is open (HD: Treasure Chart 46; with `--floor50 rewards` the chest stays open and the answer is about its Silver Rupee only) |
 | `--marie` | Mrs. Marie's reward for 40 Joy Pendants was given (GameCube: Hero's Charm; HD: Treasure Chart 45) |
 | `--lenzo` | Lenzo accepted the third picture and the Picto Box is not the Deluxe one (HD gives it at that step) |
 
