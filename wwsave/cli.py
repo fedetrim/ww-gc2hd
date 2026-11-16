@@ -51,22 +51,17 @@ def _flag(key):
 
 def _ask(decision, slot):
     print()
-    question, choices = decision.text(slot)
-    if not term.terminal():
-        print("Quest Log %d: %s" % (slot + 1, question))
-        for i, (_, text) in enumerate(choices):
-            print("  %d) %s" % (i + 1, text))
-    else:
-        print(paint("Quest Log %d  %s" % (slot + 1, _flag(decision.key)), "bold", "cyan"))
-        print("\n".join(term.wrap(question)))
-        for i, (_, text) in enumerate(choices):
-            head, sep, body = text.partition(": ")          # "by steps: what it implies"
-            number = "%d)" % (i + 1)                         # painted after wrapping: codes have no width
-            if sep and head.startswith("by "):
-                lines = term.labelled("  %s " % number, head + ":", body, "bold", rest="     ")
-            else:
-                lines = "\n".join(term.wrap(text, "  %s " % number, "     "))
-            print(lines.replace(number, paint(number, "bold", "cyan"), 1))
+    question, choices = decision.text(slot)             # only called in a terminal
+    print(paint("Quest Log %d  %s" % (slot + 1, _flag(decision.key)), "bold", "cyan"))
+    print("\n".join(term.wrap(question)))
+    for i, (_, text) in enumerate(choices):
+        head, sep, body = text.partition(": ")          # "by steps: what it implies"
+        number = "%d)" % (i + 1)                         # painted after wrapping: codes have no width
+        if sep and head.startswith("by "):
+            lines = term.labelled("  %s " % number, head + ":", body, "bold", rest="     ")
+        else:
+            lines = "\n".join(term.wrap(text, "  %s " % number, "     "))
+        print(lines.replace(number, paint(number, "bold", "cyan"), 1))
     while True:
         try:
             answer = _prompt("Choice (1 or 2): ")
@@ -130,6 +125,7 @@ def _confirm(a, card, converted, existing):
         answer = _prompt("Convert File %s to %s? (y/n): " % (
             " and ".join(str(s + 1) for s in converted), os.path.join(a.output, "cking.sav"))).lower()
     except EOFError:
+        print()
         answer = ""
     if answer not in ("y", "yes"):
         sys.exit(paint("Nothing was converted.", "yellow", stream=sys.stderr))
@@ -297,13 +293,14 @@ def cmd_convert(a):
         for w in rep.warnings:
             print(term.labelled("    ", "WARNING:", w, "bold", "yellow"))
     print()
-    for line in ("Copy %s into the game's save folder (Cemu, USA: %s)." % (
-                     "cking.sav and the cking_pic* files" if album else "cking.sav", os.path.dirname(CEMU_HINT)),
-                 "It replaces all three Quest Logs and their albums: back up the game's save folder first, and "
-                 "remove its cking_pic* files before copying."):
-        print(paint("\n".join(term.wrap(line)), "italic") if term.terminal() else line)
+    closing = ["Copy %s into the game's save folder (Cemu, USA: %s)." % (
+                   "cking.sav and the cking_pic* files" if album else "cking.sav", os.path.dirname(CEMU_HINT)),
+               "It replaces all three Quest Logs and their albums: back up the game's save folder first, and "
+               "remove its cking_pic* files before copying."]
     if backup:
-        print("The save that was in %s is in %s." % (a.output, backup))
+        closing.append("The save that was in %s is in %s." % (a.output, backup))
+    for line in closing:
+        print(paint("\n".join(term.wrap(line)), "italic") if term.terminal() else line)
     left_out = [rep.slot + 1 for rep in reports if rep.unhealthy]
     if left_out:                                # written, but not all of the card: say so in the exit status
         sys.exit(EXIT_PARTIAL)
@@ -371,7 +368,7 @@ def main(argv=None):
     c.add_argument("--allow-region", action="store_true", help="also accept Japanese / European saves (unverified)")
     c.add_argument("-y", "--yes", action="store_true",
                    help="in a terminal: do not show the input and ask before converting; go straight to the cases")
-    c.add_argument("--quiet", action="store_true", help="do not print the save summary")
+    c.add_argument("--quiet", action="store_true", help="do not print the summary of each converted file")
     c.set_defaults(func=cmd_convert)
 
     i = sub.add_parser("info", help="show what a GameCube or HD save contains")
