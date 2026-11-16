@@ -26,8 +26,9 @@ See "Verification" at the end for what was tested in the game itself.
 - `.gci`: 0x40 directory entry + 12 blocks of 0x2000 (`.gcs` adds a 0x110 header, `.sav` a 0x80 header).
   Block 0 banner/icon/comment; blocks 1 and 2 two copies of `card_savedata`; blocks 3..11 Picto Box pictures.
   Block 0 is what the console's memory card screen shows for the file: the game copies the banner and icon
-  from its disc (`/res/CardIcon/cardicon.arc`) and writes the date as comment
-  (`m_Do_MemCardRWmng.cpp:209-251`), and reads only blocks 1 to 11 back (same file, lines 61-192) [CODE].
+  from its disc (`/res/CardIcon/cardicon.arc`) and writes its title and the date of the save as text
+  (`mDoMemCdRWm_BuildHeader`, `m_Do_MemCardRWmng.cpp:208-244`), and reads only blocks 1 to 11 back (same
+  file, lines 61-192) [CODE].
   It is not converted: it holds nothing of the player's, and `cking.sav` (below) has no field for it.
 - `card_savedata`: u32 save_count, u32 data_version, 3 x (0x768 save + u64 checksum), u32 block checksum at 0x1FFC.
 - File checksum: (sum of bytes) << 32 | (sum of `0xFFFFFFFF - byte`), each mod 2^32
@@ -391,8 +392,8 @@ taken away in the final battle), and HD puts the item back on load.
   treasure of Treasure Chart 45, cannot be marked as salvaged yet: that rupee can be collected a second
   time. Rupees are not a unique reward (both games give them without limit), so the file is still one HD
   could have written; the report states it.
-  `--pawprint-chest steps` avoids it as far as the 200 rupees are still held, also with `--floor50 rewards`, where the chest
-  stays open and the answer decides about the rupee only. That combination (`--floor50 rewards` with each
+  `--pawprint-chest steps` avoids it as far as the 200 rupees are still held, also with `--floor50 rewards`,
+  where the chest stays open and the answer decides about the rupee only. That combination (`--floor50 rewards` with each
   answer to `--pawprint-chest`) was played in the game in both answers [in-game]: with the rupee kept
   the crane at Seven-Star Isles brings up nothing, with it taken back the file loads with 200 rupees less and
   the crane brings the Silver Rupee

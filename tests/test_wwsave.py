@@ -648,8 +648,9 @@ class Conversion(unittest.TestCase):
         steps, rewards = ([d.text(s)[1][k][1] for s in range(3)] for k in (0, 1))
         self.assertIn("the chest stays open: you get Treasure Chart 46", steps[0])
         self.assertIn("the chest is closed again", rewards[0])
-        self.assertEqual((steps[1][:22], rewards[1][:22]), ("by steps: you lose the", "by rewards: you keep t"))
-        self.assertNotIn("chest", steps[1] + rewards[1].split("If Treasure")[0])
+        self.assertTrue(steps[1].startswith("by steps: you lose the Silver Rupee"), steps[1])
+        self.assertTrue(rewards[1].startswith("by rewards: you keep the Silver Rupee"), rewards[1])
+        self.assertNotIn("the chest", steps[1] + rewards[1])        # nothing about the chest: floor 50 has it
         self.assertIn("With floor 50 by steps you also get Treasure Chart 46", steps[2])
         self.assertIn("With floor 50 by steps the chest is closed again", rewards[2])
         # ... and what keeping the rupee implies follows the Mrs. Marie answer, which is asked first

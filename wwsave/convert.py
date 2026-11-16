@@ -333,7 +333,7 @@ def decisions_for(slots, options=None):
                  "-1/4 heart) until you salvage it in HD",
                  "you keep the Piece of Heart; its HD place is marked done (Pawprint chest opened, Treasure "
                  "Chart 46 owned and salvaged%s). " % (
-                     "; what happens to the Silver Rupee taken from that chest is its own case, --pawprint-chest"
+                     "; what happens to the Silver Rupee taken from that chest is asked as its own case"
                      if _collected(g, PAWPRINT_CHEST) else "") + (
                      "The floor-50 chest then follows the Mrs. Marie case: it stays open if you keep the "
                      "Hero's Charm there, and is closed again otherwise" if marie else
@@ -748,8 +748,9 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
                 rep.changes.append("Pawprint chest by steps: the chest stays open, as floor 50 by rewards "
                                    "already has it, with Treasure Chart 46 salvaged.")
             rep.changes.append("200 rupees to take back (Pawprint chest by steps): the Silver Rupee the "
-                               "GameCube gave in that chest. In HD it is the sunken treasure of Treasure Chart 45 (Mrs. "
-                               "Marie's reward, then Seven-Star Isles): salvage it to get it back.")
+                               "GameCube gave in that chest. In HD it is the sunken treasure of Treasure "
+                               "Chart 45 (Mrs. Marie's reward, then Seven-Star Isles): salvage it to get it "
+                               "back.")
     # Tingle's fee for deciphering a Triforce Chart that HD does not have: HD never charges it.
     paid = [k for k in REUSED_CHARTS if g.u("map.triforce_bits") >> (k - 1) & 1]
     if paid:

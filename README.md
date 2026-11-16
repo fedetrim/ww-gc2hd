@@ -103,7 +103,7 @@ Other options:
 Picto Box pictures are converted into HD's album files (`cking_pic*.sav`, written next to `cking.sav`;
 `--no-pictures` skips them). Not carried over: the card's banner, icon and comment (the picture and text the
 GameCube's memory card screen shows for the file). They are not part of the progress: the game writes the
-same picture from its disc into every card file, with the date of the save as text, and never reads them
+same picture from its disc into every card file, with its title and the date of the save as text, and never reads them
 back. `cking.sav` has no place for them. Everything else
 is listed, with evidence, in [docs/DIFFERENCES.md](docs/DIFFERENCES.md).
 
