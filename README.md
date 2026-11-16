@@ -55,6 +55,11 @@ empty, the report says what is wrong with it, and `convert` ends with exit statu
 does not try to repair one
 (`docs/DIFFERENCES.md`, section 5b).
 
+In a terminal, `convert` first shows what the input holds (the same as `info`) and asks whether to convert
+it, so that a wrong file is noticed before anything else is asked; `--yes` skips that. Without a terminal
+nothing is asked. In a terminal the output uses bold and colours and is wrapped to the window; set
+`NO_COLOR` to turn the styles off. Redirected output is plain text.
+
 Input: `.gci`, `.gcs`, `.sav`, or a raw memory card image (Dolphin `MemoryCardA.USA.raw`, a card dump).
 All three files of the card are converted to Quest Logs 1-3. The input is never modified, and an existing
 save in the output folder is only replaced with `--force`, which first moves it (`cking.sav` and its
@@ -98,6 +103,7 @@ Other options:
 | `--name NAME`, `--name N=NAME` | the player name of the HD file (up to 8 characters; default: the GameCube name). With more than one used file, say which Quest Log: `--name 2=Zelda` |
 | `--no-pictures` | do not write the Picto Box album files |
 | `--force` | replace a save already in the output folder (it is moved to a backup folder there) |
+| `-y`, `--yes` | in a terminal: skip the confirmation (see below) and go straight to the cases |
 | `--quiet` | do not print the summary of each converted file |
 
 Picto Box pictures are converted into HD's album files (`cking_pic*.sav`, written next to `cking.sav`;

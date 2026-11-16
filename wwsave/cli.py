@@ -6,7 +6,8 @@ import os
 import sys
 
 from . import convert as conv
-from . import describe, gc, hd
+from . import describe, gc, hd, term
+from .term import paint
 
 EXIT_PARTIAL = 3            # convert wrote the save, but left out a used file that is not healthy
                             # (1: nothing written; 2: wrong arguments, as argparse reports them)
@@ -31,6 +32,14 @@ def _is_hd(path):
             or os.path.basename(path).lower() == "cking.sav")
 
 
+def _summary(save, name, indent="  ", hd_save=False):
+    """The summary of one file; in a terminal with dimmed labels and long values wrapped."""
+    on = term.styled()
+    return describe.format_summary(describe.summarize(save, name, hd=hd_save), indent,
+                                   width=term.width() if on else None,
+                                   label_style=(lambda label: paint(label, "dim")) if on else None)
+
+
 def _flag(key):
     return "--" + key.replace("_", "-")
 
@@ -38,12 +47,26 @@ def _flag(key):
 def _ask(decision, slot):
     print()
     question, choices = decision.text(slot)
-    print("Quest Log %d: %s" % (slot + 1, question))
-    for i, (_, text) in enumerate(choices):
-        print("  %d) %s" % (i + 1, text))
+    if not term.styled():
+        print("Quest Log %d: %s" % (slot + 1, question))
+        for i, (_, text) in enumerate(choices):
+            print("  %d) %s" % (i + 1, text))
+    else:
+        print(paint("Quest Log %d  %s" % (slot + 1, _flag(decision.key)), "bold", "cyan"))
+        print("\n".join(term.wrap(question)))
+        for i, (_, text) in enumerate(choices):
+            head, sep, body = text.partition(": ")          # "by steps: what it implies"
+            if not (sep and head.startswith("by ")):
+                head, body = "", text
+            lines = term.wrap(text, "  %d) " % (i + 1), "     ")
+            start = "  %d) %s" % (i + 1, head + ":" if head else "")
+            if head and lines[0].startswith(start):
+                lines[0] = "  %s %s%s" % (paint("%d)" % (i + 1), "bold", "cyan"), paint(head + ":", "bold"),
+                                          lines[0][len(start):])
+            print("\n".join(lines))
     while True:
         try:
-            answer = input("Choice (1 or 2): ").strip()
+            answer = input(paint("Choice (1 or 2): ", "bold")).strip()
         except EOFError:
             sys.exit("\nno choice made for %s" % _flag(decision.key))
         if answer in [str(i + 1) for i in range(len(choices))]:
@@ -63,6 +86,44 @@ def _case_value(text):
             raise argparse.ArgumentTypeError("Quest Log %s is answered twice" % log)
         value[int(log) - 1] = mode
     return value
+
+
+def _print_gc(card):
+    """What a GameCube card file holds, file by file."""
+    print(paint("Wind Waker GameCube save (%s, %s)" % (card.code, card.region), "bold"))
+    for k, (block_ok, slot_ok) in enumerate(card.copy_status()):
+        if not block_ok or not all(slot_ok):
+            print("  %s save copy %d has a bad checksum" % (paint("note:", "yellow"), k + 1))
+    pictures = card.pictures()
+    for s, save in enumerate(card.slots()):
+        if save is None:
+            print("%s %s" % (paint("File %d:" % (s + 1), "bold"),
+                             paint("damaged (the game cannot read it: bad checksum)", "red")))
+        elif save.is_new():
+            print("%s %s" % (paint("File %d:" % (s + 1), "bold"), paint("empty", "dim")))
+        else:
+            print(paint("File %d:" % (s + 1), "bold", "cyan"))
+            print(_summary(save, conv.gc_name(save, card.game_code)))
+            print("  %s %d" % (paint("%-22s" % "Pictures:", "dim"), len(pictures[s])))
+            for p in conv.health(save):
+                print("\n".join(term.wrap(p, "  NOT CONVERTIBLE: ", "    ")).replace(
+                    "NOT CONVERTIBLE:", paint("NOT CONVERTIBLE:", "bold", "red"), 1)
+                    if term.styled() else "  NOT CONVERTIBLE: %s" % p)
+
+
+def _confirm(a, card):
+    """In a terminal: show what the input holds and ask before going on (--yes skips this), so that a
+    wrong file is noticed before its cases are answered."""
+    print(paint(a.input, "dim"))
+    _print_gc(card)
+    print()
+    try:
+        answer = input(paint("Convert this save to %s? (y/n): " % os.path.join(a.output, "cking.sav"),
+                             "bold")).strip().lower()
+    except EOFError:
+        answer = ""
+    if answer not in ("y", "yes"):
+        sys.exit(paint("Nothing was converted.", "yellow", stream=sys.stderr))
 
 
 def cmd_convert(a):
@@ -115,6 +176,9 @@ def cmd_convert(a):
         else:
             sys.exit("--name %s: this card has %d used files. Say which Quest Log gets the name, for example "
                      "--name %d=%s (the option can be repeated)." % (value, len(used), used[0] + 1, value))
+    terminal = sys.stdin.isatty() and sys.stdout.isatty()
+    if terminal and not a.yes:
+        _confirm(a, card)
     options = conv.Options(name=names or None, swift_sail=bool(a.swift_sail), hero_mode=bool(a.hero_mode))
     for key in conv.Options.CASES:
         value = getattr(a, key)
@@ -131,7 +195,7 @@ def cmd_convert(a):
         if not pending:
             break
         # questions need a terminal on both ends: with the output redirected they would go into the file
-        if not (sys.stdin.isatty() and sys.stdout.isatty()):
+        if not terminal:
             listed = {}
             for d, s in pending:
                 question, choices = d.text(s)
@@ -192,38 +256,47 @@ def cmd_convert(a):
         sys.exit("error: %s\nThe new save in %s is incomplete.%s" % (
             e, a.output, " The save that was there is untouched in %s." % backup if backup else ""))
 
+    wide = term.width()
     print()
-    print("%s (%s, %s) -> %s" % (a.input, card.code, card.source, target))
+    print(paint("%s (%s, %s) -> %s" % (a.input, card.code, card.source, target), "bold", "green"))
     for rep in reports:
+        log = paint("Quest Log %d:" % (rep.slot + 1), "bold", "cyan")
         if rep.unhealthy:
-            print("Quest Log %d: NOT CONVERTED (written empty)" % (rep.slot + 1))
+            print("%s %s" % (log, paint("NOT CONVERTED (written empty)", "bold", "red")))
         elif not rep.used:
-            print("Quest Log %d: empty" % (rep.slot + 1))
+            print("%s %s" % (log, paint("empty", "dim")))
         else:
-            print("Quest Log %d: %s" % (rep.slot + 1, out_file.name(rep.slot)))
+            print("%s %s" % (log, paint(out_file.name(rep.slot), "bold")))
             if not a.quiet:
-                print(describe.format_summary(describe.summarize(out_file.slots[rep.slot],
-                                                                 out_file.name(rep.slot), hd=True), "    "))
+                print(_summary(out_file.slots[rep.slot], out_file.name(rep.slot), "    ", hd_save=True))
         if rep.changes:
-            print("    What changed and why:")
+            print("    " + paint("What changed and why:", "bold"))
         for c in rep.changes:
-            print(textwrap.fill(c, 100, initial_indent="    - ", subsequent_indent="      "))
+            print("\n".join(term.wrap(c, "    - ", "      ", wide)))
         if rep.totals:
-            print("    What you hold, GameCube -> HD (each difference is explained above):")
+            print("    " + paint("What you hold, GameCube -> HD (each difference is explained above):", "bold"))
             for label, before, after in rep.totals:
-                delta = " (%+d)" % (after - before) if isinstance(after, int) else ""
-                print("      %-16s %s -> %s%s" % (label + ":", before, after, delta))
+                delta = ""
+                if isinstance(after, int):
+                    delta = " " + paint("(%+d)" % (after - before),
+                                        *(["green"] if after > before else ["red"] if after < before else ["dim"]))
+                print("      %s %s -> %s%s" % (paint("%-16s" % (label + ":"), "dim"), before, after, delta))
         if rep.pictures:
             print("    %s" % ("%d Picto Box picture(s) converted to the HD album (cking_pic%d_*.sav, "
                               "cking_pic_order%d.sav)" % (rep.pictures, rep.slot, rep.slot) if not a.no_pictures
                               else "%d Picto Box picture(s) left out (--no-pictures)" % rep.pictures))
         for w in rep.warnings:
-            print("    WARNING: %s" % w)
+            if term.styled():
+                print("\n".join(term.wrap(w, "    WARNING: ", "      ", wide)).replace(
+                    "WARNING:", paint("WARNING:", "bold", "yellow"), 1))
+            else:
+                print("    WARNING: %s" % w)
     print()
-    print("Copy %s into the game's save folder (Cemu, USA: %s)." % (
-        "cking.sav and the cking_pic* files" if album else "cking.sav", os.path.dirname(CEMU_HINT)))
-    print("It replaces all three Quest Logs and their albums: back up the game's save folder first, and remove "
-          "its cking_pic* files before copying.")
+    for line in ("Copy %s into the game's save folder (Cemu, USA: %s)." % (
+                     "cking.sav and the cking_pic* files" if album else "cking.sav", os.path.dirname(CEMU_HINT)),
+                 "It replaces all three Quest Logs and their albums: back up the game's save folder first, and "
+                 "remove its cking_pic* files before copying."):
+        print(paint("\n".join(term.wrap(line)), "italic") if term.styled() else line)
     if backup:
         print("The save that was in %s is in %s." % (a.output, backup))
     left_out = [rep.slot + 1 for rep in reports if rep.unhealthy]
@@ -234,36 +307,21 @@ def cmd_convert(a):
 def cmd_info(a):
     if _is_hd(a.file):
         f = _read_hd(a.file)
-        print("Wind Waker HD save")
+        print(paint("Wind Waker HD save", "bold"))
         for p in f.problems:
-            print("  PROBLEM: %s" % p)
+            print("  %s %s" % (paint("PROBLEM:", "bold", "red"), p))
         for s in range(3):
             save = f.slots[s]
             if save.u("info.save_count") == 0:
-                print("Quest Log %d: empty%s" % (s + 1, " (New Game+ ready)" if save.u("info.clear_count") else ""))
+                print("%s %s" % (paint("Quest Log %d:" % (s + 1), "bold"), paint(
+                    "empty%s" % (" (New Game+ ready)" if save.u("info.clear_count") else ""), "dim")))
                 continue
-            print("Quest Log %d:" % (s + 1))
-            print(describe.format_summary(describe.summarize(save, f.name(s), hd=True)))
+            print(paint("Quest Log %d:" % (s + 1), "bold", "cyan"))
+            print(_summary(save, f.name(s), hd_save=True))
             opt = f.extras[s]["options"]
-            print("  %-22s %s" % ("Hero Mode:", "yes" if opt[hd.OPT_HERO_MODE] == 1 else "no"))
+            print("  %s %s" % (paint("%-22s" % "Hero Mode:", "dim"), "yes" if opt[hd.OPT_HERO_MODE] == 1 else "no"))
     else:
-        card = _read_gc(a.file)
-        print("Wind Waker GameCube save (%s, %s)" % (card.code, card.region))
-        for k, (block_ok, slot_ok) in enumerate(card.copy_status()):
-            if not block_ok or not all(slot_ok):
-                print("  note: save copy %d has a bad checksum" % (k + 1))
-        pictures = card.pictures()
-        for s, save in enumerate(card.slots()):
-            if save is None:
-                print("File %d: damaged (the game cannot read it: bad checksum)" % (s + 1))
-            elif save.is_new():
-                print("File %d: empty" % (s + 1))
-            else:
-                print("File %d:" % (s + 1))
-                print(describe.format_summary(describe.summarize(save, conv.gc_name(save, card.game_code))))
-                print("  %-22s %d" % ("Pictures:", len(pictures[s])))
-                for p in conv.health(save):
-                    print("  NOT CONVERTIBLE: %s" % p)
+        _print_gc(_read_gc(a.file))
 
 
 def cmd_verify(a):
@@ -272,7 +330,7 @@ def cmd_verify(a):
         for p in f.problems:
             print("PROBLEM: %s" % p)
         sys.exit(1)
-    print("OK: size, three Quest Log checksums, format word and HD section CRC are valid.")
+    print(paint("OK:", "bold", "green") + " size, three Quest Log checksums, format word and HD section CRC are valid.")
 
 
 def main(argv=None):
@@ -306,6 +364,8 @@ def main(argv=None):
     c.add_argument("--force", action="store_true",
                    help="replace a save already in the output folder (it is moved to a backup folder there)")
     c.add_argument("--allow-region", action="store_true", help="also accept Japanese / European saves (unverified)")
+    c.add_argument("-y", "--yes", action="store_true",
+                   help="in a terminal: do not show the input and ask before converting; go straight to the cases")
     c.add_argument("--quiet", action="store_true", help="do not print the save summary")
     c.set_defaults(func=cmd_convert)
 
@@ -326,7 +386,7 @@ def main(argv=None):
     except KeyboardInterrupt:
         sys.exit("\ninterrupted")
     except (gc.GcError, hd.HdError, conv.ConversionError, OSError) as e:       # a bug raises as it is
-        sys.exit("error: %s" % e)
+        sys.exit("%s %s" % (paint("error:", "bold", "red", stream=sys.stderr), e))
 
 
 if __name__ == "__main__":
