@@ -5,16 +5,18 @@
 > the converter afterwards (for example giving back Tingle's deciphering fee) change some rupee counts
 > quoted here; the fields each case is about are unchanged.
 > On 2026-11-16 the Silver Rupee of the Pawprint chest began to follow `--pawprint-chest` also with
-> `floor50=rewards`. Four runs were made that day with that rule: `salv45_f50rewards_kept`,
-> `salv45_f50rewards_taken`, and `paw_f50rewards` and `salv46_f50rewards` again, with
-> `pawprint_chest=rewards` named (the answer they had implied before). The two `f50_rewards_marie...` runs
-> were not repeated: their command now takes the 200 rupees back, which is not what they are about.
+> `floor50=rewards`. Six runs were made that day with that rule: `salv45_f50rewards_kept`,
+> `salv45_f50rewards_taken`, and `paw_f50rewards`, `salv46_f50rewards`, `f50_rewards_marieSteps` and
+> `f50_rewards_marieRewards` again, with `pawprint_chest=rewards` named (the answer they had implied
+> before). The four repeated runs gave the results recorded on 2026-11-15.
 
-Date: 2026-11-15 (four runs on 2026-11-16, see above). Everything below was observed in the running native port of Wind Waker HD: each run converts a
+Date: 2026-11-15 (six runs on 2026-11-16, see above). Everything below was observed in the running native port of Wind Waker HD: each run converts a
 GameCube sample with the stated options, boots the game hidden, loads Quest Log 1, drives it with scripted input
 and reads the game's save block at the end. No result here comes from code reading.
 
 Root of all paths: `runs/verify-chests/ of the author's working copy, not in this repository` (called V below).
+The runs of 2026-11-16 are under `research/out/verify/chests/` of the same working copy, where the published
+scripts write; for the four repeated runs V still holds the run of 2026-11-15.
 
 ## Result
 
@@ -38,7 +40,7 @@ halted (31 of 31 logs: 0 halt/crash/assert/fatal lines, scenario finished).
 | Chart 45 kept as salvaged (`pawprint_chest=rewards marie=steps`) | VERIFIED in game: crane at Seven-Star Isles brings up nothing, rupees stay 4980. `salv45_kept/` | |
 | Chart 45 otherwise (all steps) | | VERIFIED in game: same crane script brings the Silver Rupee, rupees 4780 -> 4980, chart completed. `salv45_given/` |
 | Chart 45 with `floor50=rewards pawprint_chest=rewards` (Silver Rupee kept) | VERIFIED in game: crane at Seven-Star Isles brings up nothing, rupees stay 1000 (set for the run: the file's wallet is full). `salv45_f50rewards_kept/` | |
-| Chart 45 with `floor50=rewards pawprint_chest=steps` (Silver Rupee taken back) | | VERIFIED in game: same crane script brings the Silver Rupee, rupees 1000 -> 1200, chart completed. `salv45_f50rewards_taken/` |
+| Chart 45 with `floor50=rewards pawprint_chest=steps` (Silver Rupee taken back) | | VERIFIED in game: same crane script brings the Silver Rupee, rupees 1000 -> 1200 (set to 1000 for the run, as in the row above), chart completed. What was played is the salvage; the take-back itself is the converter's arithmetic (unit tests) and does not show in this file, whose wallet stays full after Tingle's refund. `salv45_f50rewards_taken/` |
 
 NOT REACHED: none. FAILED: none.
 
@@ -157,18 +159,18 @@ log: 256 lines, halt/crash/assert/fatal lines: 0, test_done: True
 ### f50_rewards_marieSteps
 
 ```
-python3 vc.py f50_rewards_marieSteps ../../samples/gc/archive-org-zeldasaves/extracted/NGC/USA/the-legend-of-zelda-the-wind-waker.14259.gci 1 Cave10 20 0 30 --opt all=steps --opt floor50=rewards --opt marie=steps --shots 6,7.5,10,13,16,19,22,29 WWHD_LINK_WARP=150:0:-70:-4410:-32768 WWHD_TEST_PRESS=8-8.2:8000,14-14.2:8000,17-17.2:8000,20-20.2:8000,23-23.2:8000,26-26.2:8000 --cache f50_rewards_marieSteps
+python3 vc.py f50_rewards_marieSteps ../../samples/gc/archive-org-zeldasaves/extracted/NGC/USA/the-legend-of-zelda-the-wind-waker.14259.gci 1 Cave10 20 0 30 --opt all=steps --opt floor50=rewards --opt pawprint_chest=rewards --opt marie=steps --shots 6,7.5,10,13,16,19,22,29 WWHD_LINK_WARP=150:0:-70:-4410:-32768 WWHD_TEST_PRESS=8-8.2:8000,14-14.2:8000,17-17.2:8000,20-20.2:8000,23-23.2:8000,26-26.2:8000 --cache f50_rewards_marieSteps
 ```
 
-log: 248 lines, halt/crash/assert/fatal lines: 0, test_done: True
+log: 229 lines, halt/crash/assert/fatal lines: 0, test_done: True
 
 ### f50_rewards_marieRewards
 
 ```
-python3 vc.py f50_rewards_marieRewards ../../samples/gc/archive-org-zeldasaves/extracted/NGC/USA/the-legend-of-zelda-the-wind-waker.14259.gci 1 Cave10 20 0 30 --opt all=steps --opt floor50=rewards --opt marie=rewards --shots 6,7.5,10,13,16,19,22,29 WWHD_LINK_WARP=150:0:-70:-4410:-32768 WWHD_TEST_PRESS=8-8.2:8000,14-14.2:8000,17-17.2:8000,20-20.2:8000,23-23.2:8000,26-26.2:8000 --cache f50_rewards_marieRewards
+python3 vc.py f50_rewards_marieRewards ../../samples/gc/archive-org-zeldasaves/extracted/NGC/USA/the-legend-of-zelda-the-wind-waker.14259.gci 1 Cave10 20 0 30 --opt all=steps --opt floor50=rewards --opt pawprint_chest=rewards --opt marie=rewards --shots 6,7.5,10,13,16,19,22,29 WWHD_LINK_WARP=150:0:-70:-4410:-32768 WWHD_TEST_PRESS=8-8.2:8000,14-14.2:8000,17-17.2:8000,20-20.2:8000,23-23.2:8000,26-26.2:8000 --cache f50_rewards_marieRewards
 ```
 
-log: 246 lines, halt/crash/assert/fatal lines: 0, test_done: True
+log: 226 lines, halt/crash/assert/fatal lines: 0, test_done: True
 
 ### f50_steps_marieSteps
 

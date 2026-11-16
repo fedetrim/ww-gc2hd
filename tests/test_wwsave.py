@@ -637,6 +637,19 @@ class Conversion(unittest.TestCase):
                  if d.key == "marie")
         self.assertIn("keep the Hero's Charm", d.text(0)[1][0][1])
         self.assertIn("goes back into the floor-50 chest", d.text(1)[1][0][1])
+        # the Pawprint case: about the whole chest by default, about the rupee only with floor 50 by rewards,
+        # and both said while floor 50 is not answered
+        both = self._swapped(f50=True, paw=True).slots()[0]
+        card = gc.load(gc.build_gci(b"GZLE01", [both, both.copy(), both.copy()]))
+        d = next(d for d in conv.decisions_for(card.slots(), conv.Options(floor50={0: "steps", 1: "rewards"}))
+                 if d.key == "pawprint_chest")
+        steps, rewards = ([d.text(s)[1][k][1] for s in range(3)] for k in (0, 1))
+        self.assertIn("the chest stays open: you get Treasure Chart 46", steps[0])
+        self.assertIn("the chest is closed again", rewards[0])
+        self.assertEqual((steps[1][:22], rewards[1][:22]), ("by steps: you lose the", "by rewards: you keep t"))
+        self.assertNotIn("chest", steps[1] + rewards[1].split("If Treasure")[0])
+        self.assertIn("With floor 50 by steps you also get Treasure Chart 46", steps[2])
+        self.assertIn("With floor 50 by steps the chest is closed again", rewards[2])
 
     def test_name_changes_are_reported(self):
         self.assertEqual(conv.hd_name_for("Link"), ("Link", None))

@@ -387,7 +387,7 @@ taken away in the final battle), and HD puts the item back on load.
   treasure of Treasure Chart 45, cannot be marked as salvaged yet: that rupee can be collected a second
   time. Rupees are not a unique reward (both games give them without limit), so the file is still one HD
   could have written; the report states it.
-  `--pawprint-chest steps` avoids it in every combination, also with `--floor50 rewards`, where the chest
+  `--pawprint-chest steps` avoids it as far as the 200 rupees are still held, also with `--floor50 rewards`, where the chest
   stays open and the answer decides about the rupee only. That combination (`--floor50 rewards` with each
   answer to `--pawprint-chest`) was played in the game in both answers [in-game]: with the rupee kept
   the crane at Seven-Star Isles brings up nothing, with it taken back the crane brings the Silver Rupee
