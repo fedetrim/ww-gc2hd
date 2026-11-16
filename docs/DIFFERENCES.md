@@ -216,6 +216,9 @@ the real saves of both games no record holds a charm its file lacks [DATA]).
 Tingle's deciphering fee: on the GameCube Triforce Charts 2, 4, 6, 7, 8 are deciphered for 398 rupees each
 (decipher bit in `map.triforce_bits`); HD has no such charts and never charges it. For each of those bits
 set in the GameCube file, 398 rupees are given back, up to the wallet limit (in both modes, no question).
+Take-backs and refunds are applied together as one balance: a file with 0 rupees, 200 to take back and 398
+to give back ends with 198, which is what the same play leaves in HD. Only what would bring the balance below
+0 is not taken (the report says how much).
 
 A case can be answered per Quest Log: `--floor50 1=steps,3=rewards`; in a terminal each Quest Log is asked
 separately.
