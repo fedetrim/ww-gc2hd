@@ -119,8 +119,8 @@ def _confirm(a, card, converted, existing):
         print(term.labelled("", "note:", "not converted: %s. Each is written as an empty Quest Log." %
                             ", ".join("File %d" % n for n in left_out), "yellow"))
     if existing:
-        print(term.labelled("", "note:", "the save already in %s is first moved to a backup folder there "
-                            "(--force)." % a.output, "yellow"))
+        print(term.labelled("", "note:", "the save already in the output folder is first moved to a backup "
+                            "folder there (--force).", "yellow"))
     try:
         answer = _prompt("Convert File %s to %s? (y/n): " % (
             " and ".join(str(s + 1) for s in converted), os.path.join(a.output, "cking.sav"))).lower()

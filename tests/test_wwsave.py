@@ -265,6 +265,15 @@ class CommandLine(unittest.TestCase):
             self.assertFalse(os.path.exists(os.path.join(out, "cking.sav")))
             self.assertEqual(run([], "--yes")[:2], (0, 0))
             self.assertEqual(run(["y"], "--force")[:2], (0, 1))
+            # a case is asked after the confirmation, with its two answers
+            save.set_u("memory13.tbox", 1 << 2)             # Pawprint Isle chest open
+            with open(gci, "wb") as f:
+                f.write(gc.build_gci(b"GZLE01", [save, hd.fresh_slot(), hd.fresh_slot()]))
+            code, asked, text = run(["y", "x", "1"], "--force")
+            self.assertEqual((code, asked), (0, 3))
+            self.assertIn("--pawprint-chest", text)
+            self.assertIn("by steps:", text.replace("\033[1m", "").replace("\033[0m", ""))
+            self.assertIn("by steps", text[text.index("What changed"):])
 
     def test_convert_info_verify(self):
         import tempfile
