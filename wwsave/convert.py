@@ -910,18 +910,22 @@ def convert(card, options=None):
         extras.append(extra)
         reports.append(rep)
     if options.hd_region not in hd.REGIONS:
-        raise ConversionError("unknown HD region %r (usa or europe)" % (options.hd_region,))
-    if options.hd_region != "usa":
-        # After everything else: the two defaults are the same in every Quest Log of a file, also the empty
-        # ones, and a USA GameCube file carries the USA value of the first.
-        for rep, g in zip(reports, slots):
-            if rep.used and (g.u("config.ruby") != hd.REGIONS[options.hd_region][2]):
-                rep.changes.append("File written for the European game (--hd-region europe), with no effect "
-                                   "on what you hold: the two settings that game gives every Quest Log "
-                                   "differently from the USA one are set its way (the Japanese reading-aid "
-                                   "setting off, as on a European GameCube, and one options byte the USA "
-                                   "game leaves at 0).")
-        hd.set_region(slots, extras, options.hd_region)
+        raise ConversionError("unknown HD region %r (%s)" % (options.hd_region, " or ".join(hd.REGIONS)))
+    # After everything else: each build of the HD game gives every Quest Log, used or empty, its own two
+    # defaults (hd.REGIONS). A GameCube file carries its own region's value of the first.
+    game, _, _, ruby = hd.REGIONS[options.hd_region]
+    for rep, g in zip(reports, slots):
+        if not rep.used:
+            continue
+        if options.hd_region != "usa":
+            rep.changes.append("File written for the %s game (--hd-region %s), with no effect on what you "
+                               "hold: the two settings that game gives every Quest Log differently from "
+                               "the USA one are set its way (the reading-aid setting for Japanese text, "
+                               "and one options byte)." % (game, options.hd_region))
+        elif g.u("config.ruby") != ruby:
+            rep.changes.append("The reading-aid setting for Japanese text set to %d, with no effect on "
+                               "what you hold: the %s HD game gives every Quest Log that value." % (ruby, game))
+    hd.set_region(slots, extras, options.hd_region)
     return hd.HdFile(slots, extras), reports
 
 

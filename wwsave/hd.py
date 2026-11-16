@@ -47,14 +47,15 @@ PLAYLOG_FLAGS = 0x18  # bit 0: this sector's Fishman has drawn the chart
 PRECHARTED_SECTORS = (0, 10, 43)   # Forsaken Fortress, Windfall, Outset: charted in a new file
 
 
-# The two game builds a file can be written for: (title ID, options byte OPT_BUILD, config.ruby). Both are
-# defaults the build gives every Quest Log; nothing else in the file depends on the build.
-REGIONS = {"usa": ("0005000010143500", 0, 1), "europe": ("0005000010143600", 1, 0)}
+# The game builds a file can be written for: (name, title ID, options byte OPT_BUILD, config.ruby). The two
+# values are the defaults the build gives a Quest Log when it clears it; they go together in every real
+# file, per Quest Log. Nothing else in the file depends on the build.
+REGIONS = {"usa": ("USA", "0005000010143500", 0, 1), "europe": ("European", "0005000010143600", 1, 0)}
 
 
 def set_region(slots, extras, region):
     """Give all three Quest Logs, used or empty, the defaults of that build of the game."""
-    _, build, ruby = REGIONS[region]
+    _, _, build, ruby = REGIONS[region]
     for save, extra in zip(slots, extras):
         save.set_u("config.ruby", ruby)
         options = bytearray(extra["options"])
@@ -62,13 +63,19 @@ def set_region(slots, extras, region):
         extra["options"] = bytes(options)
 
 
-def region_of(hd_file):
-    """'usa' | 'europe' when all three Quest Logs carry that build's defaults, else None."""
-    found = {(e["options"][OPT_BUILD], s.u("config.ruby")) for s, e in zip(hd_file.slots, hd_file.extras)}
-    for region, (_, build, ruby) in REGIONS.items():
-        if found == {(build, ruby)}:
+def slot_region(save, extra):
+    """The build whose defaults one Quest Log carries: 'usa' | 'europe', or None for another pair."""
+    for region, (_, _, build, ruby) in REGIONS.items():
+        if (extra["options"][OPT_BUILD], save.u("config.ruby")) == (build, ruby):
             return region
     return None
+
+
+def region_of(hd_file):
+    """'usa' | 'europe' when all three Quest Logs carry that build's defaults, else None (a file whose
+    Quest Logs were created by different builds, which the ports can produce)."""
+    found = {slot_region(s, e) for s, e in zip(hd_file.slots, hd_file.extras)}
+    return found.pop() if len(found) == 1 else None
 
 
 class HdError(Exception):

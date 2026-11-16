@@ -318,19 +318,26 @@ pictures the album shows all three with the game's "Good!" mark.
 Play log evidence: in all genuine HD Quest Logs, bit 0 equals the charted bit for every sector other than the
 three charted from the start (680 sector pairs, no exception).
 
-### 4b. The European game (`--hd-region europe`)
+### 4b. The game build: USA or Europe (`--hd-region`)
 
 The file is written for the USA game (title `00050000-10143500`) unless `--hd-region europe` is given
-(title `00050000-10143600`). The format is the same; two values differ, in every Quest Log of a file, used
-or empty:
+(title `00050000-10143600`). The format is the same. Two values are the defaults a build gives a Quest
+Log when it clears it, and they go together in every Quest Log of every real file, used or empty:
 
 | Field | USA | Europe | Evidence |
 |---|---|---|---|
-| options byte 3 | 0 | 1 | [DATA] every Quest Log of the three saves whose source states the European game (two uploaders) has 1, every one of the four whose source states the USA game has 0; the same split in the files the native port wrote (6 used and 8 empty Quest Logs with 1, 32 and 50 with 0). The USA code sets 0 when it clears a Quest Log (HD `d/hd_save_slot_flags.cpp:23`), keeps the byte across a New Game+ (`d/d_save_5.cpp:55,74-75`) and has no other reader or writer in the decompilation. |
-| `config.ruby` (reading aid for Japanese text) | 1 | 0 | [DATA] the same files: 0 exactly where options byte 3 is 1, also in empty Quest Logs. [CODE] the GameCube game has the same split: `dSv_player_config_c::init` sets `VERSION_SELECT(0, 0, 1, 0)` (`src/d/d_save.cpp:994`). No reader in the HD decompilation. |
+| options byte 3 | 0 | 1 | [DATA] every Quest Log of the three saves whose source states the European game (two uploaders) has 1, every one of the four whose source states the USA game has 0. The USA code sets 0 when it clears a Quest Log (HD `d/hd_save_slot_flags.cpp:23`), keeps the byte across a New Game+ (`d/d_save_5.cpp:55,74-75`) and has no other reader or writer in the decompilation. |
+| `config.ruby` (reading aid for Japanese text) | 1 | 0 | [DATA] in every HD sample, 0 exactly in the Quest Logs where options byte 3 is 1 (a test checks every Quest Log). [CODE] the GameCube game has the same split: `dSv_player_config_c::init` sets `VERSION_SELECT(0, 0, 1, 0)` (`src/d/d_save.cpp:994`). No reader in the HD decompilation. |
 
-With the option both are set in all three Quest Logs; nothing else changes (a test compares the two
-outputs). Without it a file keeps the GameCube value of `config.ruby`, as before.
+The pair belongs to the Quest Log, not to the file: one sample written by a port
+(`samples/hd/github-issue-attachments/SwitchWakerHD_issue126_34516588`) has the USA pair in Quest Log 1 and
+the European pair in Quest Logs 2 and 3, as a file would whose Quest Logs were created under different
+builds. Console and Cemu samples have one pair throughout.
+
+The conversion gives all three Quest Logs the pair of the chosen build; nothing else depends on the option
+(a test compares the two outputs). A GameCube file carries its own region's `config.ruby` (USA 1, Japan
+and Europe 0; two USA sample files have 0), so for the USA game the value changes only for those files,
+and the report says so.
 
 What this rests on, and what was not checked:
 
@@ -345,9 +352,8 @@ What this rests on, and what was not checked:
   samples agree with it.
 - Not compared: the stage and event data of the European disc (chests, rewards). Every case of 3.2 was
   established on the USA disc.
-- [in-game] the USA game loads a file written with `--hd-region europe` and keeps every field (the
-  author's own save, 441 fields, `scripts/ingame_test.py`): the build's readers accept the other build's
-  two values.
+- [in-game] the USA game loads a file written with `--hd-region europe` and keeps every field
+  (`docs/verification/hd-region.md`): that build's readers accept the other build's pair.
 - The language (options byte 4) is rewritten from the console at start-up (4), so it is left at 0.
 
 ## 5. Unused and damaged files

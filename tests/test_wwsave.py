@@ -15,7 +15,7 @@ HD_FILES = sorted(f for f in glob.glob(os.path.join(ROOT, "samples/hd/**/cking.s
                   if "/rejected/" not in f)
 # fields no code reads and the game leaves uninitialised
 GARBAGE = ("return_place._unk_a", "return_place._unk_b", "get_bag_item._unk_6", "priest.pos", "priest.angle",
-           "priest.room", "config.ruby") + tuple("status_c%d.a__pad_17" % i for i in range(4))
+           "priest.room") + tuple("status_c%d.a__pad_17" % i for i in range(4))
 
 
 def _read(path):
@@ -125,6 +125,9 @@ class Formats(unittest.TestCase):
                 if save.u("info.save_count") or save.u("info.clear_count"):
                     continue
                 n += 1
+                region = hd.slot_region(save, f.extras[s])  # the build that cleared this Quest Log
+                self.assertIsNotNone(region, path)
+                hd.set_region([fresh], [hd.default_extra()], region)
                 diff = [i for i in range(layout.SAVE_SIZE) if i not in skip and save.data[i] != fresh.data[i]]
                 self.assertEqual(diff, [], path)
                 self.assertEqual(f.extras[s]["playlog"], hd.default_extra()["playlog"])
@@ -278,12 +281,17 @@ class CommandLine(unittest.TestCase):
     def test_hd_region(self):
         """--hd-region europe gives all three Quest Logs the European game's two defaults, as real
         European saves have them, and changes nothing else."""
-        for path in HD_FILES:                               # the samples whose region their source states
+        stated = {"usa": 0, "europe": 0}
+        for path in HD_FILES:
             f = hd.HdFile.parse(_read(path))
-            if "BCZP" in path or "savegameworld" in path:
-                self.assertEqual(hd.region_of(f), "europe", path)
-            elif "BCZE" in path:
-                self.assertEqual(hd.region_of(f), "usa", path)
+            for s in range(3):                              # every Quest Log of every sample has one of the
+                self.assertIsNotNone(hd.slot_region(f.slots[s], f.extras[s]), path)     # two pairs
+            region = "europe" if "BCZP" in path or "savegameworld" in path else "usa" if "BCZE" in path else None
+            if region:                                      # the samples whose source states the game
+                self.assertEqual(hd.region_of(f), region, path)
+                stated[region] += 1
+        if HD_FILES:
+            self.assertTrue(all(stated.values()), stated)
         save = hd.fresh_slot()
         save.set_raw("info.player_name", b"Tester".ljust(17, b"\0"))
         save.set_u("map.triforce_bits", 0)
@@ -433,6 +441,7 @@ class Conversion(unittest.TestCase):
                   "item.slot12", "status_a.select_equip", "collect.collect", "memory00.switch", "map.fmap_bits", "return_place.stage",
                   "status_a.max_life", "status_a.life",                    # floor 50
                   "config.attention_type",                                 # kept in the options record
+                  "config.ruby",                                           # the HD build's default
                   "status_a.rupee", "bag_item.beast", "bag_item_record.beast_num"}     # GameCube rewards taken back
     # In these fields only the listed bits may change: the event flags and registers and the chest flags
     # that a rule names.
@@ -463,6 +472,7 @@ class Conversion(unittest.TestCase):
                 continue
             self.assertGreater(h.u("info.save_count"), 0, path)
             self.assertEqual(hdcheck.invariants(h), [], "%s file %d" % (path, s + 1))
+            self.assertEqual(hd.slot_region(h, back.extras[s]), options.hd_region, path)
             for name, (off, size) in layout.FIELDS.items():
                 if name in self.MAY_CHANGE or name.startswith("status_c"):
                     continue
