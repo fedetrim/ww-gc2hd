@@ -221,7 +221,6 @@ def cmd_convert(a):
         d, s = pending[0]
         options.answer(d.key, s, _ask(d, s))
 
-    existing = save_in_output()                 # again: a save may have been written there while a question waited
     out_file, reports = conv.convert(card, options)
     # An answer typed for a Quest Log that is not in that case did nothing: say so (a mistyped number
     # would otherwise leave the intended Quest Log with the --all answer).
@@ -242,7 +241,8 @@ def cmd_convert(a):
     album = {} if a.no_pictures else conv.convert_pictures(card)       # everything is built before writing
 
     os.makedirs(a.output, exist_ok=True)
-    backup = None
+    existing = save_in_output()                 # again, right before writing: a save may have been written
+    backup = None                               # there while a question waited
     if existing:
         stamp, n = time.strftime("backup-%Y%m%d-%H%M%S"), 0
         backup = os.path.join(a.output, stamp)
@@ -266,7 +266,6 @@ def cmd_convert(a):
         sys.exit("error: %s\nThe new save in %s is incomplete.%s" % (
             e, a.output, " The save that was there is untouched in %s." % backup if backup else ""))
 
-    wide = term.width()
     print()
     print(paint("%s (%s, %s) -> %s" % (a.input, card.code, card.source, target), "bold", "green"))
     for rep in reports:
@@ -282,7 +281,7 @@ def cmd_convert(a):
         if rep.changes:
             print("    " + paint("What changed and why:", "bold"))
         for c in rep.changes:
-            print("\n".join(term.wrap(c, "    - ", "      ", wide)))
+            print("\n".join(term.wrap(c, "    - ", "      ")))
         if rep.totals:
             print("    " + paint("What you hold, GameCube -> HD (each difference is explained above):", "bold"))
             for label, before, after in rep.totals:
@@ -302,10 +301,10 @@ def cmd_convert(a):
                    "cking.sav and the cking_pic* files" if album else "cking.sav", os.path.dirname(CEMU_HINT)),
                "It replaces all three Quest Logs and their albums: back up the game's save folder first, and "
                "remove its cking_pic* files before copying."]
-    if backup:
-        closing.append("The save that was in %s is in %s." % (a.output, backup))
     for line in closing:
         print(paint("\n".join(term.wrap(line)), "italic") if term.terminal() else line)
+    if backup:                                  # not wrapped: the paths stay whole
+        print(paint("The save that was in %s is in %s." % (a.output, backup), "italic"))
     left_out = [rep.slot + 1 for rep in reports if rep.unhealthy]
     if left_out:                                # written, but not all of the card: say so in the exit status
         sys.exit(EXIT_PARTIAL)

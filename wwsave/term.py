@@ -70,9 +70,9 @@ def width():
     return max(40, min(PLAIN_WIDTH, shutil.get_terminal_size().columns - 1))
 
 
-def wrap(text, first="", rest="", wide=None):
+def wrap(text, first="", rest=""):
     """`text` wrapped as lines, the first after `first`, the others after `rest` (both plain text)."""
-    return textwrap.wrap(text, wide or width(), initial_indent=first, subsequent_indent=rest,
+    return textwrap.wrap(text, width(), initial_indent=first, subsequent_indent=rest,
                          break_long_words=False, break_on_hyphens=False) or [first]
 
 
