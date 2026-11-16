@@ -1,4 +1,5 @@
 """Human-readable summary of a save block (works for GameCube and HD data: same layout)."""
+import textwrap
 import struct
 
 from . import layout
@@ -113,13 +114,21 @@ def _bag(s, kind):
     return out
 
 
-def format_summary(info, indent="  "):
+def format_summary(info, indent="  ", width=None, label_style=None):
+    """One line per entry. With `width`, a long value continues on the next lines under its start;
+    `label_style` is applied to each label with its indent and padding (for a terminal)."""
     lines = []
 
     def add(label, value):
         if isinstance(value, (list, tuple)):
             value = ", ".join(str(v) for v in value) if value else "-"
-        lines.append("%s%-22s %s" % (indent, label + ":", value))
+        head = "%s%-22s " % (indent, label + ":")
+        parts = [str(value)]
+        room = (width or 0) - len(head)
+        if len(parts[0]) > room >= 20:          # only a value that does not fit; a narrower window reflows
+            parts = textwrap.wrap(parts[0], room, break_long_words=False, break_on_hyphens=False) or [""]
+        lines.append((label_style(head) if label_style else head) + parts[0])
+        lines.extend(" " * len(head) + part for part in parts[1:])
 
     add("Name", info["name"])
     add("Hearts", info["hearts"])

@@ -48,6 +48,7 @@ ww-gc2hd, wwsave/     the tool (Python 3.8+, standard library only)
   hdcheck.py          model of what HD rewrites when it loads a file
   picture.py          Picto Box pictures -> HD album
   describe.py         what a save holds, as text (info, and the summary convert prints)
+  term.py             terminal styles and line width (plain text when the output is redirected)
   cli.py              command line, questions
 tests/                unit tests; they also run over every save in samples/
 samples/              real saves with their sources (SOURCES.md, manifest.json, checksums.sha256)
@@ -66,7 +67,8 @@ research/, runs/, out/  local only, git-ignored
 ```
 python3 -m unittest tests.test_wwsave              # about ten seconds
 python3 scripts/fetch_samples.py --check           # samples match their checksums
-./ww-gc2hd convert SAVE.gci -o out --all steps     # or rewards; no option = asks
+./ww-gc2hd convert SAVE.gci -o out --all steps -y  # or rewards; no --all = asks per case; no -y = in a
+                                                   # terminal, shows the input and asks before converting
 ./ww-gc2hd info SAVE.gci | out/                    # what a GameCube or HD save holds
 ```
 
@@ -115,5 +117,7 @@ python3 scripts/ingame_save_batch.py PORT_EXE GAME_DIR OUT_DIR 3 [--alt]      # 
 ## Not done
 
 - A run on a real Wii U.
+- A run on Windows: the console handling in `wwsave/term.py` (styles, whether a stream is a console) was
+  written from the API documentation and never executed.
 - Japanese and European GameCube saves (`--allow-region` converts them, nothing was verified).
 - The reverse direction (HD -> GameCube).

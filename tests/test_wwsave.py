@@ -227,6 +227,54 @@ class CommandLine(unittest.TestCase):
         return subprocess.run([sys.executable, os.path.join(ROOT, "ww-gc2hd")] + list(args),
                               capture_output=True, text=True, stdin=subprocess.DEVNULL)
 
+    def test_terminal_confirmation(self):
+        """In a terminal convert shows the input and asks first; 'n' writes nothing, --yes does not ask."""
+        import contextlib, io, tempfile
+        from unittest import mock
+        from wwsave import cli
+        save = hd.fresh_slot()
+        save.set_raw("info.player_name", b"Tester".ljust(17, b"\0"))
+        save.set_u("map.triforce_bits", 0)
+        with tempfile.TemporaryDirectory() as tmp:
+            gci, out = os.path.join(tmp, "card.gci"), os.path.join(tmp, "out")
+            with open(gci, "wb") as f:
+                f.write(gc.build_gci(b"GZLE01", [save, hd.fresh_slot(), hd.fresh_slot()]))
+
+            def run(answers, *extra, extra_env=None):
+                text = io.StringIO()
+                asked = mock.Mock(side_effect=answers)
+                env = {k: v for k, v in os.environ.items() if k not in ("NO_COLOR", "TERM")}
+                env.update(extra_env or {})
+                with mock.patch("wwsave.term.terminal", return_value=True), \
+                        mock.patch("wwsave.term._windows_console", return_value=True), \
+                        mock.patch.dict(os.environ, env, clear=True), \
+                        mock.patch("sys.stderr", io.StringIO()), \
+                        mock.patch("builtins.input", asked), contextlib.redirect_stdout(text):
+                    try:
+                        cli.main(["convert", gci, "-o", out] + list(extra))
+                    except SystemExit as e:
+                        return e.code, asked.call_count, text.getvalue()
+                return 0, asked.call_count, text.getvalue()
+
+            code, asked, text = run(["n"])
+            self.assertIn("Nothing was converted.", code)
+            self.assertEqual(asked, 1)
+            self.assertIn("Tester", text)
+            self.assertIn("\033[1", text)                   # a terminal gets styles; NO_COLOR turns them off
+            self.assertNotIn("\033[", run(["n"], extra_env={"NO_COLOR": "1"})[2])
+            self.assertFalse(os.path.exists(os.path.join(out, "cking.sav")))
+            self.assertEqual(run([], "--yes")[:2], (0, 0))
+            self.assertEqual(run(["y"], "--force")[:2], (0, 1))
+            # a case is asked after the confirmation, with its two answers
+            save.set_u("memory13.tbox", 1 << 2)             # Pawprint Isle chest open
+            with open(gci, "wb") as f:
+                f.write(gc.build_gci(b"GZLE01", [save, hd.fresh_slot(), hd.fresh_slot()]))
+            code, asked, text = run(["y", "x", "1"], "--force")
+            self.assertEqual((code, asked), (0, 3))
+            self.assertIn("--pawprint-chest", text)
+            self.assertIn("by steps:", text.replace("\033[1m", "").replace("\033[0m", ""))
+            self.assertIn("by steps", text[text.index("What changed"):])
+
     def test_convert_info_verify(self):
         import tempfile
         save = hd.fresh_slot()
