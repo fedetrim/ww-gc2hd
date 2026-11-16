@@ -240,11 +240,15 @@ class CommandLine(unittest.TestCase):
             with open(gci, "wb") as f:
                 f.write(gc.build_gci(b"GZLE01", [save, hd.fresh_slot(), hd.fresh_slot()]))
 
-            def run(answers, *extra):
+            def run(answers, *extra, extra_env=None):
                 text = io.StringIO()
                 asked = mock.Mock(side_effect=answers)
                 text.isatty = lambda: True
+                env = {k: v for k, v in os.environ.items() if k not in ("NO_COLOR", "TERM")}
+                env.update(extra_env or {})
                 with mock.patch("sys.stdin.isatty", return_value=True), \
+                        mock.patch.dict(os.environ, env, clear=True), \
+                        mock.patch("sys.stderr", io.StringIO()), \
                         mock.patch("builtins.input", asked), contextlib.redirect_stdout(text):
                     try:
                         cli.main(["convert", gci, "-o", out] + list(extra))
@@ -256,8 +260,7 @@ class CommandLine(unittest.TestCase):
             self.assertEqual((code, asked), ("Nothing was converted.", 1))
             self.assertIn("Tester", text)
             self.assertIn("\033[1", text)                   # a terminal gets styles; NO_COLOR turns them off
-            with mock.patch.dict(os.environ, {"NO_COLOR": "1"}):
-                self.assertNotIn("\033[", run(["n"])[2])
+            self.assertNotIn("\033[", run(["n"], extra_env={"NO_COLOR": "1"})[2])
             self.assertFalse(os.path.exists(os.path.join(out, "cking.sav")))
             self.assertEqual(run([], "--yes")[:2], (0, 0))
             self.assertEqual(run(["y"], "--force")[:2], (0, 1))

@@ -1,6 +1,5 @@
 """ww-gc2hd: convert a GameCube Wind Waker save into a Wind Waker HD (Wii U) save."""
 import argparse
-import textwrap
 import time
 import os
 import sys
@@ -34,10 +33,9 @@ def _is_hd(path):
 
 def _summary(save, name, indent="  ", hd_save=False):
     """The summary of one file; in a terminal with dimmed labels and long values wrapped."""
-    on = term.styled()
     return describe.format_summary(describe.summarize(save, name, hd=hd_save), indent,
-                                   width=term.width() if on else None,
-                                   label_style=(lambda label: paint(label, "dim")) if on else None)
+                                   width=term.width() if term.terminal() else None,
+                                   label_style=lambda label: paint(label, "dim"))
 
 
 def _flag(key):
@@ -47,7 +45,7 @@ def _flag(key):
 def _ask(decision, slot):
     print()
     question, choices = decision.text(slot)
-    if not term.styled():
+    if not term.terminal():
         print("Quest Log %d: %s" % (slot + 1, question))
         for i, (_, text) in enumerate(choices):
             print("  %d) %s" % (i + 1, text))
@@ -56,14 +54,12 @@ def _ask(decision, slot):
         print("\n".join(term.wrap(question)))
         for i, (_, text) in enumerate(choices):
             head, sep, body = text.partition(": ")          # "by steps: what it implies"
-            if not (sep and head.startswith("by ")):
-                head, body = "", text
-            lines = term.wrap(text, "  %d) " % (i + 1), "     ")
-            start = "  %d) %s" % (i + 1, head + ":" if head else "")
-            if head and lines[0].startswith(start):
-                lines[0] = "  %s %s%s" % (paint("%d)" % (i + 1), "bold", "cyan"), paint(head + ":", "bold"),
-                                          lines[0][len(start):])
-            print("\n".join(lines))
+            number = "%d)" % (i + 1)                         # painted after wrapping: codes have no width
+            if sep and head.startswith("by "):
+                lines = term.labelled("  %s " % number, head + ":", body, "bold", rest="     ")
+            else:
+                lines = "\n".join(term.wrap(text, "  %s " % number, "     "))
+            print(lines.replace(number, paint(number, "bold", "cyan"), 1))
     while True:
         try:
             answer = input(paint("Choice (1 or 2): ", "bold")).strip()
@@ -106,20 +102,27 @@ def _print_gc(card):
             print(_summary(save, conv.gc_name(save, card.game_code)))
             print("  %s %d" % (paint("%-22s" % "Pictures:", "dim"), len(pictures[s])))
             for p in conv.health(save):
-                print("\n".join(term.wrap(p, "  NOT CONVERTIBLE: ", "    ")).replace(
-                    "NOT CONVERTIBLE:", paint("NOT CONVERTIBLE:", "bold", "red"), 1)
-                    if term.styled() else "  NOT CONVERTIBLE: %s" % p)
+                print(term.labelled("  ", "NOT CONVERTIBLE:", p, "bold", "red"))
 
 
-def _confirm(a, card):
+def _confirm(a, card, converted, existing):
     """In a terminal: show what the input holds and ask before going on (--yes skips this), so that a
     wrong file is noticed before its cases are answered."""
     print(paint(a.input, "dim"))
     _print_gc(card)
     print()
+    left_out = [s + 1 for s, g in enumerate(card.slots())
+                if s not in converted and (g is None or not g.is_new())]
+    if left_out:
+        print(term.labelled("", "note:", "File %s will be left out (see above): Quest Log %s is written empty." % (
+            (" and ".join(map(str, left_out)),) * 2), "yellow"))
+    if existing:
+        print(term.labelled("", "note:", "the save already in %s is first moved to a backup folder there "
+                            "(--force)." % a.output, "yellow"))
     try:
-        answer = input(paint("Convert this save to %s? (y/n): " % os.path.join(a.output, "cking.sav"),
-                             "bold")).strip().lower()
+        answer = input(paint("Convert File %s to %s? (y/n): " % (
+            " and ".join(str(s + 1) for s in converted), os.path.join(a.output, "cking.sav")),
+            "bold")).strip().lower()
     except EOFError:
         answer = ""
     if answer not in ("y", "yes"):
@@ -176,9 +179,9 @@ def cmd_convert(a):
         else:
             sys.exit("--name %s: this card has %d used files. Say which Quest Log gets the name, for example "
                      "--name %d=%s (the option can be repeated)." % (value, len(used), used[0] + 1, value))
-    terminal = sys.stdin.isatty() and sys.stdout.isatty()
+    terminal = sys.stdin.isatty() and term.terminal()
     if terminal and not a.yes:
-        _confirm(a, card)
+        _confirm(a, card, used, existing)
     options = conv.Options(name=names or None, swift_sail=bool(a.swift_sail), hero_mode=bool(a.hero_mode))
     for key in conv.Options.CASES:
         value = getattr(a, key)
@@ -286,17 +289,13 @@ def cmd_convert(a):
                               "cking_pic_order%d.sav)" % (rep.pictures, rep.slot, rep.slot) if not a.no_pictures
                               else "%d Picto Box picture(s) left out (--no-pictures)" % rep.pictures))
         for w in rep.warnings:
-            if term.styled():
-                print("\n".join(term.wrap(w, "    WARNING: ", "      ", wide)).replace(
-                    "WARNING:", paint("WARNING:", "bold", "yellow"), 1))
-            else:
-                print("    WARNING: %s" % w)
+            print(term.labelled("    ", "WARNING:", w, "bold", "yellow"))
     print()
     for line in ("Copy %s into the game's save folder (Cemu, USA: %s)." % (
                      "cking.sav and the cking_pic* files" if album else "cking.sav", os.path.dirname(CEMU_HINT)),
                  "It replaces all three Quest Logs and their albums: back up the game's save folder first, and "
                  "remove its cking_pic* files before copying."):
-        print(paint("\n".join(term.wrap(line)), "italic") if term.styled() else line)
+        print(paint("\n".join(term.wrap(line)), "italic") if term.terminal() else line)
     if backup:
         print("The save that was in %s is in %s." % (a.output, backup))
     left_out = [rep.slot + 1 for rep in reports if rep.unhealthy]
