@@ -333,7 +333,7 @@ def decisions_for(slots, options=None):
                  "-1/4 heart) until you salvage it in HD",
                  "you keep the Piece of Heart; its HD place is marked done (Pawprint chest opened, Treasure "
                  "Chart 46 owned and salvaged%s). " % (
-                     "; what happens to the Silver Rupee taken from that chest is asked as its own case"
+                     "; the Silver Rupee taken from that chest follows the answer to the Pawprint case"
                      if _collected(g, PAWPRINT_CHEST) else "") + (
                      "The floor-50 chest then follows the Mrs. Marie case: it stays open if you keep the "
                      "Hero's Charm there, and is closed again otherwise" if marie else
