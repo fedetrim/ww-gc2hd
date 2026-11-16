@@ -38,6 +38,11 @@ stays 0. In 31 the file differs only in date, time of day, save counter and curr
 five the game changed the return place (in two also the play log) or an event flag. These are the same
 counts as the run for the USA game with `--all steps` (`docs/DIFFERENCES.md`, Verification).
 
+The same with every case by `rewards`, Swift Sail and Hero Mode (`--alt --europe`, run on the working tree
+after commit a4931aa): all 42 load, 36 save, and in all 36 the options record is written back as it was (it
+also holds the Hero Mode byte). In 30 nothing else differs; in the other six the game changed the return
+place (in two also the play log) or an event flag. Again the counts of the USA run in that mode.
+
 What these runs show: the USA build reads a Quest Log that carries the European pair and writes it back
 unchanged. What they do not show: anything about the European build.
 
@@ -59,4 +64,3 @@ fields.
   conversions for the USA game of all 34 USA sample cards, with `--all steps` and with `--all rewards` (68
   outputs), were compared with those of the commit before this change: 66 are the same bytes, and the two
   that differ are the card above, which was played in both modes.
-- For the European target only `--all steps` was run over every sample.
