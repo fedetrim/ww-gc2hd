@@ -88,8 +88,9 @@ class Options:
     name: str = None                    # player name override (max 8 characters), or {file index: name}
 
     CASES = ("triforce_chart_2", "triforce_chart_4", "triforce_chart_6", "triforce_chart_7",
-             "triforce_chart_8", "horseshoe_chest", "star_belt_chest", "floor50", "pawprint_chest", "marie",
-             "lenzo")
+             "triforce_chart_8", "horseshoe_chest", "star_belt_chest", "floor50", "marie", "pawprint_chest",
+             "lenzo")           # asking order: what Mrs. Marie and the Pawprint chest imply depends on the
+                                # answers before them
 
     def for_slot(self, slot):
         """The options of one file: a case may hold {file index: mode} instead of one mode for all."""
@@ -117,7 +118,6 @@ class Decision:
     choices: list           # [(value, description)]; there is no default
     slots: list = field(default_factory=list)
     per_slot: dict = field(default_factory=dict)    # file index -> (question, choices): the text can differ
-    depends: dict = field(default_factory=dict)     # file index -> (case, mode): a case only with that answer
 
     def text(self, slot):
         return self.per_slot.get(slot, (self.question, self.choices))
@@ -290,8 +290,9 @@ _REWARDS = "by rewards: "
 
 
 def decisions_for(slots, options=None):
-    """The cases these GameCube files are in (list of Decision, in asking order). `options` matters for one
-    dependency: the Pawprint chest is not a case when --floor50 rewards already settles it."""
+    """The cases these GameCube files are in (list of Decision, in asking order). `options` matters for the
+    texts: an answer already given to one case changes what the answers to another imply (floor 50 by
+    rewards keeps the Pawprint chest open, so that case is then about its Silver Rupee only)."""
     all_options = options or Options()
     out = {}
 
@@ -331,23 +332,49 @@ def decisions_for(slots, options=None):
                  "the chest stays open: you get the Hero's Charm and lose the Piece of Heart (maximum life "
                  "-1/4 heart) until you salvage it in HD",
                  "you keep the Piece of Heart; its HD place is marked done (Pawprint chest opened, Treasure "
-                 "Chart 46 owned and salvaged; a Silver Rupee already taken from that chest is treated as in "
-                 "the Pawprint case by rewards). " + (
+                 "Chart 46 owned and salvaged%s). " % (
+                     "; the Silver Rupee taken from that chest follows the answer to the Pawprint case"
+                     if _collected(g, PAWPRINT_CHEST) else "") + (
                      "The floor-50 chest then follows the Mrs. Marie case: it stays open if you keep the "
                      "Hero's Charm there, and is closed again otherwise" if marie else
                      "The floor-50 chest is closed again; open it in HD to get the Hero's Charm"), s)
-        if _collected(g, PAWPRINT_CHEST) and not _pawprint_settled(g, opts):
-            need("pawprint_chest",
-                 "%s is open. In HD it holds Treasure Chart 46 (which leads to a Piece of Heart), and the "
-                 "Silver Rupee is the sunken treasure of Treasure Chart 45 (Mrs. Marie's reward)." %
-                 HD_CHART_SOURCES[8][1],
-                 "the chest stays open: you get Treasure Chart 46 and lose the Silver Rupee (200 rupees, as "
-                 "far as still held)",
-                 "the chest is closed again; open it in HD to get the chart. You keep the Silver Rupee. If "
-                 "Treasure Chart 45 is in hand (Mrs. Marie by steps) its treasure is marked as salvaged; "
-                 "otherwise that treasure stays to be found, a second Silver Rupee", s)
-            if f50:
-                out["pawprint_chest"].depends[s] = ("floor50", "steps")
+        if _collected(g, PAWPRINT_CHEST):
+            # Floor 50 by rewards keeps this chest open with its chart salvaged whatever is answered here,
+            # so the answer is then about the Silver Rupee only. While floor 50 is not answered, say both.
+            question = ("%s is open. In HD it holds Treasure Chart 46 (which leads to a Piece of Heart), and "
+                        "the Silver Rupee is the sunken treasure of Treasure Chart 45 (Mrs. Marie's reward)." %
+                        HD_CHART_SOURCES[8][1])
+            paw_lose = ("lose the Silver Rupee (200 rupees, as far as still held); in HD you get it by "
+                        "salvaging the treasure of Treasure Chart 45")
+            # kept, the rupee's HD place has to be marked done, which needs Treasure Chart 45 in hand
+            if marie and opts.marie == "steps":
+                paw_keep = ("keep the Silver Rupee; the treasure of Treasure Chart 45, which you get from "
+                            "Mrs. Marie by steps, is marked as salvaged")
+            elif marie and opts.marie is None:
+                paw_keep = ("keep the Silver Rupee. With Mrs. Marie by steps the treasure of Treasure Chart 45 "
+                            "is marked as salvaged; with Mrs. Marie by rewards you do not have that chart yet, "
+                            "and its treasure stays to be found: a second Silver Rupee (a chart cannot be "
+                            "marked as salvaged before it is owned)")
+            else:
+                paw_keep = ("keep the Silver Rupee. You do not have Treasure Chart 45 yet%s, so its treasure "
+                            "cannot be marked as salvaged and stays to be found: a second Silver Rupee, which "
+                            "an HD player does not get" % (" (Mrs. Marie by rewards)" if marie else ""))
+            if f50 and opts.floor50 == "rewards":
+                need("pawprint_chest", question + " Floor 50 by rewards keeps this chest open with the chart "
+                     "salvaged, so this answer is about the Silver Rupee only.",
+                     "you " + paw_lose, "you " + paw_keep, s)
+            elif f50 and opts.floor50 is None:
+                need("pawprint_chest", question + " With floor 50 by rewards the chest stays open with its "
+                     "chart already salvaged whatever is answered here, and this answer is about the Silver "
+                     "Rupee only.",
+                     "you " + paw_lose + ". With floor 50 by steps you also get Treasure Chart 46, its "
+                     "treasure still to be salvaged",
+                     "you " + paw_keep + ". With floor 50 by steps the chest is closed again; open it in HD to "
+                     "get the chart", s)
+            else:
+                need("pawprint_chest", question,
+                     "the chest stays open: you get Treasure Chart 46 and " + paw_lose,
+                     "the chest is closed again; open it in HD to get the chart. You " + paw_keep, s)
         if marie:
             if not f50:
                 lose = "and lose the Hero's Charm until you open the floor-50 chest in HD"
@@ -375,27 +402,6 @@ def decisions_for(slots, options=None):
                  "the third task is pending again; bring Lenzo that picture in HD to get the Deluxe Picto "
                  "Box. You keep the Joy Pendant", s)
     return [out[k] for k in Options.CASES if k in out]
-
-
-def _pawprint_settled(g, options):
-    """Floor 50 by rewards opens the Pawprint chest and marks Treasure Chart 46 as salvaged, so the Pawprint
-    chest is not a case of its own then."""
-    return _collected(g, SAVAGE_FLOOR_50) and options.floor50 == "rewards"
-
-
-def settled_answers(slots, options):
-    """{(case, file index): (why, mode applied or None)} for cases that are settled without their own
-    answer. An answer given for one of them has no effect, which a front end should say unless it is the
-    mode that was applied anyway."""
-    out = {}
-    for s, g in enumerate(slots):
-        if not is_converted(g):
-            continue
-        g = _with_owned_items(g)
-        if _collected(g, PAWPRINT_CHEST) and _pawprint_settled(g, options.for_slot(s)):
-            out[("pawprint_chest", s)] = ("floor 50 by rewards already settles that chest (opened, Treasure "
-                                          "Chart 46 salvaged)", None)
-    return out
 
 
 def is_converted(g):
@@ -713,29 +719,39 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
         else:
             _set_tbox(out, PAWPRINT_CHEST[1], PAWPRINT_CHEST[2], False)
             rep.changes.append("Chest closed again (by rewards): %s. In HD it holds Treasure Chart 46: open it "
-                               "again to get the chart." % HD_CHART_SOURCES[8][1])
+                               "again to get the chart. You keep its Silver Rupee." % HD_CHART_SOURCES[8][1])
     if b == "steps":
         give_chart(7)
         rep.changes.append("Treasure Chart 45 added (Mrs. Marie by steps): in HD it is her reward for 40 Joy "
                            "Pendants, which she already gave you.")
     if paw:
-        # The Pawprint chest's Silver Rupee is the sunken treasure of Treasure Chart 45 in HD. It can be kept
-        # only if that treasure can be marked as salvaged, which needs the chart in hand.
-        keep = a == "rewards" or options.pawprint_chest == "rewards"
-        if keep and b == "steps":
-            give_chart(7, salvaged=True)
-            rep.changes.append("Treasure Chart 45 marked as salvaged: its treasure in HD is the Silver Rupee you "
-                               "keep from the Pawprint chest, so it must not be collectable a second time.")
-        elif keep:
-            rep.warnings.append("you keep the Silver Rupee of the Pawprint chest, and in HD the same rupee is "
-                                "the sunken treasure of Treasure Chart 45, which this file does not have yet "
-                                "(a chart cannot be marked as salvaged before it is owned): it can be "
-                                "collected once more, 200 rupees")
+        # The Pawprint chest's Silver Rupee is the sunken treasure of Treasure Chart 45 in HD. Kept, that
+        # treasure is marked as salvaged, which needs the chart in hand; without the chart the rupee is kept
+        # all the same (the answer says so) and the report warns that it can be found a second time.
+        keep = options.pawprint_chest == "rewards"
+        if keep:
+            if a == "rewards":                  # otherwise said with the chest, above
+                rep.changes.append("Pawprint chest by rewards: you keep its Silver Rupee. The chest itself "
+                                   "stays open: floor 50 by rewards needs it so.")
+            if b == "steps":
+                give_chart(7, salvaged=True)
+                rep.changes.append("Treasure Chart 45 marked as salvaged: its treasure in HD is the Silver "
+                                   "Rupee you keep from the Pawprint chest, so it must not be collectable a "
+                                   "second time.")
+            else:
+                rep.warnings.append("you keep the Silver Rupee of the Pawprint chest, and in HD the same rupee "
+                                    "is the sunken treasure of Treasure Chart 45, which this file does not "
+                                    "have yet (a chart cannot be marked as salvaged before it is owned): it "
+                                    "can be collected once more, 200 rupees")
         else:
             rupees.append(-200)
-            rep.changes.append("200 rupees to take back: the Silver Rupee the GameCube gave in the "
-                               "Pawprint chest. In HD it is the sunken treasure of Treasure Chart 45 (Mrs. "
-                               "Marie's reward, then Seven-Star Isles): salvage it to get it back.")
+            if a == "rewards":
+                rep.changes.append("Pawprint chest by steps: the chest stays open, as floor 50 by rewards "
+                                   "already has it, with Treasure Chart 46 salvaged.")
+            rep.changes.append("200 rupees to take back (Pawprint chest by steps): the Silver Rupee the "
+                               "GameCube gave in that chest. In HD it is the sunken treasure of Treasure "
+                               "Chart 45 (Mrs. Marie's reward, then Seven-Star Isles): salvage it to get it "
+                               "back.")
     # Tingle's fee for deciphering a Triforce Chart that HD does not have: HD never charges it.
     paid = [k for k in REUSED_CHARTS if g.u("map.triforce_bits") >> (k - 1) & 1]
     if paid:

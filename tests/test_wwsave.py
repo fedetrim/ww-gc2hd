@@ -316,7 +316,7 @@ class CommandLine(unittest.TestCase):
             self.assertEqual(r.returncode, 3, r.stderr)     # 2 is argparse's status for wrong arguments
             self.assertIn("Quest Log 2: NOT CONVERTED", r.stdout)
             self.assertTrue(os.path.exists(os.path.join(tmp, "out3", "cking.sav")))
-            # the Pawprint case alone is not said to depend on floor 50
+            # a case is listed with its flag and the Quest Logs it applies to
             paw = hd.fresh_slot()
             paw.set_raw("info.player_name", b"Paw".ljust(17, b"\0"))
             paw.set_u("memory13.tbox", 1 << 2)
@@ -326,6 +326,25 @@ class CommandLine(unittest.TestCase):
                 f.write(gc.build_gci(b"GZLE01", [paw, hd.fresh_slot(), hd.fresh_slot()]))
             r = self._run("convert", gci2, "-o", os.path.join(tmp, "out2"))
             self.assertIn("--pawprint-chest steps|rewards   (Quest Log 1)\n", r.stderr)
+            # floor 50 by rewards does not answer the Pawprint case: it is listed, as about the rupee only
+            both = paw.copy()
+            both.set_u("memory13.tbox", 1 << 2 | 1 << 12)
+            both.set_u("status_a.max_life", 48)
+            both.set_u("status_a.life", 48)
+            both.set_u("status_a.rupee", 200)
+            gci4 = os.path.join(tmp, "both.gci")
+            with open(gci4, "wb") as f:
+                f.write(gc.build_gci(b"GZLE01", [both, hd.fresh_slot(), hd.fresh_slot()]))
+            r = self._run("convert", gci4, "-o", os.path.join(tmp, "out4"), "--floor50", "rewards")
+            self.assertNotEqual(r.returncode, 0)
+            self.assertIn("--pawprint-chest steps|rewards   (Quest Log 1)\n", r.stderr)
+            self.assertIn("about the Silver Rupee only", r.stderr)
+            self.assertFalse(os.path.exists(os.path.join(tmp, "out4", "cking.sav")))
+            r = self._run("convert", gci4, "-o", os.path.join(tmp, "out4"), "--floor50", "rewards",
+                          "--pawprint-chest", "steps")
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("200 rupees to take back", r.stdout)
+            self.assertIn("200 -> 0.", r.stdout)
             # a case answered for one Quest Log only: the other is still listed
             r = self._run("convert", gci, "-o", out, "--force", "--floor50", "1=steps")
             self.assertNotEqual(r.returncode, 0)
@@ -620,6 +639,32 @@ class Conversion(unittest.TestCase):
                  if d.key == "marie")
         self.assertIn("keep the Hero's Charm", d.text(0)[1][0][1])
         self.assertIn("goes back into the floor-50 chest", d.text(1)[1][0][1])
+        # the Pawprint case: about the whole chest by default, about the rupee only with floor 50 by rewards,
+        # and both said while floor 50 is not answered
+        both = self._swapped(f50=True, paw=True).slots()[0]
+        card = gc.load(gc.build_gci(b"GZLE01", [both, both.copy(), both.copy()]))
+        d = next(d for d in conv.decisions_for(card.slots(), conv.Options(floor50={0: "steps", 1: "rewards"}))
+                 if d.key == "pawprint_chest")
+        steps, rewards = ([d.text(s)[1][k][1] for s in range(3)] for k in (0, 1))
+        self.assertIn("the chest stays open: you get Treasure Chart 46", steps[0])
+        self.assertIn("the chest is closed again", rewards[0])
+        self.assertTrue(steps[1].startswith("by steps: you lose the Silver Rupee"), steps[1])
+        self.assertTrue(rewards[1].startswith("by rewards: you keep the Silver Rupee"), rewards[1])
+        self.assertNotIn("the chest", steps[1] + rewards[1])        # nothing about the chest: floor 50 has it
+        self.assertIn("With floor 50 by steps you also get Treasure Chart 46", steps[2])
+        self.assertIn("With floor 50 by steps the chest is closed again", rewards[2])
+        # ... and what keeping the rupee implies follows the Mrs. Marie answer, which is asked first
+        self.assertLess(conv.Options.CASES.index("marie"), conv.Options.CASES.index("pawprint_chest"))
+        both = self._swapped(marie=True, paw=True).slots()[0]
+        card = gc.load(gc.build_gci(b"GZLE01", [both, both.copy(), both.copy()]))
+        d = next(d for d in conv.decisions_for(card.slots(), conv.Options(marie={0: "steps", 1: "rewards"}))
+                 if d.key == "pawprint_chest")
+        keep = [d.text(s)[1][1][1] for s in range(3)]
+        self.assertIn("is marked as salvaged", keep[0])
+        self.assertNotIn("second Silver Rupee", keep[0])
+        self.assertIn("(Mrs. Marie by rewards)", keep[1])
+        self.assertIn("a second Silver Rupee", keep[1])
+        self.assertIn("With Mrs. Marie by steps", keep[2])
 
     def test_name_changes_are_reported(self):
         self.assertEqual(conv.hd_name_for("Link"), ("Link", None))
@@ -636,20 +681,29 @@ class Conversion(unittest.TestCase):
         self.assertEqual(self._state(card, pawprint_chest="steps")["charts"][46], "x--")
         st = self._state(card, pawprint_chest="rewards")
         self.assertEqual((st["charts"][46], st["paw"]), ("---", 0))
-        # with the floor-50 Piece of Heart kept, the Pawprint chest is settled and not asked about
+        # with the floor-50 Piece of Heart kept the chest stays open with its chart salvaged, and the case
+        # is still asked: its answer decides about the Silver Rupee
         card = self._swapped(f50=True, paw=True)
         keys = lambda o: [d.key for d in conv.decisions_for(card.slots(), o)]
-        self.assertEqual(keys(conv.Options()), ["floor50", "pawprint_chest"])
-        d = conv.decisions_for(card.slots(), conv.Options())[1]
-        self.assertEqual(d.depends, {0: ("floor50", "steps")})     # a case only if floor 50 is by steps
-        self.assertEqual(conv.settled_answers(card.slots(), conv.Options(floor50="rewards")).keys(),
-                         {("pawprint_chest", 0)})
         card.slots()[0].set_u("memory13.tbox", 0)           # a caller's edit does not reach the card
         self.assertEqual(card.slots()[0].u("memory13.tbox"), 1 << 12 | 1 << 2)
-        self.assertEqual(keys(conv.Options(floor50="steps")), ["floor50", "pawprint_chest"])
-        self.assertEqual(keys(conv.Options(floor50="rewards")), ["floor50"])
-        st = self._state(card, floor50="rewards")
-        self.assertEqual((st["charts"][46], st["paw"]), ("xxx", 1))
+        for answer in (None, "steps", "rewards"):
+            self.assertEqual(keys(conv.Options(floor50=answer)), ["floor50", "pawprint_chest"])
+        d = conv.decisions_for(card.slots(), conv.Options(floor50="rewards"))[1]
+        self.assertIn("about the Silver Rupee only", d.text(0)[0])
+        with self.assertRaises(conv.ConversionError):
+            conv.convert(card, conv.Options(floor50="rewards"))
+        rich = card.slots()[0]
+        rich.set_u("status_a.rupee", 200)                   # enough for the take-back to show
+        card = gc.load(gc.build_gci(b"GZLE01", [rich, hd.fresh_slot(), hd.fresh_slot()]))
+        before = card.slots()[0].u("status_a.rupee")
+        for answer, rupees in (("steps", before - 200), ("rewards", before)):
+            out, reports = conv.convert(card, conv.Options(floor50="rewards", pawprint_chest=answer))
+            h = out.slots[0]
+            self.assertEqual((h.u("memory13.tbox") >> 2 & 1, h.u("status_a.rupee")), (1, rupees), answer)
+            self.assertTrue(conv._map_bit(h, "map.get_map", 8) and conv._map_bit(h, "map.complete_map", 8))
+            # kept without Treasure Chart 45 in hand: the report says it can be found a second time
+            self.assertEqual(any("once more" in w for w in reports[0].warnings), answer == "rewards")
 
     def test_no_duplicate_and_nothing_unobtainable(self):
         """Every combination of cases and answers: each unique reward is held exactly when the place that
@@ -682,7 +736,7 @@ class Conversion(unittest.TestCase):
                 if 4 in charts:
                     s.set_event_reg(conv.GHOST_SHIP_REG, 3)
             card = self._card(edit)
-            keys = [d.key for d in conv.decisions_for(card.slots(), conv.Options(floor50="steps"))]
+            keys = [d.key for d in conv.decisions_for(card.slots())]
             for answers in itertools.product(conv.MODES, repeat=len(keys)):
                 opts = conv.Options(**dict(zip(keys, answers)))
                 converted = conv.convert(card, opts)[0]
@@ -712,7 +766,7 @@ class Conversion(unittest.TestCase):
                 # consumables: taken back by steps; the Silver Rupee is held <=> Chart 45's treasure is salvaged
                 ans = dict(zip(keys, answers))
                 self.assertEqual(done(7) and not paw, False, where)
-                kept = ans.get("pawprint_chest") == "rewards" or (f50 and ans.get("floor50") == "rewards")
+                kept = ans.get("pawprint_chest") == "rewards"
                 self.assertEqual(done(7), bool(paw and kept and ans.get("marie") == "steps"), where)
                 rupees = 300 - (20 if ans.get("star_belt_chest") == "steps" else 0) - (
                     200 if paw and not kept else 0) + 398 * len(charts)     # Tingle's fee comes back

@@ -135,17 +135,13 @@ def cmd_convert(a):
             listed = {}
             for d, s in pending:
                 question, choices = d.text(s)
-                dep = d.depends.get(s)
-                note = ""
-                if dep and getattr(options.for_slot(s), dep[0]) is None:
-                    note = "   only needed with %s %s" % (_flag(dep[0]), dep[1])
-                listed.setdefault((d.key, question, tuple(choices), note), []).append(s)
+                listed.setdefault((d.key, question, tuple(choices)), []).append(s)
             lines = ["%s holds states the two games do not share. Choose for each one (or --all for all;"
                      % a.input, "per Quest Log: 1=steps,2=rewards):"]
-            for (key, question, choices, note), logs in listed.items():
+            for (key, question, choices), logs in listed.items():
                 lines.append("")
-                lines.append("%s steps|rewards   (Quest Log %s)%s" % (
-                    _flag(key), ", ".join(str(s + 1) for s in sorted(set(logs))), note))
+                lines.append("%s steps|rewards   (Quest Log %s)" % (
+                    _flag(key), ", ".join(str(s + 1) for s in sorted(set(logs)))))
                 lines.append("  " + question)
                 lines.extend("    %s" % text for _, text in choices)
             sys.exit("\n".join(lines))
@@ -156,7 +152,6 @@ def cmd_convert(a):
     # An answer typed for a Quest Log that is not in that case did nothing: say so (a mistyped number
     # would otherwise leave the intended Quest Log with the --all answer).
     in_case = {(d.key, s) for d in conv.decisions_for(slots, options) for s in d.slots}
-    in_case |= set(conv.settled_answers(slots, options))
     for key in conv.Options.CASES:
         typed = getattr(a, key)
         if isinstance(typed, dict):
@@ -167,11 +162,6 @@ def cmd_convert(a):
         elif typed and not any(k == key for k, _ in in_case):
             print("note: %s %s was not used: no Quest Log is in that case." % (_flag(key), typed),
                   file=sys.stderr)
-    for (key, s), (why, applied) in conv.settled_answers(slots, options).items():
-        given = getattr(a, key)                 # an answer typed by hand that had no effect is said
-        given = given.get(s) if isinstance(given, dict) else given
-        if given and given != applied:
-            reports[s].warnings.append("%s %s was not used: %s" % (_flag(key), given, why))
     data = out_file.serialize()
     hd.HdFile.parse(data)                      # the output must pass the same checks as a real save
 
@@ -301,7 +291,7 @@ def main(argv=None):
     c.add_argument("--star-belt-chest", type=_case_value, metavar="MODE", help="Star Belt Archipelago lookout chest open (HD: Treasure Chart 44)")
     c.add_argument("--floor50", type=_case_value, metavar="MODE",
                    help="Savage Labyrinth floor-50 chest open (GameCube: Piece of Heart, HD: Hero's Charm)")
-    c.add_argument("--pawprint-chest", type=_case_value, metavar="MODE", help="Pawprint Isle Wizzrobe cave chest open (HD: Treasure Chart 46)")
+    c.add_argument("--pawprint-chest", type=_case_value, metavar="MODE", help="Pawprint Isle Wizzrobe cave chest open (HD: Treasure Chart 46; with --floor50 rewards: about its Silver Rupee only)")
     c.add_argument("--marie", type=_case_value, metavar="MODE",
                    help="Mrs. Marie's 40 Joy Pendant reward given (GameCube: Hero's Charm, HD: Treasure Chart 45)")
     c.add_argument("--lenzo", type=_case_value, metavar="MODE",
