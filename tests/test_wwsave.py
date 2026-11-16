@@ -247,6 +247,7 @@ class CommandLine(unittest.TestCase):
                 env = {k: v for k, v in os.environ.items() if k not in ("NO_COLOR", "TERM")}
                 env.update(extra_env or {})
                 with mock.patch("sys.stdin.isatty", return_value=True), \
+                        mock.patch("wwsave.term._vt", True), \
                         mock.patch.dict(os.environ, env, clear=True), \
                         mock.patch("sys.stderr", io.StringIO()), \
                         mock.patch("builtins.input", asked), contextlib.redirect_stdout(text):

@@ -15,30 +15,38 @@ _vt = None
 
 def _windows_vt():
     """On Windows a console shows escape codes as text unless virtual terminal processing is on: turn it
-    on for the standard output and error consoles, and report whether that worked."""
+    on for the standard output and error consoles, and report whether that worked. Where neither stream
+    is a console (a terminal emulator that passes a pipe), TERM says whether there is a terminal."""
     global _vt
     if _vt is None:
         try:
             import ctypes
-            kernel = ctypes.windll.kernel32
-            _vt = True
+            from ctypes import wintypes
+            kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+            kernel.GetStdHandle.argtypes, kernel.GetStdHandle.restype = [wintypes.DWORD], wintypes.HANDLE
+            kernel.GetConsoleMode.argtypes = [wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD)]
+            kernel.GetConsoleMode.restype = wintypes.BOOL
+            kernel.SetConsoleMode.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+            kernel.SetConsoleMode.restype = wintypes.BOOL
+            consoles, ok = 0, True
             for handle in (-11, -12):               # STD_OUTPUT_HANDLE, STD_ERROR_HANDLE
-                h, mode = kernel.GetStdHandle(handle), ctypes.c_uint32()
-                if kernel.GetConsoleMode(h, ctypes.byref(mode)):        # fails for a redirected stream
-                    if not kernel.SetConsoleMode(h, mode.value | 0x0004):
-                        _vt = False
+                h, mode = kernel.GetStdHandle(wintypes.DWORD(handle & 0xFFFFFFFF)), wintypes.DWORD()
+                if kernel.GetConsoleMode(h, ctypes.byref(mode)):        # fails for a stream that is no console
+                    consoles += 1
+                    ok = ok and bool(kernel.SetConsoleMode(h, mode.value | 0x0004))
+            _vt = ok if consoles else bool(os.environ.get("TERM"))
         except Exception:
             _vt = False
     return _vt
 
 
 def terminal(stream=None):
-    stream = stream or sys.stdout
-    return bool(hasattr(stream, "isatty") and stream.isatty())
+    stream = sys.stdout if stream is None else stream     # a closed standard stream is None
+    return bool(stream is not None and hasattr(stream, "isatty") and stream.isatty())
 
 
 def styled(stream=None):
-    return (terminal(stream) and "NO_COLOR" not in os.environ and os.environ.get("TERM") != "dumb"
+    return (terminal(stream) and not os.environ.get("NO_COLOR") and os.environ.get("TERM") != "dumb"
             and (os.name != "nt" or _windows_vt()))
 
 

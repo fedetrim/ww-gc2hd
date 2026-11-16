@@ -38,6 +38,13 @@ def _summary(save, name, indent="  ", hd_save=False):
                                    label_style=lambda label: paint(label, "dim"))
 
 
+def _prompt(text):
+    """input() with a bold prompt. The prompt is printed here: input() itself writes it to the standard
+    error stream when readline is not in use, where a redirection would hide it."""
+    print(paint(text, "bold"), end="", flush=True)
+    return input().strip()
+
+
 def _flag(key):
     return "--" + key.replace("_", "-")
 
@@ -62,7 +69,7 @@ def _ask(decision, slot):
             print(lines.replace(number, paint(number, "bold", "cyan"), 1))
     while True:
         try:
-            answer = input(paint("Choice (1 or 2): ", "bold")).strip()
+            answer = _prompt("Choice (1 or 2): ")
         except EOFError:
             sys.exit("\nno choice made for %s" % _flag(decision.key))
         if answer in [str(i + 1) for i in range(len(choices))]:
@@ -114,15 +121,14 @@ def _confirm(a, card, converted, existing):
     left_out = [s + 1 for s, g in enumerate(card.slots())
                 if s not in converted and (g is None or not g.is_new())]
     if left_out:
-        print(term.labelled("", "note:", "File %s will be left out (see above): Quest Log %s is written empty." % (
-            (" and ".join(map(str, left_out)),) * 2), "yellow"))
+        print(term.labelled("", "note:", "not converted: %s. Each is written as an empty Quest Log." %
+                            ", ".join("File %d" % n for n in left_out), "yellow"))
     if existing:
         print(term.labelled("", "note:", "the save already in %s is first moved to a backup folder there "
                             "(--force)." % a.output, "yellow"))
     try:
-        answer = input(paint("Convert File %s to %s? (y/n): " % (
-            " and ".join(str(s + 1) for s in converted), os.path.join(a.output, "cking.sav")),
-            "bold")).strip().lower()
+        answer = _prompt("Convert File %s to %s? (y/n): " % (
+            " and ".join(str(s + 1) for s in converted), os.path.join(a.output, "cking.sav"))).lower()
     except EOFError:
         answer = ""
     if answer not in ("y", "yes"):
@@ -179,7 +185,7 @@ def cmd_convert(a):
         else:
             sys.exit("--name %s: this card has %d used files. Say which Quest Log gets the name, for example "
                      "--name %d=%s (the option can be repeated)." % (value, len(used), used[0] + 1, value))
-    terminal = sys.stdin.isatty() and term.terminal()
+    terminal = term.terminal(sys.stdin) and term.terminal()
     if terminal and not a.yes:
         _confirm(a, card, used, existing)
     options = conv.Options(name=names or None, swift_sail=bool(a.swift_sail), hero_mode=bool(a.hero_mode))

@@ -116,7 +116,7 @@ def _bag(s, kind):
 
 def format_summary(info, indent="  ", width=None, label_style=None):
     """One line per entry. With `width`, a long value continues on the next lines under its start;
-    `label_style` is applied to each label (for a terminal)."""
+    `label_style` is applied to each label with its indent and padding (for a terminal)."""
     lines = []
 
     def add(label, value):
