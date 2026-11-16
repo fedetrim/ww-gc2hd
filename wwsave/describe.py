@@ -124,9 +124,9 @@ def format_summary(info, indent="  ", width=None, label_style=None):
             value = ", ".join(str(v) for v in value) if value else "-"
         head = "%s%-22s " % (indent, label + ":")
         parts = [str(value)]
-        if width:
-            parts = textwrap.wrap(str(value), max(20, width - len(head)), break_long_words=False,
-                                  break_on_hyphens=False) or [""]
+        room = (width or 0) - len(head)
+        if len(parts[0]) > room >= 20:          # only a value that does not fit; a narrower window reflows
+            parts = textwrap.wrap(parts[0], room, break_long_words=False, break_on_hyphens=False) or [""]
         lines.append((label_style(head) if label_style else head) + parts[0])
         lines.extend(" " * len(head) + part for part in parts[1:])
 

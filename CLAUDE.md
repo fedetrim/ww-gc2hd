@@ -117,5 +117,7 @@ python3 scripts/ingame_save_batch.py PORT_EXE GAME_DIR OUT_DIR 3 [--alt]      # 
 ## Not done
 
 - A run on a real Wii U.
+- A run on Windows: the console handling in `wwsave/term.py` (styles, whether a stream is a console) was
+  written from the API documentation and never executed.
 - Japanese and European GameCube saves (`--allow-region` converts them, nothing was verified).
 - The reverse direction (HD -> GameCube).
