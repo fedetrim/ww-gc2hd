@@ -299,7 +299,7 @@ class CommandLine(unittest.TestCase):
         eur, reports = conv.convert(card, conv.Options(hd_region="europe"))
         self.assertEqual((hd.region_of(usa), hd.region_of(eur)), ("usa", "europe"))
         self.assertIn("--hd-region europe", " ".join(reports[0].changes))
-        self.assertIn("was not run", " ".join(reports[0].warnings))
+        self.assertIn("established on the USA game", " ".join(reports[0].warnings))
         self.assertEqual(reports[1].changes, [])
         hd.set_region(eur.slots, eur.extras, "usa")         # the two defaults are the only difference
         self.assertEqual(eur.serialize(), usa.serialize())
@@ -347,7 +347,7 @@ class CommandLine(unittest.TestCase):
             r = self._run("convert", gci, "-o", eur, "--floor50", "steps", "--hd-region", "europe")
             self.assertEqual(r.returncode, 0, r.stderr)
             self.assertIn("mlc01/usr/save/00050000/10143600/user/80000001", r.stdout)
-            self.assertIn("WARNING: the European game itself was not run", r.stdout)
+            self.assertIn("the disc of the European game was not compared", " ".join(r.stdout.split()))
             self.assertIn("defaults of the European game", self._run("info", eur).stdout)
             self.assertIn("defaults of the USA game", self._run("info", out).stdout)
             self.assertEqual(self._run("verify", eur).returncode, 0)
@@ -511,11 +511,12 @@ class Conversion(unittest.TestCase):
             self.skipTest("no GameCube samples under samples/gc")
 
     def test_all_samples_other_options(self):
-        opts = conv.Options.all("rewards", swift_sail=True, hero_mode=True, hd_region="europe")
         if not GC_FILES:
             self.skipTest("no GameCube samples under samples/gc")
-        for path in GC_FILES:
-            self._check(path, gc.load(_read(path)), opts)
+        for region in hd.REGIONS:                           # the other answers and extras, for each HD game
+            opts = conv.Options.all("rewards", swift_sail=True, hero_mode=True, hd_region=region)
+            for path in GC_FILES:
+                self._check(path, gc.load(_read(path)), opts)
 
     def _card(self, edit):
         save = hd.fresh_slot()

@@ -341,8 +341,11 @@ European GameCube file (`--allow-region`) and for those two files, and the repor
 
 What this rests on, and what was not checked:
 
-- The author has the USA game only. The European game was not run, and its code and stage data were not
-  read here.
+- The research was done on the USA game only: the code and stage data of the European game were not read
+  here.
+- [in-game] tested on a real Wii U with the European game: a converted save loads, and file select,
+  gameplay, inventory, sea chart and album show what the file holds. Nothing was played there and no file
+  written by that game was read back.
 - That the two builds are otherwise the same program is the claim of the native port's own comparison of
   the two executables (ZeldaWWHDRecomp at 1af1d61, `docs/builds.md` and `tools/savegame/README.md`): 18 of
   37,766 functions differ, all of them language code (the reader of the console language, the player name
@@ -444,7 +447,8 @@ taken away in the final battle), and HD puts the item back on load.
 - A consumable already used on the GameCube cannot be taken back by `steps` (the report says so when it
   happens).
 - `--hd-region europe` writes the file for the European HD game from samples and a third party's
-  comparison of the executables; the European game itself was not run and its disc was not compared (4b).
+  comparison of the executables; in the European game one save was loaded on a console, nothing was
+  played, and its disc was not compared (4b).
 - Japanese and European GameCube saves convert (`--allow-region`) but were not analysed. A Japanese name is
   written as "Link" (with a warning): the tool writes only characters below U+0250, and whether the USA HD
   game shows kana was not checked.

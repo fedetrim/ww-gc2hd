@@ -19,8 +19,11 @@ from wwsave import convert as conv  # noqa: E402
 exe, game, out = [os.path.abspath(p) for p in sys.argv[1:4]]
 workers = int(sys.argv[4]) if len(sys.argv) > 4 else 3
 MODE = sys.argv[5] if len(sys.argv) > 5 else "steps"      # steps | rewards, for every case
-OPTIONS = conv.Options.all(MODE, hd_region=sys.argv[6] if len(sys.argv) > 6 else "usa")
-print("every case is answered by %s" % MODE, flush=True)
+REGION = sys.argv[6] if len(sys.argv) > 6 else "usa"
+if MODE not in conv.MODES or REGION not in ("usa", "europe"):
+    sys.exit(__doc__)
+OPTIONS = conv.Options.all(MODE, hd_region=REGION)
+print("every case is answered by %s; files written for the %s game" % (MODE, REGION), flush=True)
 os.makedirs(out, exist_ok=True)
 jobs = sample_jobs(OPTIONS, out)
 

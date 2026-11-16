@@ -41,7 +41,7 @@ This tool was written to make the conversion exact and to prove it:
 | Regions | USA, Japan, Europe | USA (Japan / Europe convert with `--allow-region`, unverified) |
 | HD -> GameCube | `hd2gc.py`, shared fields | no |
 
-Not done here either: a run on a real Wii U.
+Tested on a real Wii U: a converted save loads in the European game.
 
 ```
 ./ww-gc2hd info    "My Save.gci"                 # what is in a GameCube or HD save
@@ -68,8 +68,8 @@ save in the output folder is only replaced with `--force`, which first moves it 
 
 The save is written for the USA game. For the European game give `--hd-region europe`: the file format is
 the same and two settings get the values that game writes. This rests on real European saves and on a
-published comparison of the two executables; the European game itself was not run
-(`docs/DIFFERENCES.md`, 4b). The Japanese game is not covered.
+published comparison of the two executables; in the European game one converted save was loaded on a
+console, and its disc was not compared with the USA one (`docs/DIFFERENCES.md`, 4b). The Japanese game is not covered.
 
 Install the result as `mlc01/usr/save/00050000/10143500/user/80000001/cking.sav` (Cemu; `10143600` for the
 European game) or with a save

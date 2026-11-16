@@ -922,10 +922,11 @@ def convert(card, options=None):
                                "hold: the two settings that game gives every Quest Log differently from "
                                "the USA one are set its way (the reading-aid setting for Japanese text, "
                                "and one options byte)." % (target.game, options.hd_region))
-            rep.warnings.append("the %s game itself was not run and its disc was not compared: every rule "
-                                "here, and each case's two answers, was established on the USA game. A "
-                                "published comparison of the two programs finds them the same except for "
-                                "language code (docs/DIFFERENCES.md, 4b)" % target.game)
+            rep.warnings.append("every rule here, and each case's two answers, was established on the USA "
+                                "game; the disc of the %s game was not compared. A published comparison of "
+                                "the two programs finds them the same except for language code, and one "
+                                "converted save was loaded on a console with that game "
+                                "(docs/DIFFERENCES.md, 4b)" % target.game)
         elif g.u("config.ruby") != target.ruby:
             rep.changes.append("The reading-aid setting for Japanese text set to %d, with no effect on "
                                "what you hold: the %s HD game gives every Quest Log that value." % (

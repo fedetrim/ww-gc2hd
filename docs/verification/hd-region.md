@@ -1,6 +1,7 @@
 # `--hd-region`: runs in the game
 
-Only the USA game is available here (the author's copy). The European game was not run.
+The runs here use the USA game in the native port. The European game was tested once on a real Wii U (a
+converted save loads and shows what the file holds); that run has no report here.
 
 ## The USA game loads a file written for the European game
 
@@ -53,7 +54,7 @@ fields.
 
 ## Not run
 
-- The European game, on a console or in an emulator.
+- The European game in the port or an emulator.
 - For the USA target the reload of every sample (`scripts/ingame_batch.py`) was not repeated. Instead the
   conversions for the USA game of all 34 USA sample cards, with `--all steps` and with `--all rewards` (68
   outputs), were compared with those of the commit before this change: 66 are the same bytes, and the two

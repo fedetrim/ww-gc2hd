@@ -116,9 +116,10 @@ python3 scripts/ingame_save_batch.py PORT_EXE GAME_DIR OUT_DIR 3 [--alt]      # 
 
 ## Not done
 
-- A run on a real Wii U.
-- The European HD game: `--hd-region europe` rests on samples and on the native port's comparison of the
-  executables (`docs/DIFFERENCES.md`, 4b). That game was never run and its disc never compared.
+- On a real Wii U one converted save was loaded and looked at, in the European game. Nothing was played
+  there and no file the console wrote was read back.
+- The European HD game: `--hd-region europe` rests on samples, on the native port's comparison of the
+  executables and on that one console run (`docs/DIFFERENCES.md`, 4b). Its disc was never compared.
 - A run on Windows: the console handling in `wwsave/term.py` (styles, whether a stream is a console) was
   written from the API documentation and never executed.
 - Japanese and European GameCube saves (`--allow-region` converts them, nothing was verified).

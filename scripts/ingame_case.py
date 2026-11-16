@@ -18,8 +18,10 @@ mode = kw.pop("all", "steps")
 region = kw.pop("hd_region", "usa")
 bad = [a for a in sys.argv[7:] if "=" not in a] + [
     "%s=%s" % (k, v) for k, v in kw.items() if k not in conv.Options.CASES or v not in conv.MODES]
+if region not in ("usa", "europe"):
+    bad.append("hd_region=" + region)
 if bad or mode not in conv.MODES:
-    sys.exit("not a case answer: %s\ncases: %s; answers: steps, rewards" % (
+    sys.exit("not a case answer: %s\ncases: %s; answers: steps, rewards; hd_region: usa, europe" % (
         ", ".join(bad) or "all=" + mode, ", ".join(conv.Options.CASES)))
 print("cases not named are answered by %s" % mode)
 card = gc.load(open(src, "rb").read())
