@@ -389,9 +389,9 @@ taken away in the final battle), and HD puts the item back on load.
   could have written; the report states it.
   `--pawprint-chest steps` avoids it in every combination, also with `--floor50 rewards`, where the chest
   stays open and the answer decides about the rupee only. That combination (`--floor50 rewards` with each
-  answer to `--pawprint-chest`) is covered by the unit tests, and both answers load in the game with every
-  field kept [in-game] (file 3 of `the-legend-of-zelda-the-wind-waker.14259.gci`). Salvaging Treasure
-  Chart 45 afterwards was not played for this combination; it was for the Pawprint case alone (Verification).
+  answer to `--pawprint-chest`) was played in the game in both answers [in-game]: with the rupee kept
+  the crane at Seven-Star Isles brings up nothing, with it taken back the crane brings the Silver Rupee
+  (`docs/verification/chests.md`, `salv45_f50rewards_kept`, `salv45_f50rewards_taken`).
 - A consumable already used on the GameCube cannot be taken back by `steps` (the report says so when it
   happens).
 - Japanese and European GameCube saves convert (`--allow-region`) but were not analysed. A Japanese name is

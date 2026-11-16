@@ -32,6 +32,8 @@ halted (29 of 29 logs: 0 halt/crash/assert/fatal lines, scenario finished).
 | Chart 46 with `floor50=steps pawprint_chest=steps` | | VERIFIED in game: salvage gives the Piece of Heart, maximum life 79 -> 80, chart completed. `salv46_f50steps/` |
 | Chart 45 kept as salvaged (`pawprint_chest=rewards marie=steps`) | VERIFIED in game: crane at Seven-Star Isles brings up nothing, rupees stay 4980. `salv45_kept/` | |
 | Chart 45 otherwise (all steps) | | VERIFIED in game: same crane script brings the Silver Rupee, rupees 4780 -> 4980, chart completed. `salv45_given/` |
+| Chart 45 with `floor50=rewards pawprint_chest=rewards` (Silver Rupee kept) | VERIFIED in game: crane at Seven-Star Isles brings up nothing, rupees stay 1000 (set for the run: the file's wallet is full). `salv45_f50rewards_kept/` | |
+| Chart 45 with `floor50=rewards pawprint_chest=steps` (Silver Rupee taken back) | | VERIFIED in game: same crane script brings the Silver Rupee, rupees 1000 -> 1200, chart completed. `salv45_f50rewards_taken/` |
 
 NOT REACHED: none. FAILED: none.
 
@@ -326,7 +328,7 @@ log: 303 lines, halt/crash/assert/fatal lines: 0, test_done: True
 ### paw_f50rewards
 
 ```
-python3 vc.py paw_f50rewards ../../samples/gc/archive-org-zeldasaves/extracted/NGC/USA/the-legend-of-zelda-the-wind-waker.14259.gci 1 Cave07 0 0 50 --opt all=steps --opt floor50=rewards --shots 4,8,12,16,20,24,26,30,34,38,42,48 WWHD_KILL_ENEMIES=300,400,500 WWHD_LINK_WARP=150:2000:60:0:16384,750:2420:27:0:16384 WWHD_TEST_PRESS=27-27.2:8000,33-33.2:8000,36-36.2:8000,39-39.2:8000,42-42.2:8000,45-45.2:8000 --cache paw_f50rewards
+python3 vc.py paw_f50rewards ../../samples/gc/archive-org-zeldasaves/extracted/NGC/USA/the-legend-of-zelda-the-wind-waker.14259.gci 1 Cave07 0 0 50 --opt all=steps --opt floor50=rewards --opt pawprint_chest=rewards --shots 4,8,12,16,20,24,26,30,34,38,42,48 WWHD_KILL_ENEMIES=300,400,500 WWHD_LINK_WARP=150:2000:60:0:16384,750:2420:27:0:16384 WWHD_TEST_PRESS=27-27.2:8000,33-33.2:8000,36-36.2:8000,39-39.2:8000,42-42.2:8000,45-45.2:8000 --cache paw_f50rewards
 ```
 
 log: 303 lines, halt/crash/assert/fatal lines: 0, test_done: True
@@ -334,7 +336,7 @@ log: 303 lines, halt/crash/assert/fatal lines: 0, test_done: True
 ### salv46_f50rewards
 
 ```
-python3 vc.py salv46_f50rewards ../../samples/gc/archive-org-zeldasaves/extracted/NGC/USA/the-legend-of-zelda-the-wind-waker.14259.gci 1 sea 46 0 50 --opt all=steps --opt floor50=rewards --hd 's.data[layout.FIELDS['status_a.select_item'][0]] = 3; mapbit(s,'map.open_map',8,True)' WWHD_SHIP_WARP=150:8300:285300,315:8300:285300 WWHD_TEST_PRESS=8-8.3:2000,11-21:8000,32-32.2:8000,35-35.2:8000,38-38.2:8000,41-41.2:8000,44-44.2:8000,47-47.2:8000 --shots 9,14,20,26,31,34,40,49 --cache salv46_f50rewards
+python3 vc.py salv46_f50rewards ../../samples/gc/archive-org-zeldasaves/extracted/NGC/USA/the-legend-of-zelda-the-wind-waker.14259.gci 1 sea 46 0 50 --opt all=steps --opt floor50=rewards --opt pawprint_chest=rewards --hd 's.data[layout.FIELDS['status_a.select_item'][0]] = 3; mapbit(s,'map.open_map',8,True)' WWHD_SHIP_WARP=150:8300:285300,315:8300:285300 WWHD_TEST_PRESS=8-8.3:2000,11-21:8000,32-32.2:8000,35-35.2:8000,38-38.2:8000,41-41.2:8000,44-44.2:8000,47-47.2:8000 --shots 9,14,20,26,31,34,40,49 --cache salv46_f50rewards
 ```
 
 log: 271 lines, halt/crash/assert/fatal lines: 0, test_done: True
@@ -362,3 +364,19 @@ python3 vc.py salv45_given ../../samples/gc/archive-org-zeldasaves/extracted/NGC
 ```
 
 log: 270 lines, halt/crash/assert/fatal lines: 0, test_done: True
+
+### salv45_f50rewards_kept
+
+```
+python3 vc.py salv45_f50rewards_kept ../../samples/gc/archive-org-zeldasaves/extracted/NGC/USA/the-legend-of-zelda-the-wind-waker.14259.gci 1 sea 6 0 50 --opt all=steps --opt floor50=rewards --opt pawprint_chest=rewards --hd 's.data[layout.FIELDS['status_a.select_item'][0]] = 3; mapbit(s,'map.open_map',7,True); s.set_u('status_a.rupee', 1000)' WWHD_SHIP_WARP=150:227100:-312700,315:227100:-312700 WWHD_TEST_PRESS=3-3.2:8000,8-8.3:2000,11-21:8000,32-32.2:8000,35-35.2:8000,38-38.2:8000,41-41.2:8000,44-44.2:8000,47-47.2:8000 --shots 4,9,14,20,26,31,34,40,49
+```
+
+log: 252 lines, halt/crash/assert/fatal lines: 0, test_done: True
+
+### salv45_f50rewards_taken
+
+```
+python3 vc.py salv45_f50rewards_taken ../../samples/gc/archive-org-zeldasaves/extracted/NGC/USA/the-legend-of-zelda-the-wind-waker.14259.gci 1 sea 6 0 50 --opt all=steps --opt floor50=rewards --hd 's.data[layout.FIELDS['status_a.select_item'][0]] = 3; mapbit(s,'map.open_map',7,True); s.set_u('status_a.rupee', 1000)' WWHD_SHIP_WARP=150:227100:-312700,315:227100:-312700 WWHD_TEST_PRESS=3-3.2:8000,8-8.3:2000,11-21:8000,32-32.2:8000,35-35.2:8000,38-38.2:8000,41-41.2:8000,44-44.2:8000,47-47.2:8000 --shots 4,9,14,20,26,31,34,40,49
+```
+
+log: 252 lines, halt/crash/assert/fatal lines: 0, test_done: True

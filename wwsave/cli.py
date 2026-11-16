@@ -291,7 +291,7 @@ def main(argv=None):
     c.add_argument("--star-belt-chest", type=_case_value, metavar="MODE", help="Star Belt Archipelago lookout chest open (HD: Treasure Chart 44)")
     c.add_argument("--floor50", type=_case_value, metavar="MODE",
                    help="Savage Labyrinth floor-50 chest open (GameCube: Piece of Heart, HD: Hero's Charm)")
-    c.add_argument("--pawprint-chest", type=_case_value, metavar="MODE", help="Pawprint Isle Wizzrobe cave chest open (HD: Treasure Chart 46)")
+    c.add_argument("--pawprint-chest", type=_case_value, metavar="MODE", help="Pawprint Isle Wizzrobe cave chest open (HD: Treasure Chart 46; with --floor50 rewards: about its Silver Rupee only)")
     c.add_argument("--marie", type=_case_value, metavar="MODE",
                    help="Mrs. Marie's 40 Joy Pendant reward given (GameCube: Hero's Charm, HD: Treasure Chart 45)")
     c.add_argument("--lenzo", type=_case_value, metavar="MODE",

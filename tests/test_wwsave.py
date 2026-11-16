@@ -688,7 +688,7 @@ class Conversion(unittest.TestCase):
                 if 4 in charts:
                     s.set_event_reg(conv.GHOST_SHIP_REG, 3)
             card = self._card(edit)
-            keys = [d.key for d in conv.decisions_for(card.slots(), conv.Options(floor50="steps"))]
+            keys = [d.key for d in conv.decisions_for(card.slots())]
             for answers in itertools.product(conv.MODES, repeat=len(keys)):
                 opts = conv.Options(**dict(zip(keys, answers)))
                 converted = conv.convert(card, opts)[0]

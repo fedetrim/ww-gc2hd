@@ -2,7 +2,7 @@
 # q.sh LISTFILE [WORKERS]: runs each line of LISTFILE as "python3 verify/chests/vc.py <line>", WORKERS at a
 # time (default 3), each run with its own shader cache. Empty lines and lines starting with # are skipped.
 #
-#   verify/chests/q.sh verify/chests/cases.txt            all 27 cases of the published report (about 30 minutes)
+#   verify/chests/q.sh verify/chests/cases.txt            all 29 cases of the published report (about 30 minutes)
 #   grep '^f30_' verify/chests/cases.txt > /tmp/f30.txt && verify/chests/q.sh /tmp/f30.txt
 #
 # Inputs: the list file; everything vc.py needs (the port built with both test-aid patches, the extracted

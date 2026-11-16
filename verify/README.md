@@ -43,13 +43,13 @@ left open (`steps`) is shown open while the file already holds the item. Also th
 |---|---|
 | `scan.py` | which sample files are in which case; used to choose the sample of a case |
 | `vc.py` | one run: convert, optional edits, play, print a before/after table |
-| `cases.txt` | the 27 runs of the published report, one `vc.py` argument line each |
+| `cases.txt` | the 29 runs of the published report, one `vc.py` argument line each |
 | `q.sh` | runs the lines of a list file in parallel |
 | `evdiff.py` | every byte of the save block a run changed |
 
 ```sh
 python3 verify/chests/scan.py > research/out/verify/scan.txt       # which samples are in which case
-verify/chests/q.sh verify/chests/cases.txt                         # all 27 cases, 3 at a time, about 30 minutes
+verify/chests/q.sh verify/chests/cases.txt                         # all 29 cases, 3 at a time, about 30 minutes
 python3 verify/chests/evdiff.py f30_rewards tf04_rewards           # after the runs
 ```
 
