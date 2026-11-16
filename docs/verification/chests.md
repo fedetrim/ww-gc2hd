@@ -22,6 +22,10 @@ a full wallet), so that the take-back shows.
 The batch reload of every sample (`scripts/ingame_batch.py`) was not repeated for this rule: with
 `--all steps` and with `--all rewards` every USA sample converts to the same bytes as before the change
 (62 conversions compared), so the files of the last batch are the files of this version.
+The one new output, `floor50=rewards` with `pawprint_chest=steps`, applies to two files of the USA samples
+(files 1 and 3 of the sample used here, the only ones with both chests open): both load into gameplay
+with every field kept, with the other cases by `steps` and by `rewards` (`scripts/ingame_case.py`,
+`scripts/ingame_test.py`).
 
 ## Result
 

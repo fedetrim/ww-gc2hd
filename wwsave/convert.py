@@ -88,8 +88,9 @@ class Options:
     name: str = None                    # player name override (max 8 characters), or {file index: name}
 
     CASES = ("triforce_chart_2", "triforce_chart_4", "triforce_chart_6", "triforce_chart_7",
-             "triforce_chart_8", "horseshoe_chest", "star_belt_chest", "floor50", "pawprint_chest", "marie",
-             "lenzo")
+             "triforce_chart_8", "horseshoe_chest", "star_belt_chest", "floor50", "marie", "pawprint_chest",
+             "lenzo")           # asking order: what Mrs. Marie and the Pawprint chest imply depends on the
+                                # answers before them
 
     def for_slot(self, slot):
         """The options of one file: a case may hold {file index: mode} instead of one mode for all."""
@@ -332,7 +333,7 @@ def decisions_for(slots, options=None):
                  "-1/4 heart) until you salvage it in HD",
                  "you keep the Piece of Heart; its HD place is marked done (Pawprint chest opened, Treasure "
                  "Chart 46 owned and salvaged%s). " % (
-                     "; the Silver Rupee taken from that chest is the Pawprint case"
+                     "; what happens to the Silver Rupee taken from that chest is its own case, --pawprint-chest"
                      if _collected(g, PAWPRINT_CHEST) else "") + (
                      "The floor-50 chest then follows the Mrs. Marie case: it stays open if you keep the "
                      "Hero's Charm there, and is closed again otherwise" if marie else
@@ -344,9 +345,19 @@ def decisions_for(slots, options=None):
                         "the Silver Rupee is the sunken treasure of Treasure Chart 45 (Mrs. Marie's reward)." %
                         HD_CHART_SOURCES[8][1])
             paw_lose = "lose the Silver Rupee (200 rupees, as far as still held) until you salvage it in HD"
-            paw_keep = ("keep the Silver Rupee. If Treasure Chart 45 is in hand (Mrs. Marie by steps) its "
-                        "treasure is marked as salvaged; otherwise that treasure stays to be found, a second "
-                        "Silver Rupee (a chart cannot be marked as salvaged before it is owned)")
+            # kept, the rupee's HD place has to be marked done, which needs Treasure Chart 45 in hand
+            if marie and opts.marie == "steps":
+                paw_keep = ("keep the Silver Rupee; the treasure of Treasure Chart 45, which you get from "
+                            "Mrs. Marie by steps, is marked as salvaged")
+            elif marie and opts.marie is None:
+                paw_keep = ("keep the Silver Rupee. With Mrs. Marie by steps the treasure of Treasure Chart 45 "
+                            "is marked as salvaged; with Mrs. Marie by rewards you do not have that chart yet, "
+                            "and its treasure stays to be found: a second Silver Rupee (a chart cannot be "
+                            "marked as salvaged before it is owned)")
+            else:
+                paw_keep = ("keep the Silver Rupee. You do not have Treasure Chart 45 yet%s, so its treasure "
+                            "cannot be marked as salvaged and stays to be found: a second Silver Rupee, which "
+                            "an HD player does not get" % (" (Mrs. Marie by rewards)" if marie else ""))
             if f50 and opts.floor50 == "rewards":
                 need("pawprint_chest", question + " Floor 50 by rewards keeps this chest open with the chart "
                      "salvaged, so this answer is about the Silver Rupee only.",
@@ -733,6 +744,9 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
                                     "can be collected once more, 200 rupees")
         else:
             rupees.append(-200)
+            if a == "rewards":
+                rep.changes.append("Pawprint chest by steps: the chest stays open, as floor 50 by rewards "
+                                   "already has it, with Treasure Chart 46 salvaged.")
             rep.changes.append("200 rupees to take back (Pawprint chest by steps): the Silver Rupee the "
                                "GameCube gave in that chest. In HD it is the sunken treasure of Treasure Chart 45 (Mrs. "
                                "Marie's reward, then Seven-Star Isles): salvage it to get it back.")

@@ -331,6 +331,7 @@ class CommandLine(unittest.TestCase):
             both.set_u("memory13.tbox", 1 << 2 | 1 << 12)
             both.set_u("status_a.max_life", 48)
             both.set_u("status_a.life", 48)
+            both.set_u("status_a.rupee", 200)
             gci4 = os.path.join(tmp, "both.gci")
             with open(gci4, "wb") as f:
                 f.write(gc.build_gci(b"GZLE01", [both, hd.fresh_slot(), hd.fresh_slot()]))
@@ -343,6 +344,7 @@ class CommandLine(unittest.TestCase):
                           "--pawprint-chest", "steps")
             self.assertEqual(r.returncode, 0, r.stderr)
             self.assertIn("200 rupees to take back", r.stdout)
+            self.assertIn("200 -> 0.", r.stdout)
             # a case answered for one Quest Log only: the other is still listed
             r = self._run("convert", gci, "-o", out, "--force", "--floor50", "1=steps")
             self.assertNotEqual(r.returncode, 0)
@@ -650,6 +652,18 @@ class Conversion(unittest.TestCase):
         self.assertNotIn("chest", steps[1] + rewards[1].split("If Treasure")[0])
         self.assertIn("With floor 50 by steps you also get Treasure Chart 46", steps[2])
         self.assertIn("With floor 50 by steps the chest is closed again", rewards[2])
+        # ... and what keeping the rupee implies follows the Mrs. Marie answer, which is asked first
+        self.assertLess(conv.Options.CASES.index("marie"), conv.Options.CASES.index("pawprint_chest"))
+        both = self._swapped(marie=True, paw=True).slots()[0]
+        card = gc.load(gc.build_gci(b"GZLE01", [both, both.copy(), both.copy()]))
+        d = next(d for d in conv.decisions_for(card.slots(), conv.Options(marie={0: "steps", 1: "rewards"}))
+                 if d.key == "pawprint_chest")
+        keep = [d.text(s)[1][1][1] for s in range(3)]
+        self.assertIn("is marked as salvaged", keep[0])
+        self.assertNotIn("second Silver Rupee", keep[0])
+        self.assertIn("(Mrs. Marie by rewards)", keep[1])
+        self.assertIn("a second Silver Rupee", keep[1])
+        self.assertIn("With Mrs. Marie by steps", keep[2])
 
     def test_name_changes_are_reported(self):
         self.assertEqual(conv.hd_name_for("Link"), ("Link", None))
@@ -678,8 +692,11 @@ class Conversion(unittest.TestCase):
         self.assertIn("about the Silver Rupee only", d.text(0)[0])
         with self.assertRaises(conv.ConversionError):
             conv.convert(card, conv.Options(floor50="rewards"))
+        rich = card.slots()[0]
+        rich.set_u("status_a.rupee", 200)                   # enough for the take-back to show
+        card = gc.load(gc.build_gci(b"GZLE01", [rich, hd.fresh_slot(), hd.fresh_slot()]))
         before = card.slots()[0].u("status_a.rupee")
-        for answer, rupees in (("steps", max(0, before - 200)), ("rewards", before)):
+        for answer, rupees in (("steps", before - 200), ("rewards", before)):
             out, reports = conv.convert(card, conv.Options(floor50="rewards", pawprint_chest=answer))
             h = out.slots[0]
             self.assertEqual((h.u("memory13.tbox") >> 2 & 1, h.u("status_a.rupee")), (1, rupees), answer)
