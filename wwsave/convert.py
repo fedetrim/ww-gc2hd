@@ -86,6 +86,7 @@ class Options:
     swift_sail: bool = False            # upgrade an owned Sail to the HD Swift Sail
     hero_mode: bool = False             # HD Hero Mode
     name: str = None                    # player name override (max 8 characters), or {file index: name}
+    hd_region: str = "usa"              # the HD game the file is for: "usa" | "europe" (hd.REGIONS)
 
     CASES = ("triforce_chart_2", "triforce_chart_4", "triforce_chart_6", "triforce_chart_7",
              "triforce_chart_8", "horseshoe_chest", "star_belt_chest", "floor50", "marie", "pawprint_chest",
@@ -908,6 +909,19 @@ def convert(card, options=None):
         slots.append(out)
         extras.append(extra)
         reports.append(rep)
+    if options.hd_region not in hd.REGIONS:
+        raise ConversionError("unknown HD region %r (usa or europe)" % (options.hd_region,))
+    if options.hd_region != "usa":
+        # After everything else: the two defaults are the same in every Quest Log of a file, also the empty
+        # ones, and a USA GameCube file carries the USA value of the first.
+        for rep, g in zip(reports, slots):
+            if rep.used and (g.u("config.ruby") != hd.REGIONS[options.hd_region][2]):
+                rep.changes.append("File written for the European game (--hd-region europe), with no effect "
+                                   "on what you hold: the two settings that game gives every Quest Log "
+                                   "differently from the USA one are set its way (the Japanese reading-aid "
+                                   "setting off, as on a European GameCube, and one options byte the USA "
+                                   "game leaves at 0).")
+        hd.set_region(slots, extras, options.hd_region)
     return hd.HdFile(slots, extras), reports
 
 

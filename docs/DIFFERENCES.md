@@ -305,7 +305,8 @@ pictures the album shows all three with the game's "Good!" mark.
 | | byte 4 | language, rewritten from the console at start-up | 0 |
 | | byte 5 | GamePad motion aiming on | 1 (HD default) |
 | | byte 6 | Hero Mode (double damage, no heart drops) | `--hero-mode` |
-| | bytes 3, 7, 8 | role not established | 0 |
+| | byte 3 | default of the game build: 0 USA, 1 Europe (4b) | 0, or 1 with `--hd-region europe` |
+| | bytes 7, 8 | role not established | 0 |
 | controller settings | 2 bytes | read by the options and Miiverse screens | 0 |
 | HD inventory | u32 flags | Zunari's pre-sail dialogue (bits 1, 2) | 0 |
 | | 12 entries + count | Carlov's figurine queue (GameCube: one pending figure in register 0xA9FF) | entry 0 = register, count 1, when event 0x2F01 is set or 0x3080 is set without 0x4080 |
@@ -316,6 +317,38 @@ pictures the album shows all three with the game's "Good!" mark.
 
 Play log evidence: in all genuine HD Quest Logs, bit 0 equals the charted bit for every sector other than the
 three charted from the start (680 sector pairs, no exception).
+
+### 4b. The European game (`--hd-region europe`)
+
+The file is written for the USA game (title `00050000-10143500`) unless `--hd-region europe` is given
+(title `00050000-10143600`). The format is the same; two values differ, in every Quest Log of a file, used
+or empty:
+
+| Field | USA | Europe | Evidence |
+|---|---|---|---|
+| options byte 3 | 0 | 1 | [DATA] every Quest Log of the three saves whose source states the European game (two uploaders) has 1, every one of the four whose source states the USA game has 0; the same split in the files the native port wrote (6 used and 8 empty Quest Logs with 1, 32 and 50 with 0). The USA code sets 0 when it clears a Quest Log (HD `d/hd_save_slot_flags.cpp:23`), keeps the byte across a New Game+ (`d/d_save_5.cpp:55,74-75`) and has no other reader or writer in the decompilation. |
+| `config.ruby` (reading aid for Japanese text) | 1 | 0 | [DATA] the same files: 0 exactly where options byte 3 is 1, also in empty Quest Logs. [CODE] the GameCube game has the same split: `dSv_player_config_c::init` sets `VERSION_SELECT(0, 0, 1, 0)` (`src/d/d_save.cpp:994`). No reader in the HD decompilation. |
+
+With the option both are set in all three Quest Logs; nothing else changes (a test compares the two
+outputs). Without it a file keeps the GameCube value of `config.ruby`, as before.
+
+What this rests on, and what was not checked:
+
+- The author has the USA game only. The European game was not run, and its code and stage data were not
+  read here.
+- That the two builds are otherwise the same program is the claim of the native port's own comparison of
+  the two executables (ZeldaWWHDRecomp at 1af1d61, `docs/builds.md` and `tools/savegame/README.md`): 18 of
+  37,766 functions differ, all of them language code (the reader of the console language, the player name
+  in a message, parts of the message window and the keyboard); the functions that read, write and
+  checksum the save have identical bodies; the function that clears a Quest Log stores options byte 3 as
+  0 in the USA build and 1 in the European one. It is a third party's result, not repeated here. The save
+  samples agree with it.
+- Not compared: the stage and event data of the European disc (chests, rewards). Every case of 3.2 was
+  established on the USA disc.
+- [in-game] the USA game loads a file written with `--hd-region europe` and keeps every field (the
+  author's own save, 441 fields, `scripts/ingame_test.py`): the build's readers accept the other build's
+  two values.
+- The language (options byte 4) is rewritten from the console at start-up (4), so it is left at 0.
 
 ## 5. Unused and damaged files
 - A GameCube file without a player name is unused; it becomes a fresh HD Quest Log
@@ -402,6 +435,8 @@ taken away in the final battle), and HD puts the item back on load.
   about, was not played to the second rupee: that needs Mrs. Marie's reward and then the salvage.
 - A consumable already used on the GameCube cannot be taken back by `steps` (the report says so when it
   happens).
+- `--hd-region europe` writes the file for the European HD game from samples and a third party's
+  comparison of the executables; the European game itself was not run and its disc was not compared (4b).
 - Japanese and European GameCube saves convert (`--allow-region`) but were not analysed. A Japanese name is
   written as "Link" (with a warning): the tool writes only characters below U+0250, and whether the USA HD
   game shows kana was not checked.

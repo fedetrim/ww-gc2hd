@@ -65,7 +65,13 @@ All three files of the card are converted to Quest Logs 1-3. The input is never 
 save in the output folder is only replaced with `--force`, which first moves it (`cking.sav` and its
 `cking_pic*` album files) to a `backup-<date>` folder there.
 
-Install the result as `mlc01/usr/save/00050000/10143500/user/80000001/cking.sav` (Cemu) or with a save
+The save is written for the USA game. For the European game give `--hd-region europe`: the file format is
+the same and two settings get the values that game writes. This rests on real European saves and on a
+published comparison of the two executables; the European game itself was not run
+(`docs/DIFFERENCES.md`, 4b). The Japanese game is not covered.
+
+Install the result as `mlc01/usr/save/00050000/10143500/user/80000001/cking.sav` (Cemu; `10143600` for the
+European game) or with a save
 manager such as SaveMii on a console, together with the `cking_pic*` files written next to it. It replaces
 all three Quest Logs: back up the game's save folder first and remove its old `cking_pic*` files, which
 are the albums of the Quest Logs being replaced.
@@ -101,6 +107,7 @@ Other options:
 | `--swift-sail` | upgrade an owned Sail to HD's Swift Sail (off unless given) |
 | `--hero-mode` | HD's Hero Mode (off unless given) |
 | `--name NAME`, `--name N=NAME` | the player name of the HD file (up to 8 characters; default: the GameCube name). With more than one used file, say which Quest Log: `--name 2=Zelda` |
+| `--hd-region usa\|europe` | the Wind Waker HD game the save is for: the USA one (title `10143500`, the default) or the European one (title `10143600`). See below |
 | `--no-pictures` | do not write the Picto Box album files |
 | `--force` | replace a save already in the output folder (it is moved to a backup folder there) |
 | `-y`, `--yes` | in a terminal: skip the confirmation described above and go straight to the cases |

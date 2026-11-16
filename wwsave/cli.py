@@ -10,7 +10,12 @@ from .term import paint
 
 EXIT_PARTIAL = 3            # convert wrote the save, but left out a used file that is not healthy
                             # (1: nothing written; 2: wrong arguments, as argparse reports them)
-CEMU_HINT = "mlc01/usr/save/00050000/10143500/user/80000001/cking.sav"
+
+
+def _save_folder(region):
+    """Where Cemu keeps the save of that build of the game (first user)."""
+    title = hd.REGIONS[region][0]
+    return "mlc01/usr/save/%s/%s/user/80000001" % (title[:8], title[8:])
 
 
 def _read_gc(path):
@@ -188,7 +193,8 @@ def cmd_convert(a):
     terminal = term.terminal(sys.stdin) and term.terminal()
     if terminal and not a.yes:
         _confirm(a, card, used, existing)
-    options = conv.Options(name=names or None, swift_sail=bool(a.swift_sail), hero_mode=bool(a.hero_mode))
+    options = conv.Options(name=names or None, swift_sail=bool(a.swift_sail), hero_mode=bool(a.hero_mode),
+                           hd_region=a.hd_region)
     for key in conv.Options.CASES:
         value = getattr(a, key)
         if isinstance(value, dict):                         # a copy: answers given later are not "typed"
@@ -297,8 +303,9 @@ def cmd_convert(a):
         for w in rep.warnings:
             print(term.labelled("    ", "WARNING:", w, "bold", "yellow"))
     print()
-    closing = ["Copy %s into the game's save folder (Cemu, USA: %s)." % (
-                   "cking.sav and the cking_pic* files" if album else "cking.sav", os.path.dirname(CEMU_HINT)),
+    closing = ["Copy %s into the game's save folder (Cemu, %s game: %s)." % (
+                   "cking.sav and the cking_pic* files" if album else "cking.sav",
+                   {"usa": "USA", "europe": "European"}[a.hd_region], _save_folder(a.hd_region)),
                "It replaces all three Quest Logs and their albums: back up the game's save folder first, and "
                "remove its cking_pic* files before copying."]
     for line in closing:
@@ -313,7 +320,9 @@ def cmd_convert(a):
 def cmd_info(a):
     if _is_hd(a.file):
         f = _read_hd(a.file)
-        print(paint("Wind Waker HD save", "bold"))
+        region = hd.region_of(f)
+        print(paint("Wind Waker HD save" + (" (%s game)" % {"usa": "USA", "europe": "European"}[region]
+                                            if region else ""), "bold"))
         for p in f.problems:
             print("  %s %s" % (paint("PROBLEM:", "bold", "red"), p))
         for s in range(3):
@@ -362,6 +371,9 @@ def main(argv=None):
                    help="Lenzo's third picture accepted without the Deluxe Picto Box (HD gives it at that step)")
     c.add_argument("--swift-sail", action="store_true", help="upgrade an owned Sail to the HD Swift Sail")
     c.add_argument("--hero-mode", action="store_true", help="enable HD Hero Mode")
+    c.add_argument("--hd-region", choices=sorted(hd.REGIONS, reverse=True), default="usa",
+                   help="the Wind Waker HD game the save is for: usa (title 10143500, the default) or europe "
+                        "(title 10143600)")
     c.add_argument("--no-pictures", action="store_true",
                    help="do not write the Picto Box album files (cking_pic*.sav)")
     c.add_argument("--name", action="append", metavar="NAME or N=NAME",

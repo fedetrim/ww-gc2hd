@@ -31,6 +31,8 @@ NAME_CHARS = 8
 
 # options record (hdSaveSlotFlags_c) byte indices
 OPT_LOCK_ON = 0       # Z-targeting: 0 hold, 1 switch (GameCube: config.attention_type)
+OPT_BUILD = 3         # default of the game build: 0 in files of the USA game, 1 in files of the European
+                      # one, in every Quest Log, used or empty; no reader found (docs/DIFFERENCES.md, 4b)
 OPT_LANGUAGE = 4      # PAL language, written by the game from the console setting
 OPT_GYRO = 5          # 1 = motion aiming enabled (default of a fresh file)
 OPT_HERO_MODE = 6     # 1 = Hero Mode
@@ -43,6 +45,30 @@ INV_AUCTION_ITEM = 17 # auction item re-offered after losing a bid
 # play log (hdSavePlayLog_c): 0x18 bytes of map-view state, then 49 x u32 per sea sector
 PLAYLOG_FLAGS = 0x18  # bit 0: this sector's Fishman has drawn the chart
 PRECHARTED_SECTORS = (0, 10, 43)   # Forsaken Fortress, Windfall, Outset: charted in a new file
+
+
+# The two game builds a file can be written for: (title ID, options byte OPT_BUILD, config.ruby). Both are
+# defaults the build gives every Quest Log; nothing else in the file depends on the build.
+REGIONS = {"usa": ("0005000010143500", 0, 1), "europe": ("0005000010143600", 1, 0)}
+
+
+def set_region(slots, extras, region):
+    """Give all three Quest Logs, used or empty, the defaults of that build of the game."""
+    _, build, ruby = REGIONS[region]
+    for save, extra in zip(slots, extras):
+        save.set_u("config.ruby", ruby)
+        options = bytearray(extra["options"])
+        options[OPT_BUILD] = build
+        extra["options"] = bytes(options)
+
+
+def region_of(hd_file):
+    """'usa' | 'europe' when all three Quest Logs carry that build's defaults, else None."""
+    found = {(e["options"][OPT_BUILD], s.u("config.ruby")) for s, e in zip(hd_file.slots, hd_file.extras)}
+    for region, (_, build, ruby) in REGIONS.items():
+        if found == {(build, ruby)}:
+            return region
+    return None
 
 
 class HdError(Exception):

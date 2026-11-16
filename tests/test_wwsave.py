@@ -275,6 +275,30 @@ class CommandLine(unittest.TestCase):
             self.assertIn("by steps:", text.replace("\033[1m", "").replace("\033[0m", ""))
             self.assertIn("by steps", text[text.index("What changed"):])
 
+    def test_hd_region(self):
+        """--hd-region europe gives all three Quest Logs the European game's two defaults, as real
+        European saves have them, and changes nothing else."""
+        for path in HD_FILES:                               # the samples whose region their source states
+            f = hd.HdFile.parse(_read(path))
+            if "BCZP" in path or "savegameworld" in path:
+                self.assertEqual(hd.region_of(f), "europe", path)
+            elif "BCZE" in path:
+                self.assertEqual(hd.region_of(f), "usa", path)
+        save = hd.fresh_slot()
+        save.set_raw("info.player_name", b"Tester".ljust(17, b"\0"))
+        save.set_u("map.triforce_bits", 0)
+        card = gc.load(gc.build_gci(b"GZLE01", [save, hd.fresh_slot(), hd.fresh_slot()]))
+        usa, _ = conv.convert(card, conv.Options())
+        eur, reports = conv.convert(card, conv.Options(hd_region="europe"))
+        self.assertEqual((hd.region_of(usa), hd.region_of(eur)), ("usa", "europe"))
+        self.assertIn("--hd-region europe", " ".join(reports[0].changes))
+        self.assertEqual(reports[1].changes, [])
+        hd.set_region(eur.slots, eur.extras, "usa")         # the two defaults are the only difference
+        self.assertEqual(eur.serialize(), usa.serialize())
+        hd.HdFile.parse(conv.convert(card, conv.Options(hd_region="europe"))[0].serialize())
+        with self.assertRaises(conv.ConversionError):
+            conv.convert(card, conv.Options(hd_region="japan"))
+
     def test_convert_info_verify(self):
         import tempfile
         save = hd.fresh_slot()
