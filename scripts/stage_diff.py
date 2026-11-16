@@ -67,8 +67,10 @@ for st in sorted(set(G) & set(H)):
         h[(a["arc"], a["start_code"])].append((a["params"], tuple(a["aux"]), tuple(a["pos"])))
     for k in sorted(set(g) | set(h)):
         if sorted(g.get(k, [])) != sorted(h.get(k, [])):
-            print("  %-8s %-7s spawn %-3d GC %s  HD %s" % (st, k[0], k[1], [x[0] for x in g.get(k, [])] or "-",
-                                                        [x[0] for x in h.get(k, [])] or "-"))
+            show = (lambda x: x[0]) if sorted(x[0] for x in g.get(k, [])) != sorted(x[0] for x in h.get(k, [])) \
+                else (lambda x: "%s aux %s pos %s" % x)         # same parameters: show what does differ
+            print("  %-8s %-7s spawn %-3d GC %s  HD %s" % (st, k[0], k[1], [show(x) for x in g.get(k, [])] or "-",
+                                                        [show(x) for x in h.get(k, [])] or "-"))
 print("== summary by actor name")
 for (kind, name), n in sorted(names.items()):
     print("  %-8s %-10s %d" % (kind, name, n))

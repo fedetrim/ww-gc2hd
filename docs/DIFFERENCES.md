@@ -384,7 +384,11 @@ taken away in the final battle), and HD puts the item back on load.
   could have written; the report states it.
 - A consumable already used on the GameCube cannot be taken back by `steps` (the report says so when it
   happens).
-- Japanese and European GameCube saves convert (`--allow-region`) but were not analysed.
+- Japanese and European GameCube saves convert (`--allow-region`) but were not analysed. A Japanese name is
+  written as "Link" (with a warning): the tool writes only characters below U+0250, and whether the USA HD
+  game shows kana was not checked.
+- A name with spaces at its ends is written without them (the report says so). Whether HD can hold such a
+  name was not checked; no real HD save in the samples has one.
 
 ## Verification
 - **In the game** (`scripts/ingame_test.py`, `scripts/ingame_batch.py`): the game's own code, recompiled from the
