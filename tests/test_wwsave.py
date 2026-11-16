@@ -342,6 +342,16 @@ class CommandLine(unittest.TestCase):
             self.assertIn("do not fit: the wallet holds 500", report)
             self.assertIn("Maximum life:    12 hearts -> 11 hearts + 3/4", r.stdout)
             self.assertEqual(self._run("verify", out).returncode, 0)
+            # the same card for the European game: the hint and info name it, the file is valid
+            eur = os.path.join(tmp, "eur")
+            r = self._run("convert", gci, "-o", eur, "--floor50", "steps", "--hd-region", "europe")
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("mlc01/usr/save/00050000/10143600/user/80000001", r.stdout)
+            self.assertIn("WARNING: the European game itself was not run", r.stdout)
+            self.assertIn("defaults of the European game", self._run("info", eur).stdout)
+            self.assertIn("defaults of the USA game", self._run("info", out).stdout)
+            self.assertEqual(self._run("verify", eur).returncode, 0)
+            self.assertEqual(self._run("convert", gci, "-o", eur, "--hd-region", "japan").returncode, 2)
             back = hd.HdFile.parse(_read(os.path.join(out, "cking.sav")))
             self.assertEqual([back.slots[i].u("status_a.max_life") for i in (0, 1)], [47, 48])
             self.assertEqual([back.slots[i].u("status_a.rupee") for i in (0, 1)], [500, 500])   # HD wallet limit

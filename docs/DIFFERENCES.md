@@ -352,14 +352,16 @@ What this rests on, and what was not checked:
   samples agree with it.
 - Not compared: the stage and event data of the European disc (chests, rewards). Every case of 3.2 was
   established on the USA disc.
-- [in-game] the USA game loads a file written with `--hd-region europe` and keeps every field
-  (`docs/verification/hd-region.md`): that build's readers accept the other build's pair.
+- [in-game] the USA game loads files written with `--hd-region europe`, saves them from the pause menu and
+  writes both values back unchanged (every healthy USA sample, 42 files, 36 of which save;
+  `docs/verification/hd-region.md`): that build reads and keeps the other build's pair. It says nothing
+  about the European build.
 - The language (options byte 4) is rewritten from the console at start-up (4), so it is left at 0.
 
 ## 5. Unused and damaged files
 - A GameCube file without a player name is unused; it becomes a fresh HD Quest Log
   (`dSv_info_c::initdata_to_card` 025BAC50; equal to the 65 empty Quest Logs of the real HD files, apart from
-  bytes the game leaves uninitialised).
+  bytes the game leaves uninitialised and from the two defaults of the game build, 4b).
 - A raw memory card image keeps a backup copy of its directory and of its block map. The one in use is
   the copy with the higher update counter among those whose checksums are right, as the console picks it.
 - The card file holds two copies of the three files. The converter reads them as the game does

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """For every USA GameCube sample: convert (every case by steps; with --alt every case by rewards plus Swift Sail and Hero Mode), load the
 result in the game, walk a little, save from the pause menu, and compare the file the game writes with the
-converted one.  usage: ingame_save_batch.py EXE GAME_DIR OUT_DIR [WORKERS] [--alt]"""
+converted one. With --europe the files are written for the European game (--hd-region europe); the game
+that loads them is the one in GAME_DIR.
+usage: ingame_save_batch.py EXE GAME_DIR OUT_DIR [WORKERS] [--alt] [--europe]"""
 import concurrent.futures
 import os
 import subprocess
@@ -34,6 +36,9 @@ with open(RUNNER, "w") as f:
     f.write(src.replace("\nrm -rf save states\n", "\nrm -rf states\n"))
 EXPECTED = {"status_b.date_ipl", "status_b.time", "status_b.date", "info.save_count", "status_a.life",
             "status_b.tact_wind_x", "status_b.tact_wind_y"}
+
+if "--europe" in sys.argv:
+    OPTIONS.hd_region = "europe"
 
 jobs = sample_jobs(OPTIONS, out)
 
