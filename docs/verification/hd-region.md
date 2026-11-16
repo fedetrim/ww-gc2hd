@@ -20,9 +20,19 @@ as in the file.
 What this shows: the USA build reads a Quest Log that carries the European pair. What it does not show:
 anything about the European build.
 
+## The USA game loads a file whose `config.ruby` the conversion set to 1
+
+The only USA sample card whose files carry `config.ruby` 0 is
+`samples/gc/archive-org-zeldasaves/extracted/NGC/USA/the-legend-of-zelda-the-wind-waker.14259.gci`
+(files 1 and 3). Converted with `--all steps --no-pictures` for the USA game, the report of both files
+says the setting was set to 1. File 1 was loaded as it is, file 3 after moving it to Quest Log 1
+(`HdFile.move_to_quest_log_1`).
+
+Result (2026-11-16, same build): both go into gameplay and keep all 442 compared fields.
+
 ## Not run
 
 - The European game, on a console or in an emulator.
 - The reload of every sample (`scripts/ingame_batch.py`) was not repeated for this change. For the USA
-  game the output changes only for a GameCube file whose `config.ruby` is 0 (two USA sample files), by
-  that one byte and its checksum.
+  game the output changes only for the two files above, by that one byte and its checksum; every other
+  USA sample converts to the same bytes as before.

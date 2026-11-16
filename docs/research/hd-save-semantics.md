@@ -403,7 +403,8 @@ with the Forsaken Fortress 1 sword removal, which clears the collect bit in both
 3. **`table[7]` and the rest of the slot->item table** (data at 101F3484) are assumed equal to
    GameCube's `itemicon[]` apart from HD additions.
 4. **Play-log flag index** (1.7) assumed equal to the sea sector index.
-5. **Options byte 3 and byte 7** — roles not established.
+5. **Options byte 7** — role not established. (Byte 3 was established later: the default of the game
+   build, `docs/DIFFERENCES.md` 4b.)
 6. **"Serial" word** (1.10) — only the comparison was read.
 7. **Pig mini-game reward `0xFD`** (1.1 side note) — reachability not established.
 8. The HD item-id enum header (`include/d/d_item_data.h`) is textually identical to GameCube's, so

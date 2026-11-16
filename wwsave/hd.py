@@ -14,6 +14,7 @@ hd_save_holders.cpp; checked here against real console and Cemu saves):
   0x2302  u32         CRC-32 of the five HD sections (0x342 bytes), with the quirk that each name
                       contributes only its first (characters + 1) BYTES, zero padded to 18
 """
+import collections
 import struct
 import zlib
 
@@ -47,26 +48,28 @@ PLAYLOG_FLAGS = 0x18  # bit 0: this sector's Fishman has drawn the chart
 PRECHARTED_SECTORS = (0, 10, 43)   # Forsaken Fortress, Windfall, Outset: charted in a new file
 
 
-# The game builds a file can be written for: (name, title ID, options byte OPT_BUILD, config.ruby). The two
-# values are the defaults the build gives a Quest Log when it clears it; they go together in every real
-# file, per Quest Log. Nothing else in the file depends on the build.
-REGIONS = {"usa": ("USA", "0005000010143500", 0, 1), "europe": ("European", "0005000010143600", 1, 0)}
+# The game builds a file can be written for. `build` (options byte OPT_BUILD) and `ruby` (config.ruby) are
+# the defaults the build gives a Quest Log when it clears it; they go together in every real file, per
+# Quest Log. Nothing else in the file depends on the build. The first entry is the default.
+Region = collections.namedtuple("Region", "game title build ruby")
+REGIONS = {"usa": Region("USA", "0005000010143500", 0, 1),
+           "europe": Region("European", "0005000010143600", 1, 0)}
 
 
 def set_region(slots, extras, region):
     """Give all three Quest Logs, used or empty, the defaults of that build of the game."""
-    _, _, build, ruby = REGIONS[region]
+    target = REGIONS[region]
     for save, extra in zip(slots, extras):
-        save.set_u("config.ruby", ruby)
+        save.set_u("config.ruby", target.ruby)
         options = bytearray(extra["options"])
-        options[OPT_BUILD] = build
+        options[OPT_BUILD] = target.build
         extra["options"] = bytes(options)
 
 
 def slot_region(save, extra):
     """The build whose defaults one Quest Log carries: 'usa' | 'europe', or None for another pair."""
-    for region, (_, _, build, ruby) in REGIONS.items():
-        if (extra["options"][OPT_BUILD], save.u("config.ruby")) == (build, ruby):
+    for region, r in REGIONS.items():
+        if (extra["options"][OPT_BUILD], save.u("config.ruby")) == (r.build, r.ruby):
             return region
     return None
 

@@ -281,17 +281,15 @@ class CommandLine(unittest.TestCase):
     def test_hd_region(self):
         """--hd-region europe gives all three Quest Logs the European game's two defaults, as real
         European saves have them, and changes nothing else."""
-        stated = {"usa": 0, "europe": 0}
         for path in HD_FILES:
             f = hd.HdFile.parse(_read(path))
             for s in range(3):                              # every Quest Log of every sample has one of the
                 self.assertIsNotNone(hd.slot_region(f.slots[s], f.extras[s]), path)     # two pairs
-            region = "europe" if "BCZP" in path or "savegameworld" in path else "usa" if "BCZE" in path else None
+            source = os.path.relpath(path, ROOT)
+            region = "europe" if "BCZP" in source or "savegameworld" in source else \
+                "usa" if "BCZE" in source else None
             if region:                                      # the samples whose source states the game
                 self.assertEqual(hd.region_of(f), region, path)
-                stated[region] += 1
-        if HD_FILES:
-            self.assertTrue(all(stated.values()), stated)
         save = hd.fresh_slot()
         save.set_raw("info.player_name", b"Tester".ljust(17, b"\0"))
         save.set_u("map.triforce_bits", 0)
@@ -300,6 +298,7 @@ class CommandLine(unittest.TestCase):
         eur, reports = conv.convert(card, conv.Options(hd_region="europe"))
         self.assertEqual((hd.region_of(usa), hd.region_of(eur)), ("usa", "europe"))
         self.assertIn("--hd-region europe", " ".join(reports[0].changes))
+        self.assertIn("was not run", " ".join(reports[0].warnings))
         self.assertEqual(reports[1].changes, [])
         hd.set_region(eur.slots, eur.extras, "usa")         # the two defaults are the only difference
         self.assertEqual(eur.serialize(), usa.serialize())

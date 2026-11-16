@@ -887,6 +887,8 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
 def convert(card, options=None):
     """GcCardFile -> (HdFile, [SlotReport])."""
     options = options or Options()
+    if options.hd_region not in hd.REGIONS:
+        raise ConversionError("unknown HD region %r (%s)" % (options.hd_region, " or ".join(hd.REGIONS)))
     slots, extras, reports = [], [], []
     pictures = card.pictures()
     for s, g in enumerate(card.slots()):
@@ -909,11 +911,9 @@ def convert(card, options=None):
         slots.append(out)
         extras.append(extra)
         reports.append(rep)
-    if options.hd_region not in hd.REGIONS:
-        raise ConversionError("unknown HD region %r (%s)" % (options.hd_region, " or ".join(hd.REGIONS)))
     # After everything else: each build of the HD game gives every Quest Log, used or empty, its own two
     # defaults (hd.REGIONS). A GameCube file carries its own region's value of the first.
-    game, _, _, ruby = hd.REGIONS[options.hd_region]
+    target = hd.REGIONS[options.hd_region]
     for rep, g in zip(reports, slots):
         if not rep.used:
             continue
@@ -921,10 +921,15 @@ def convert(card, options=None):
             rep.changes.append("File written for the %s game (--hd-region %s), with no effect on what you "
                                "hold: the two settings that game gives every Quest Log differently from "
                                "the USA one are set its way (the reading-aid setting for Japanese text, "
-                               "and one options byte)." % (game, options.hd_region))
-        elif g.u("config.ruby") != ruby:
+                               "and one options byte)." % (target.game, options.hd_region))
+            rep.warnings.append("the %s game itself was not run and its disc was not compared: every rule "
+                                "here, and each case's two answers, was established on the USA game. A "
+                                "published comparison of the two programs finds them the same except for "
+                                "language code (docs/DIFFERENCES.md, 4b)" % target.game)
+        elif g.u("config.ruby") != target.ruby:
             rep.changes.append("The reading-aid setting for Japanese text set to %d, with no effect on "
-                               "what you hold: the %s HD game gives every Quest Log that value." % (ruby, game))
+                               "what you hold: the %s HD game gives every Quest Log that value." % (
+                                   target.ruby, target.game))
     hd.set_region(slots, extras, options.hd_region)
     return hd.HdFile(slots, extras), reports
 

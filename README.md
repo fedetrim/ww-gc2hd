@@ -1,7 +1,8 @@
 # ww-gc2hd
 
 Converts a *The Legend of Zelda: The Wind Waker* save from the GameCube (NTSC-U, `GZLE01`) into a
-*Wind Waker HD* save for the Wii U (`cking.sav`, USA title `00050000-10143500`; also what Cemu uses).
+*Wind Waker HD* save for the Wii U (`cking.sav`, USA title `00050000-10143500`, or the European title
+`00050000-10143600` with `--hd-region europe`; also what Cemu uses).
 
 Python 3.8+, no dependencies.
 
