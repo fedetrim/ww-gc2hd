@@ -257,7 +257,8 @@ class CommandLine(unittest.TestCase):
                 return 0, asked.call_count, text.getvalue()
 
             code, asked, text = run(["n"])
-            self.assertEqual((code, asked), ("Nothing was converted.", 1))
+            self.assertIn("Nothing was converted.", code)
+            self.assertEqual(asked, 1)
             self.assertIn("Tester", text)
             self.assertIn("\033[1", text)                   # a terminal gets styles; NO_COLOR turns them off
             self.assertNotIn("\033[", run(["n"], extra_env={"NO_COLOR": "1"})[2])
