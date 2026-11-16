@@ -17,8 +17,11 @@ and reads the game's save block at the end. No result here comes from code readi
 Root of all paths: `runs/verify-chests/ of the author's working copy, not in this repository` (called V below).
 The six runs of 2026-11-16 are in V too; for the four repeated ones the run of 2026-11-15 is kept beside it
 as `V/CASE-2026-11-15/`, and the screenshots named below for those cases are of that earlier run. The two
-`salv45_f50rewards` runs start from the sample with its rupees set to 1000 and no chart deciphered
-(`--gc`), so that the wallet has room and the take-back shows.
+`salv45_f50rewards` runs start from the sample with its rupees set to 1000 (`--gc`; the sample has 5000,
+a full wallet), so that the take-back shows.
+The batch reload of every sample (`scripts/ingame_batch.py`) was not repeated for this rule: with
+`--all steps` and with `--all rewards` every USA sample converts to the same bytes as before the change
+(62 conversions compared), so the files of the last batch are the files of this version.
 
 ## Result
 
@@ -41,8 +44,8 @@ halted (31 of 31 logs: 0 halt/crash/assert/fatal lines, scenario finished).
 | Chart 46 with `floor50=steps pawprint_chest=steps` | | VERIFIED in game: salvage gives the Piece of Heart, maximum life 79 -> 80, chart completed. `salv46_f50steps/` |
 | Chart 45 kept as salvaged (`pawprint_chest=rewards marie=steps`) | VERIFIED in game: crane at Seven-Star Isles brings up nothing, rupees stay 4980. `salv45_kept/` | |
 | Chart 45 otherwise (all steps) | | VERIFIED in game: same crane script brings the Silver Rupee, rupees 4780 -> 4980, chart completed. `salv45_given/` |
-| Chart 45 with `floor50=rewards pawprint_chest=rewards` (Silver Rupee kept) | VERIFIED in game: the file loads with 980 rupees (GameCube 1000, less the Red Rupee of the Star Belt chest); crane at Seven-Star Isles brings up nothing, rupees stay 980. `salv45_f50rewards_kept/` | |
-| Chart 45 with `floor50=rewards pawprint_chest=steps` (Silver Rupee taken back) | | VERIFIED in game: the file loads with 780 rupees (200 less than the row above); the same crane script brings the Silver Rupee, rupees 780 -> 980, chart completed. `salv45_f50rewards_taken/` |
+| Chart 45 with `floor50=rewards pawprint_chest=rewards` (Silver Rupee kept) | VERIFIED in game: the file loads with 2970 rupees (GameCube 1000, less the Red Rupee of the Star Belt chest, plus Tingle's fee for five charts); crane at Seven-Star Isles brings up nothing, rupees stay 2970. `salv45_f50rewards_kept/` | |
+| Chart 45 with `floor50=rewards pawprint_chest=steps` (Silver Rupee taken back) | | VERIFIED in game: the file loads with 2770 rupees (200 less than the row above); the same crane script brings the Silver Rupee, rupees 2770 -> 2970, chart completed. `salv45_f50rewards_taken/` |
 
 NOT REACHED: none. FAILED: none.
 
@@ -377,7 +380,7 @@ log: 270 lines, halt/crash/assert/fatal lines: 0, test_done: True
 ### salv45_f50rewards_kept
 
 ```
-python3 vc.py salv45_f50rewards_kept ../../samples/gc/archive-org-zeldasaves/extracted/NGC/USA/the-legend-of-zelda-the-wind-waker.14259.gci 1 sea 6 0 50 --opt all=steps --opt floor50=rewards --opt pawprint_chest=rewards --gc "g.set_u('status_a.rupee', 1000); g.set_u('map.triforce_bits', 0)" --hd "s.data[layout.FIELDS['status_a.select_item'][0]] = 3; mapbit(s,'map.open_map',7,True)" WWHD_SHIP_WARP=150:227100:-312700,315:227100:-312700 WWHD_TEST_PRESS=3-3.2:8000,8-8.3:2000,11-21:8000,32-32.2:8000,35-35.2:8000,38-38.2:8000,41-41.2:8000,44-44.2:8000,47-47.2:8000 --shots 4,9,14,20,26,31,34,40,49
+python3 vc.py salv45_f50rewards_kept ../../samples/gc/archive-org-zeldasaves/extracted/NGC/USA/the-legend-of-zelda-the-wind-waker.14259.gci 1 sea 6 0 50 --opt all=steps --opt floor50=rewards --opt pawprint_chest=rewards --gc "g.set_u('status_a.rupee', 1000)" --hd "s.data[layout.FIELDS['status_a.select_item'][0]] = 3; mapbit(s,'map.open_map',7,True)" WWHD_SHIP_WARP=150:227100:-312700,315:227100:-312700 WWHD_TEST_PRESS=3-3.2:8000,8-8.3:2000,11-21:8000,32-32.2:8000,35-35.2:8000,38-38.2:8000,41-41.2:8000,44-44.2:8000,47-47.2:8000 --shots 4,9,14,20,26,31,34,40,49 --cache salv45_f50rewards_kept
 ```
 
 log: 252 lines, halt/crash/assert/fatal lines: 0, test_done: True
@@ -385,7 +388,7 @@ log: 252 lines, halt/crash/assert/fatal lines: 0, test_done: True
 ### salv45_f50rewards_taken
 
 ```
-python3 vc.py salv45_f50rewards_taken ../../samples/gc/archive-org-zeldasaves/extracted/NGC/USA/the-legend-of-zelda-the-wind-waker.14259.gci 1 sea 6 0 50 --opt all=steps --opt floor50=rewards --gc "g.set_u('status_a.rupee', 1000); g.set_u('map.triforce_bits', 0)" --hd "s.data[layout.FIELDS['status_a.select_item'][0]] = 3; mapbit(s,'map.open_map',7,True)" WWHD_SHIP_WARP=150:227100:-312700,315:227100:-312700 WWHD_TEST_PRESS=3-3.2:8000,8-8.3:2000,11-21:8000,32-32.2:8000,35-35.2:8000,38-38.2:8000,41-41.2:8000,44-44.2:8000,47-47.2:8000 --shots 4,9,14,20,26,31,34,40,49
+python3 vc.py salv45_f50rewards_taken ../../samples/gc/archive-org-zeldasaves/extracted/NGC/USA/the-legend-of-zelda-the-wind-waker.14259.gci 1 sea 6 0 50 --opt all=steps --opt floor50=rewards --gc "g.set_u('status_a.rupee', 1000)" --hd "s.data[layout.FIELDS['status_a.select_item'][0]] = 3; mapbit(s,'map.open_map',7,True)" WWHD_SHIP_WARP=150:227100:-312700,315:227100:-312700 WWHD_TEST_PRESS=3-3.2:8000,8-8.3:2000,11-21:8000,32-32.2:8000,35-35.2:8000,38-38.2:8000,41-41.2:8000,44-44.2:8000,47-47.2:8000 --shots 4,9,14,20,26,31,34,40,49 --cache salv45_f50rewards_taken
 ```
 
 log: 252 lines, halt/crash/assert/fatal lines: 0, test_done: True

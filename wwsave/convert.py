@@ -733,8 +733,8 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
                                     "can be collected once more, 200 rupees")
         else:
             rupees.append(-200)
-            rep.changes.append("200 rupees to take back: the Silver Rupee the GameCube gave in the "
-                               "Pawprint chest. In HD it is the sunken treasure of Treasure Chart 45 (Mrs. "
+            rep.changes.append("200 rupees to take back (Pawprint chest by steps): the Silver Rupee the "
+                               "GameCube gave in that chest. In HD it is the sunken treasure of Treasure Chart 45 (Mrs. "
                                "Marie's reward, then Seven-Star Isles): salvage it to get it back.")
     # Tingle's fee for deciphering a Triforce Chart that HD does not have: HD never charges it.
     paid = [k for k in REUSED_CHARTS if g.u("map.triforce_bits") >> (k - 1) & 1]
