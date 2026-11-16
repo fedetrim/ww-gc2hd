@@ -1,0 +1,518 @@
+[
+ {
+  "kind": "github",
+  "dest": "gc/github-cbartondock_windwaker",
+  "repo": "cbartondock/Windwaker",
+  "commit": "4ea07cbfb0cfa02a2df9cf2ed52aef7d96f16248"
+ },
+ {
+  "kind": "github",
+  "dest": "gc/github-pdale-boop_ww-save-editor",
+  "repo": "pdale-boop/ww-save-editor",
+  "commit": "2ea1d43aa3da467b33e3c1dca7cf5da43690ad44"
+ },
+ {
+  "kind": "github",
+  "dest": "gc/github-samrg97_tww-gz_save_tools",
+  "repo": "samrg97/tww-gz_save_tools",
+  "commit": "f5252cc8f78ca9eb4219c29030eea03b63ed6209"
+ },
+ {
+  "kind": "github",
+  "dest": "gc/github-zephiles_twwsavefilehacker",
+  "repo": "Zephiles/TWWSaveFileHacker",
+  "commit": "28a02ae6a5fff9eb94a2628c0a00475e44c5d05b"
+ },
+ {
+  "kind": "github",
+  "dest": "gc/github-minimini352_tww-100-saves",
+  "repo": "minimini352/TWW-100-Saves",
+  "commit": "c6e3807e67801c3c69bdf612b4979f9944882cb3"
+ },
+ {
+  "kind": "github",
+  "dest": "gc/github-minimini352_tww-any-saves",
+  "repo": "minimini352/TWW-Any-Saves",
+  "commit": "1c9c95ad7cd309fdcad50afc437c3d6793667d52"
+ },
+ {
+  "kind": "github",
+  "dest": "gc/github-minimini352_tww-any-no-mss-saves",
+  "repo": "minimini352/TWW-Any-No-MSS-Saves",
+  "commit": "2a183cf65a5cfaeaff34da953b0a546bf4ef3a29"
+ },
+ {
+  "kind": "github",
+  "dest": "gc/github-minimini352_tww-glitchless-saves",
+  "repo": "minimini352/TWW-Glitchless-Saves",
+  "commit": "ec8ffc4711cd89227d1a95c6d62b26d7c9a943b9"
+ },
+ {
+  "kind": "github",
+  "dest": "gc/github-minimini352_tww-il-saves",
+  "repo": "minimini352/TWW-IL-Saves",
+  "commit": "0cdc3d0f248a73c048ae5ab04b4a1ebb6c24d383"
+ },
+ {
+  "kind": "github",
+  "dest": "gc/cryze",
+  "repo": "CryZe/WindWakerSaves",
+  "commit": "e8b4aa6ee324cb16ce20e6eb5f186fbdc5c987ab"
+ },
+ {
+  "kind": "file",
+  "dest": "gc/gc-saves.com",
+  "name": "the_legend_of_zelda_the_wind_waker_usa.gci",
+  "url": "https://gc-saves.com/saves/the_legend_of_zelda_the_wind_waker_usa.gci"
+ },
+ {
+  "kind": "file",
+  "dest": "gc/gc-saves.com",
+  "name": "the_legend_of_zelda_the_wind_waker_jp.gci",
+  "url": "https://gc-saves.com/saves/the_legend_of_zelda_the_wind_waker_jp.gci"
+ },
+ {
+  "kind": "file",
+  "dest": "gc/gc-saves.com",
+  "name": "the_legend_of_zelda_the_wind_waker_pal.gci",
+  "url": "https://gc-saves.com/saves/the_legend_of_zelda_the_wind_waker_pal.gci"
+ },
+ {
+  "kind": "file",
+  "dest": "gc/archive-org-memcard-251-us",
+  "name": "0251b_2025_Feb_07_04-09-10.raw",
+  "url": "https://archive.org/download/20250206-dol-memcard-bak/0251b_2025_Feb_07_04-09-10.raw",
+  "raw_card": true
+ },
+ {
+  "kind": "archive",
+  "dest": "gc/archive-org-zeldasaves",
+  "name": "Zelda SAVES.rar",
+  "keep_archive": false,
+  "url": "https://archive.org/download/zeldasaves/Zelda%20SAVES.rar",
+  "members": [
+   "*NGC/*/*[Ww]ind*[Ww]aker*"
+  ],
+  "note": "120 MB; only the three Wind Waker files are kept"
+ },
+ {
+  "kind": "archive",
+  "dest": "gc/pack1",
+  "name": "WindWakerSaves.7z",
+  "extracted": ".",
+  "keep_archive": false,
+  "url": "https://retromaggedon.com/wp-content/uploads/2022/03/WindWakerSaves.7z"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/gbatemp-compilation",
+  "name": "01_TLOZ_Wind_Waker_HD_-BCZE01-.7z",
+  "archive_dir": "archives",
+  "extracted": "extracted/01_TLOZ_Wind_Waker_HD_-BCZE01-",
+  "url": "https://drive.google.com/uc?export=download&id=0B5p7e1g-NHIva0pFOHVfQ2s3c3M"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/gbatemp-compilation",
+  "name": "02_Zelda_Windwaker_HD_-BCZE01-.zip",
+  "archive_dir": "archives",
+  "extracted": "extracted/02_Zelda_Windwaker_HD_-BCZE01-",
+  "url": "https://drive.google.com/uc?export=download&id=0B5p7e1g-NHIvYmV3YXBkc2hlalk"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/gbatemp-compilation",
+  "name": "03_Zelda_Windwaker_HD_-BCZE01-(1).zip",
+  "archive_dir": "archives",
+  "extracted": "extracted/03_Zelda_Windwaker_HD_-BCZE01-(1)",
+  "url": "https://drive.google.com/uc?export=download&id=0B5p7e1g-NHIvbWJaaWNnSE80ZUk"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/gbatemp-compilation",
+  "name": "04_Zelda_Wind_Waker_-BCZP01-.zip",
+  "archive_dir": "archives",
+  "extracted": "extracted/04_Zelda_Wind_Waker_-BCZP01-",
+  "url": "https://drive.google.com/uc?export=download&id=0B5p7e1g-NHIvaU5ycmxRYVZoYkE"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/gbatemp-compilation",
+  "name": "05_cking.zip",
+  "archive_dir": "archives",
+  "extracted": "extracted/05_cking",
+  "url": "https://drive.google.com/uc?export=download&id=0B5p7e1g-NHIva0NxZkwyRjRrb28"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/gbatemp-compilation",
+  "name": "06_The_Legend_Of_Zelda_-_Wind_Waker_HD_-BCZE01-.zip",
+  "archive_dir": "archives",
+  "extracted": "extracted/06_The_Legend_Of_Zelda_-_Wind_Waker_HD_-BCZE01-",
+  "url": "https://drive.google.com/uc?export=download&id=0B5p7e1g-NHIvdzliS3JnQVdIeEk"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/gbatemp-compilation",
+  "name": "07_ckingv2.zip",
+  "archive_dir": "archives",
+  "extracted": "extracted/07_ckingv2",
+  "url": "https://drive.google.com/uc?export=download&id=1Y_6JQPc_8aMXY5SvIc5jpyH3ivQO6fC0"
+ },
+ {
+  "kind": "github",
+  "dest": "hd/github-chriztr_wiiu-game-saves-for-cemu",
+  "repo": "chriztr/wiiu-game-saves-for-cemu",
+  "commit": "114f6640943e9c34d02f3d1de3eb750ca54865e6",
+  "only": "GameSaves/ZeldaWWHD",
+  "unpack_zips": true
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/savegameworld",
+  "name": "Wind_Waker_HD_Save.zip",
+  "url": "https://www.savegameworld.com/download/Wind_Waker_HD_Save.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecompAndroid_issue4_33079052",
+  "name": "dcd0f8c6a236af6e009ec7774d537ecc.zip",
+  "url": "https://github.com/user-attachments/files/33079052/dcd0f8c6a236af6e009ec7774d537ecc.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecompAndroid_issue23_33271660",
+  "name": "user.zip",
+  "url": "https://github.com/user-attachments/files/33271660/user.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/WindWakerHD-Android-Plus_issue24_33793975",
+  "name": "WindWakerHD.Saves.zip",
+  "url": "https://github.com/user-attachments/files/33793975/WindWakerHD.Saves.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/wwstate-only/ZeldaWWHDRecomp_issue571_34834879",
+  "name": "slot2.zip",
+  "url": "https://github.com/user-attachments/files/34834879/slot2.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue571_34834882",
+  "name": "save.zip",
+  "url": "https://github.com/user-attachments/files/34834882/save.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/rejected/ZeldaWWHDRecomp_issue529_34719414",
+  "name": "Zelda.zip",
+  "url": "https://github.com/user-attachments/files/34719414/Zelda.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/wwstate-only/ZeldaWWHDRecomp_issue493_34589784",
+  "name": "slot2.zip",
+  "url": "https://github.com/user-attachments/files/34589784/slot2.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue469_34530589",
+  "name": "save.zip",
+  "url": "https://github.com/user-attachments/files/34530589/save.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/wwstate-only/ZeldaWWHDRecomp_issue446_34489357",
+  "name": "slot1.zip",
+  "url": "https://github.com/user-attachments/files/34489357/slot1.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue446_34489377",
+  "name": "cking.zip",
+  "url": "https://github.com/user-attachments/files/34489377/cking.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/wwstate-only/ZeldaWWHDRecomp_issue361_34292581",
+  "name": "slot1.zip",
+  "url": "https://github.com/user-attachments/files/34292581/slot1.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/wwstate-only/ZeldaWWHDRecomp_issue353_34276523",
+  "name": "slot1.zip",
+  "url": "https://github.com/user-attachments/files/34276523/slot1.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue334_34190104",
+  "name": "saves.zip",
+  "url": "https://github.com/user-attachments/files/34190104/saves.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue322_34016118",
+  "name": "cking.zip",
+  "url": "https://github.com/user-attachments/files/34016118/cking.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue309_33939896",
+  "name": "save.+.state.zip",
+  "url": "https://github.com/user-attachments/files/33939896/save.%2B.state.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue307_33933279",
+  "name": "state.zip",
+  "url": "https://github.com/user-attachments/files/33933279/state.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/wwstate-only/ZeldaWWHDRecomp_issue299_33901570",
+  "name": "boatingcourse_slot1.zip",
+  "url": "https://github.com/user-attachments/files/33901570/boatingcourse_slot1.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/wwstate-only/ZeldaWWHDRecomp_issue297_33894147",
+  "name": "slot5.zip",
+  "url": "https://github.com/user-attachments/files/33894147/slot5.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/wwstate-only/ZeldaWWHDRecomp_issue283_33830392",
+  "name": "slot1.zip",
+  "url": "https://github.com/user-attachments/files/33830392/slot1.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/wwstate-only/ZeldaWWHDRecomp_issue275_33813450",
+  "name": "slot3.zip",
+  "url": "https://github.com/user-attachments/files/33813450/slot3.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue254_33680064",
+  "name": "evosave.zip",
+  "url": "https://github.com/user-attachments/files/33680064/evosave.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue251_33642303",
+  "name": "Wind.Waker.Saves.zip",
+  "url": "https://github.com/user-attachments/files/33642303/Wind.Waker.Saves.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue237_33583087",
+  "name": "slot1.zip",
+  "url": "https://github.com/user-attachments/files/33583087/slot1.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/wwstate-only/ZeldaWWHDRecomp_issue229_33552585",
+  "name": "slot1.zip",
+  "url": "https://github.com/user-attachments/files/33552585/slot1.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue223_33515517",
+  "name": "state.zip",
+  "url": "https://github.com/user-attachments/files/33515517/state.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue179_33410800",
+  "name": "WWHDSaves.zip",
+  "url": "https://github.com/user-attachments/files/33410800/WWHDSaves.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue178_33361454",
+  "name": "saves.zip",
+  "url": "https://github.com/user-attachments/files/33361454/saves.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue167_33346280",
+  "name": "save.zip",
+  "url": "https://github.com/user-attachments/files/33346280/save.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue160_33323831",
+  "name": "states.zip",
+  "url": "https://github.com/user-attachments/files/33323831/states.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue145_33303346",
+  "name": "state.zip",
+  "url": "https://github.com/user-attachments/files/33303346/state.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue119_33274308",
+  "name": "bug-mailsorting.zip",
+  "url": "https://github.com/user-attachments/files/33274308/bug-mailsorting.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/wwstate-only/ZeldaWWHDRecomp_issue85_33222357",
+  "name": "slot2.state.zip",
+  "url": "https://github.com/user-attachments/files/33222357/slot2.state.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue85_33222358",
+  "name": "cking.sav.zip",
+  "url": "https://github.com/user-attachments/files/33222358/cking.sav.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue79_33215368",
+  "name": "cking.zip",
+  "url": "https://github.com/user-attachments/files/33215368/cking.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue76_33205565",
+  "name": "states.zip",
+  "url": "https://github.com/user-attachments/files/33205565/states.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_pull39_33132841",
+  "name": "cking.sav.zip",
+  "url": "https://github.com/user-attachments/files/33132841/cking.sav.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue68_33258077",
+  "name": "save.zip",
+  "url": "https://github.com/user-attachments/files/33258077/save.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue90_33265997",
+  "name": "user.zip",
+  "url": "https://github.com/user-attachments/files/33265997/user.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/wwstate-only/ZeldaWWHDRecomp_issue255_33762781",
+  "name": "slot1.zip",
+  "url": "https://github.com/user-attachments/files/33762781/slot1.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/wwstate-only/ZeldaWWHDRecomp_issue273_33826092",
+  "name": "slot1.zip",
+  "url": "https://github.com/user-attachments/files/33826092/slot1.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue278_33885712",
+  "name": "rocknroll-one.zip",
+  "url": "https://github.com/user-attachments/files/33885712/rocknroll-one.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/ZeldaWWHDRecomp_issue312_34189274",
+  "name": "user.zip",
+  "url": "https://github.com/user-attachments/files/34189274/user.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/wwstate-only/ZeldaWWHDRecomp_issue405_34493263",
+  "name": "states.zip",
+  "url": "https://github.com/user-attachments/files/34493263/states.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/wwstate-only/ZeldaWWHDRecomp_issue405_34503108",
+  "name": "slot2.zip",
+  "url": "https://github.com/user-attachments/files/34503108/slot2.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/SwitchWakerHD_issue151_34682722",
+  "name": "Save.and.state.zip",
+  "url": "https://github.com/user-attachments/files/34682722/Save.and.state.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/wwstate-only/SwitchWakerHD_issue150_34654035",
+  "name": "Savestate.tar.gz",
+  "url": "https://github.com/user-attachments/files/34654035/Savestate.tar.gz"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/SwitchWakerHD_issue141_34550678",
+  "name": "State.zip",
+  "url": "https://github.com/user-attachments/files/34550678/State.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/SwitchWakerHD_issue126_34516588",
+  "name": "Puppet.Ganon.Crash.zip",
+  "url": "https://github.com/user-attachments/files/34516588/Puppet.Ganon.Crash.zip"
+ },
+ {
+  "kind": "file",
+  "dest": "hd/github-issue-attachments/wwstate-only/SwitchWakerHD_issue52_33731178",
+  "name": "slot1.wwstate.txt",
+  "url": "https://github.com/user-attachments/files/33731178/slot1.wwstate.txt"
+ },
+ {
+  "kind": "file",
+  "dest": "hd/github-issue-attachments/SwitchWakerHD_issue52_33731181",
+  "name": "cking.sav.txt",
+  "url": "https://github.com/user-attachments/files/33731181/cking.sav.txt"
+ },
+ {
+  "kind": "file",
+  "dest": "hd/github-issue-attachments/wwstate-only/SwitchWakerHD_issue52_33731152",
+  "name": "slot1.wwstate.txt",
+  "url": "https://github.com/user-attachments/files/33731152/slot1.wwstate.txt"
+ },
+ {
+  "kind": "file",
+  "dest": "hd/github-issue-attachments/SwitchWakerHD_issue52_33731154",
+  "name": "cking.sav.txt",
+  "url": "https://github.com/user-attachments/files/33731154/cking.sav.txt"
+ },
+ {
+  "kind": "file",
+  "dest": "hd/github-issue-attachments/SwitchWakerHD_issue46_33631753",
+  "name": "cking.sav.txt",
+  "url": "https://github.com/user-attachments/files/33631753/cking.sav.txt"
+ },
+ {
+  "kind": "file",
+  "dest": "hd/github-issue-attachments/wwstate-only/SwitchWakerHD_issue46_33631752",
+  "name": "slot1.wwstate.txt",
+  "url": "https://github.com/user-attachments/files/33631752/slot1.wwstate.txt"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/SwitchWakerHD_issue42_33470586",
+  "name": "save.zip",
+  "url": "https://github.com/user-attachments/files/33470586/save.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/SwitchWakerHD_issue32_33360541",
+  "name": "Slot.1.Pre-Helmaroc.Forsaken.Fortress.2.-.State.inside.the.flooding.tower.zip",
+  "url": "https://github.com/user-attachments/files/33360541/Slot.1.Pre-Helmaroc.Forsaken.Fortress.2.-.State.inside.the.flooding.tower.zip"
+ },
+ {
+  "kind": "archive",
+  "dest": "hd/github-issue-attachments/SwitchWakerHD_issue12_33297201",
+  "name": "save.zip",
+  "url": "https://github.com/user-attachments/files/33297201/save.zip"
+ }
+]

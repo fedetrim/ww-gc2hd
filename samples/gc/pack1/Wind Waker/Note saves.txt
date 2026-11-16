@@ -1,0 +1,26 @@
+These saves have been tested on dolphin and Retroarch. 
+
+All files should be renamed 01-GZLE-gczelda.gci
+
+1st save is after the 3 pearls are placed at the statues and you're at the entrance of the first major dungeon
+
+2nd save is the entrence of getting the master sword
+
+3rd save is after ganon and getting the fire and ice arrows
+
+4th save map complete but not dungones 
+
+5th save is after the earth temple is beaten 
+
+6th master sword restored, but no triforce pieces
+
+7th save is after all triforce pieces are collected
+
+9th saved is before puppet ganon
+
+10th save is the end
+
+11th is new game plus
+
+Note: Compatabilty issues with the emulator these saves were created on made it impssoble to collect the Heart Pieces acquired by taking photgraphs with Tingle's Pitco Box.
+This problem can be corrected by playing the game on Dolphin 5.0-16101 (some previous versions also work) and collecting photographs normally, since the Picto Box works on Dolphin. 

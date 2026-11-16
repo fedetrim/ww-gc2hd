@@ -1,0 +1,32 @@
+# Game data, third-party clones and local run output are never published.
+/research/
+/runs/
+/out/
+# Samples: only save files and the notes that came with them are published (samples/SOURCES.md lists the
+# sources). Everything else a download brings stays out: archives, logs, videos, fonts, console metadata.
+/samples/**
+!/samples/**/
+!/samples/SOURCES.md
+!/samples/manifest.json
+!/samples/checksums.sha256
+!/samples/**/*.gci
+!/samples/**/cking.sav
+!/samples/**/cking_pic*.sav
+!/samples/**/COMMIT.txt
+!/samples/**/README.md
+!/samples/**/attachments.tsv
+!/samples/gc/cryze/**/*.txt
+!/samples/gc/pack1/**/*.txt
+!/samples/gc/github-pdale-boop_ww-save-editor/presets/presets.json
+# ... and among the save files, those nothing here uses: files that failed validation, practice-ROM files,
+# saves modified by an exploit tool, tools of the source repositories.
+/samples/**/rejected/
+/samples/**/wwstate-only/
+/samples/gc/github-cgf95_tww-gz/
+/samples/**/Hacked_File_*/
+/samples/gc/github-pdale-boop_ww-save-editor/research/
+/samples/gc/github-pdale-boop_ww-save-editor/tools/
+__pycache__/
+*.pyc
+.DS_Store
+*.bak

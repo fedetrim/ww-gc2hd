@@ -1,0 +1,202 @@
+== stages and save records
+  A_R00    only on the GameCube disc
+  Amos_T   only on the GameCube disc
+  H_test   only on the GameCube disc
+  I_TestM  only on the GameCube disc
+  I_TestR  only on the GameCube disc
+  KATA_HB  only on the GameCube disc
+  KATA_RM  only on the GameCube disc
+  K_Test2  only on the GameCube disc
+  K_Test3  only on the GameCube disc
+  K_Test4  only on the GameCube disc
+  K_Test5  only on the GameCube disc
+  K_Test6  only on the GameCube disc
+  K_Test8  only on the GameCube disc
+  K_Test9  only on the GameCube disc
+  K_Testa  only on the GameCube disc
+  K_Testb  only on the GameCube disc
+  K_Testc  only on the GameCube disc
+  K_Testd  only on the GameCube disc
+  K_Teste  only on the GameCube disc
+  SubD45   only on the GameCube disc
+  TEST     only on the GameCube disc
+  TF_05    only on the GameCube disc
+  TF_07    only on the GameCube disc
+  VrTest   only on the GameCube disc
+  morocam  only on the GameCube disc
+  131 stages on both discs; save record differs in 0
+== chests
+  Cave07   Stage   rec 13 pos [2500.0, 26.9, 0.0]
+      GC (type, flag, switch, item) [(2, 2, 255, '0F')]
+      HD [(2, 2, 255, 'F7')]
+  Cave09   Room20  rec 13 pos [0.0, -70.0, -4400.0]
+      GC (type, flag, switch, item) [(6, 11, 11, 'F9')]
+      HD [(6, 11, 11, '66')]
+  Cave10   Room20  rec 13 pos [0.0, -70.0, -4490.0]
+      GC (type, flag, switch, item) [(0, 12, 0, '07')]
+      HD [(0, 12, 0, '43')]
+  PShip    Stage   rec 10 pos [0.0, -550.0, -3840.0]
+      GC (type, flag, switch, item) [(0, 21, 0, 'FB'), (0, 22, 0, 'FB'), (0, 23, 0, 'FB')]
+      HD [(0, 23, 0, '64')]
+  TF_01    Stage   rec 12 pos [2600.0, 20.0, 0.0]
+      GC (type, flag, switch, item) [(6, 10, 10, 'F8')]
+      HD [(6, 10, 10, '67')]
+  TF_02    Stage   rec 12 pos [2600.0, 20.0, 0.0]
+      GC (type, flag, switch, item) [(6, 11, 11, 'F7')]
+      HD [(6, 11, 11, '68')]
+  TF_04    Stage   rec 12 pos [4150.0, 50.0, -50.0]
+      GC (type, flag, switch, item) [(6, 17, 17, 'FD')]
+      HD [(6, 17, 17, '62')]
+  sea      Room21  rec 0  pos [330400.0, 2100.0, -105400.0]
+      GC (type, flag, switch, item) [(7, 11, 0, '04')]
+      HD [(7, 11, 0, 'F9')]
+  sea      Room43  rec 0  pos [-293800.0, 1900.0, 321200.0]
+      GC (type, flag, switch, item) [(8, 26, 234, '45')]
+      HD [(8, 26, 234, 'FB')]
+== actors
+  HD only Cave09   Room0   SCOB  Ysdls00  pos [-800.0, 30.0, 0.0]  GC []  HD ['10FF01E0 0000/0000/0000/FFFF']
+  GC only Cave09   Room0   SCOB  Ysdls00  pos [-800.0, 56.2, 0.0]  GC ['10FF01E0 0000/0000/0000/FFFF']  HD []
+  HD only Cave09   Room15  SCOB  Ysdls00  pos [-800.0, 30.0, 0.0]  GC []  HD ['10FF01FF 0000/0000/0000/FFFF']
+  GC only Cave09   Room15  SCOB  Ysdls00  pos [-800.0, 56.2, 0.0]  GC ['10FF01FF 0000/0000/0000/FFFF']  HD []
+  HD only Cave10   Room15  SCOB  Ysdls00  pos [-800.0, 30.0, 0.0]  GC []  HD ['10FF01FF 0000/0000/0000/FFFF']
+  GC only Cave10   Room15  SCOB  Ysdls00  pos [-800.0, 56.2, 0.0]  GC ['10FF01FF 0000/0000/0000/FFFF']  HD []
+  HD only Cave11   Room15  SCOB  Ysdls00  pos [-800.0, 30.0, 0.0]  GC []  HD ['10FF01FF 0000/0000/0000/FFFF']
+  GC only Cave11   Room15  SCOB  Ysdls00  pos [-800.0, 56.2, 0.0]  GC ['10FF01FF 0000/0000/0000/FFFF']  HD []
+  HD only M_Dai    Room14  ACTR  MknjD    pos [1007.0, -1200.0, 7700.4]  GC []  HD ['00000059 0000/4000/0000/FFFF']
+  GC only M_Dai    Room14  ACTR  MknjD    pos [1015.7, -1200.0, 7700.4]  GC ['00000059 0000/4000/0000/FFFF']  HD []
+  GC only M_Dai    Room7   SCOB  agbTBOX  pos [4280.4, 1000.0, -470.8]  GC ['007CFFFF 0000/0000/0006/FFFF']  HD []
+  GC only M_Dra09  Room9   SCOB  agbTBOX  pos [-1520.7, 13600.0, -58.4]  GC ['007801D7 0000/C000/0006/FFFF']  HD []
+  GC only M_NewD2  Room0   SCOB  agbTBOX  pos [-2143.8, 99.0, 5689.4]  GC ['005001E1 0000/C000/0006/FFFF']  HD []
+  GC only M_NewD2  Room2   SCOB  agbTBOX  pos [-10.2, 3500.0, 1574.2]  GC ['007E01D4 0000/C000/0006/FFFF']  HD []
+  GC only Opub     Room0   ACTR  Bm4      pos [-124.4, 0.0, -176.2]  GC ['00FFFF02 0000/C16D/0000/FFFF']  HD []
+  HD only Opub     Room0   ACTR  Bm4      pos [-124.4, 0.0, -126.0]  GC []  HD ['00FFFF02 0000/C16D/0000/FFFF']
+  GC only PShip    Room0   ACT8  bable    pos [-400.0, -900.0, -2600.0]  GC ['FF00FF02 0000/0000/0002/FFFF']  HD []
+  GC only PShip    Room0   ACT8  bable    pos [400.0, -900.0, -1200.0]  GC ['FF01FF02 0000/0000/0002/FFFF']  HD []
+  GC only PShip    Room0   ACTR  ALLdie   pos [0.0, -600.0, -3000.0]  GC ['FFFFE0FF 0000/0000/0000/FFFF']  HD []
+  GC only PShip    Room0   ACTR  AND_SW2  pos [100.0, -600.0, -3000.0]  GC ['E0E00001 0006/0000/0000/FFFF']  HD []
+  GC only PShip    Room0   ACTR  Mhsg4h   pos [0.0, -600.0, -2900.0]  GC ['00FFE004 0000/0000/0000/FFFF']  HD []
+  GC only PShip    Room0   ACTR  Odokuro  pos [-600.0, -1000.0, -1900.0]  GC ['257FFF00 0000/4000/00FF/FFFF']  HD []
+  GC only PShip    Room0   ACTR  Odokuro  pos [-600.0, -1000.0, -1800.0]  GC ['757FFF3F 0000/4000/00FF/FFFF']  HD []
+  GC only PShip    Room0   ACTR  Odokuro  pos [-600.0, -1000.0, -1700.0]  GC ['757FFF10 0000/4000/00FF/FFFF']  HD []
+  GC only PShip    Room0   ACTR  Odokuro  pos [-600.0, -1000.0, -1600.0]  GC ['757FFF3F 0000/4000/00FF/FFFF']  HD []
+  GC only PShip    Room0   ACTR  Odokuro  pos [700.0, -1000.0, -2600.0]  GC ['757FFF0B 0000/C000/00FF/FFFF']  HD []
+  GC only PShip    Room0   ACTR  Odokuro  pos [700.0, -1000.0, -2500.0]  GC ['257FFF00 0000/C000/00FF/FFFF']  HD []
+  GC only PShip    Room0   ACTR  Odokuro  pos [700.0, -1000.0, -2400.0]  GC ['757FFF3F 0000/C000/00FF/FFFF']  HD []
+  GC only PShip    Room0   ACTR  Odokuro  pos [700.0, -1000.0, -2300.0]  GC ['757FFF3F 0000/C000/00FF/FFFF']  HD []
+  GC only PShip    Room0   ACTR  PScnChg  pos [-200.0, -500.0, -4200.0]  GC ['FFFFFFFF 0000/0000/0000/FFFF']  HD []
+  GC only PShip    Room0   ACTR  Rdead1   pos [-609.0, -1000.0, -2387.1]  GC ['E1FFFF3E 0000/0000/00FF/FFFF']  HD []
+  GC only PShip    Room0   ACTR  Rdead1   pos [596.6, -1000.0, -1040.3]  GC ['E2FFFF3E 0000/C000/00FF/FFFF']  HD []
+  GC only PShip    Room0   ACTR  flower   pos [630.0, -1000.0, -1700.0]  GC ['00000BE0 0000/0000/0000/FFFF']  HD []
+  GC only PShip    Room0   ACTR  ootubo1  pos [-200.0, -550.0, -3800.0]  GC ['717FFF2C 0000/0000/00FF/FFFF']  HD []
+  GC only PShip    Room0   ACTR  ootubo1  pos [-200.0, -550.0, -3650.0]  GC ['717FFF31 0000/0000/00FF/FFFF']  HD []
+  GC only PShip    Room0   ACTR  ootubo1  pos [-200.0, -550.0, -3500.0]  GC ['717FFF2B 0000/0000/00FF/FFFF']  HD []
+  GC only PShip    Room0   ACTR  ootubo1  pos [200.0, -550.0, -3800.0]  GC ['717FFF31 0000/0000/00FF/FFFF']  HD []
+  GC only PShip    Room0   ACTR  ootubo1  pos [200.0, -550.0, -3650.0]  GC ['717FFF2C 0000/0000/00FF/FFFF']  HD []
+  GC only PShip    Room0   ACTR  ootubo1  pos [200.0, -550.0, -3500.0]  GC ['717FFF2E 0000/0000/00FF/FFFF']  HD []
+  GC only PShip    Room0   ACTR  wiz_r    pos [-397.3, -1000.0, -2788.5]  GC ['02EBFF01 0000/0000/0005/FFFF']  HD []
+  GC only PShip    Room0   SCOB  LTag1    pos [600.0, -1100.0, -1700.0]  GC ['00FFC3FD 0B60/4000/0000/FFFF']  HD []
+  GC only PShip    Room0   SCOB  SW_C00   pos [0.0, -1000.0, -1700.0]  GC ['0003FFEB 0000/0000/0000/FFFF']  HD []
+  GC only PShip    Room0   SCOB  ky_tag0  pos [0.0, -1000.0, -1700.0]  GC ['FFFF03FF 00EB/0000/0000/FFFF']  HD []
+  GC only PShip    Room1   ACTR  ALLdie   pos [0.0, -600.0, -3000.0]  GC ['FFFFE0FF 0000/0000/0000/FFFF']  HD []
+  GC only PShip    Room1   ACTR  AND_SW2  pos [100.0, -600.0, -3000.0]  GC ['E0E00001 0007/0000/0000/FFFF']  HD []
+  GC only PShip    Room1   ACTR  Mhsg4h   pos [0.0, -600.0, -2900.0]  GC ['00FFE004 0000/0000/0000/FFFF']  HD []
+  GC only PShip    Room1   ACTR  Odokuro  pos [-600.0, -1000.0, -1900.0]  GC ['257FFF00 0000/4000/00FF/FFFF']  HD []
+  GC only PShip    Room1   ACTR  Odokuro  pos [-600.0, -1000.0, -1800.0]  GC ['757FFF11 0000/4000/00FF/FFFF']  HD []
+  GC only PShip    Room1   ACTR  Odokuro  pos [-600.0, -1000.0, -1700.0]  GC ['757FFF3F 0000/4000/00FF/FFFF']  HD []
+  GC only PShip    Room1   ACTR  Odokuro  pos [-600.0, -1000.0, -1600.0]  GC ['757FFF00 0000/4000/00FF/FFFF']  HD []
+  GC only PShip    Room1   ACTR  Odokuro  pos [300.0, -1000.0, -2800.0]  GC ['757FFF3F 0000/0000/00FF/FFFF']  HD []
+  GC only PShip    Room1   ACTR  Odokuro  pos [400.0, -1000.0, -2800.0]  GC ['757FFF0A 0000/0000/00FF/FFFF']  HD []
+  GC only PShip    Room1   ACTR  Odokuro  pos [500.0, -1000.0, -2800.0]  GC ['257FFF00 0000/0000/00FF/FFFF']  HD []
+  GC only PShip    Room1   ACTR  Odokuro  pos [600.0, -1000.0, -2800.0]  GC ['757FFF0C 0000/0000/00FF/FFFF']  HD []
+  GC only PShip    Room1   ACTR  PScnChg  pos [0.0, -500.0, -4200.0]  GC ['FFFFFFFF 0000/0000/0000/FFFF']  HD []
+  GC only PShip    Room1   ACTR  flower   pos [630.0, -1000.0, -1700.0]  GC ['00000BE0 0000/0000/0000/FFFF']  HD []
+  GC only PShip    Room1   ACTR  ootubo1  pos [-200.0, -550.0, -3800.0]  GC ['717FFF30 0000/0000/00FF/FFFF']  HD []
+  GC only PShip    Room1   ACTR  ootubo1  pos [-200.0, -550.0, -3650.0]  GC ['717FFF31 0000/0000/00FF/FFFF']  HD []
+  GC only PShip    Room1   ACTR  ootubo1  pos [-200.0, -550.0, -3500.0]  GC ['717FFF30 0000/0000/00FF/FFFF']  HD []
+  GC only PShip    Room1   ACTR  ootubo1  pos [200.0, -550.0, -3800.0]  GC ['717FFF31 0000/0000/00FF/FFFF']  HD []
+  GC only PShip    Room1   ACTR  ootubo1  pos [200.0, -550.0, -3650.0]  GC ['717FFF33 0000/0000/00FF/FFFF']  HD []
+  GC only PShip    Room1   ACTR  ootubo1  pos [200.0, -550.0, -3500.0]  GC ['717FFF33 0000/0000/00FF/FFFF']  HD []
+  GC only PShip    Room1   ACTR  wiz_r    pos [-500.0, -1000.0, -2800.0]  GC ['02EBFF01 0000/0000/0006/FFFF']  HD []
+  GC only PShip    Room1   SCOB  LTag1    pos [600.0, -1100.0, -1700.0]  GC ['00FFC3FD 0B60/4000/0000/FFFF']  HD []
+  GC only PShip    Room1   SCOB  SW_C00   pos [0.0, -1000.0, -1700.0]  GC ['0003FFEB 0000/0000/0000/FFFF']  HD []
+  GC only PShip    Room1   SCOB  ky_tag0  pos [0.0, -1000.0, -1700.0]  GC ['FFFF03FF 00EB/0000/0000/FFFF']  HD []
+  GC only Siren    Room7   SCOB  agbTBOX  pos [899.8, 307.3, -8575.9]  GC ['0075FFFF 0000/0000/0006/FFFF']  HD []
+  changed SirenMB  Room23  ACTR  Hys2     pos [-22.6, 252.4, -4008.1]  GC ['000001FF 0000/0000/0000/FFFF']  HD ['00000118 0000/0000/0000/FFFF']
+  GC only TF_03    Room1   ACT8  Bk       pos [1492.2, 0.0, -3.0]  GC ['98FFFF60 0000/0000/0099/0006']  HD []
+  GC only TF_03    Room1   ACTR  AND_SW0  pos [2400.3, 0.0, -1.3]  GC ['98940004 00FF/0000/FFFF/0000']  HD []
+  GC only TF_03    Room1   ACTR  Hyuf2    pos [700.0, 500.0, -900.0]  GC ['100002FF 0000/0000/0088/0004']  HD []
+  GC only TF_03    Room1   ACTR  Hyuf2    pos [700.0, 500.0, 900.0]  GC ['100000FF 0000/8000/0086/0002']  HD []
+  GC only TF_03    Room1   ACTR  Hyuf2    pos [2900.0, 500.0, -900.0]  GC ['100003FF 0000/0000/0089/0005']  HD []
+  GC only TF_03    Room1   ACTR  Hyuf2    pos [2900.0, 500.0, 900.0]  GC ['100001FF 0000/8000/0087/0003']  HD []
+  GC only TF_03    Room1   ACTR  amos     pos [1700.0, 0.0, 0.0]  GC ['9801FF00 0000/C000/0000/0001']  HD []
+  GC only TF_03    Room2   ACTR  mo2      pos [711.4, 0.0, 2247.9]  GC ['FFFFFF00 0000/8000/0096/0000']  HD []
+  GC only TF_03    Room3   ACTR  mo2      pos [2871.9, 0.0, 2224.4]  GC ['FFFFFF00 0000/8000/0097/0000']  HD []
+  GC only TF_03    Room4   ACTR  mo2      pos [679.3, 0.0, -2202.0]  GC ['FFFFFF00 0000/0000/0095/0000']  HD []
+  GC only TF_03    Room5   ACTR  mo2      pos [2877.8, 0.0, -2291.3]  GC ['FFFFFF00 0000/0000/0094/0000']  HD []
+  GC only TF_03    Room6   SCOB  SW_C00   pos [5700.8, 0.0, 0.6]  GC ['00031180 0000/0000/0000/0000']  HD []
+  HD only TyuTyu   Room0   ACTR  Ebrock   pos [-500.0, -300.0, 5720.3]  GC []  HD ['F27FFF3F 0000/0000/00FF/FFFF']
+  GC only TyuTyu   Room0   ACTR  Ebrock   pos [-464.1, -300.0, 5753.3]  GC ['F27FFF3F 0000/0000/00FF/FFFF']  HD []
+  GC only kindan   Room3   SCOB  agbTBOX  pos [515.2, 4100.0, 5353.2]  GC ['0021021A 0000/4000/0006/FFFF']  HD []
+  GC only sea      Room11  SCOB  agbTBOX  pos [-3827.8, 134.5, -194346.9]  GC ['007BFFFF 0000/0000/0006/FFFF']  HD []
+  GC only sea      Room11  SCOB  agbTBOX  pos [-1618.5, 797.3, -202189.1]  GC ['007C03EC 0000/0000/0006/FFFF']  HD []
+  GC only sea      Room13  SCO7  agbTBOX  pos [198200.0, 1400.0, -199200.0]  GC ['0070FFFF 0000/0000/0006/FFFF']  HD []
+  changed sea      Room32  SCOB  Salvage  pos [-4000.0, -5000.0, 104500.0]  GC ['006FF661 0000/0000/0001/FFFF']  HD ['006FF061 0000/0000/0001/FFFF']
+  changed sea      Room32  SCOB  Salvage  pos [-1900.0, -5000.0, 96100.0]  GC ['006FF661 0000/0000/0002/FFFF']  HD ['006FF061 0000/0000/0002/FFFF']
+  changed sea      Room32  SCOB  Salvage  pos [3000.0, -5000.0, 95000.0]  GC ['006FF661 0000/0000/0000/FFFF']  HD ['006FF061 0000/0000/0000/FFFF']
+  changed sea      Room32  SCOB  Salvage  pos [4000.0, -5000.0, 106100.0]  GC ['006FF661 0000/0000/0003/FFFF']  HD ['006FF061 0000/0000/0003/FFFF']
+  changed sea      Room4   SCOB  Salvage  pos [15200.0, -5000.0, -326400.0]  GC ['002FF621 0000/0000/0003/FFFF']  HD ['002FF061 0000/0000/0003/FFFF']
+  changed sea      Room4   SCOB  Salvage  pos [16400.0, -5000.0, -317200.0]  GC ['002FF621 0000/0000/0002/FFFF']  HD ['002FF061 0000/0000/0002/FFFF']
+  changed sea      Room4   SCOB  Salvage  pos [22100.0, -5000.0, -324200.0]  GC ['002FF621 0000/0000/0000/FFFF']  HD ['002FF061 0000/0000/0000/FFFF']
+  changed sea      Room4   SCOB  Salvage  pos [26500.0, -5000.0, -315700.0]  GC ['002FF621 0000/0000/0001/FFFF']  HD ['002FF061 0000/0000/0001/FFFF']
+  GC only sea      Room41  SCO7  agbTBOX  pos [206330.7, 4916.9, 193313.8]  GC ['00ED0057 0000/0000/0006/FFFF']  HD []
+  GC only sea      Room41  SCO7  agbTBOX  pos [211638.9, 1153.3, 191816.2]  GC ['0071FFFF 0000/0000/0006/FFFF']  HD []
+  GC only sea      Room41  SCOB  agbTBOX  pos [204277.4, 3064.3, 204882.4]  GC ['00EEFFFF 0000/0000/0006/FFFF']  HD []
+  changed sea      Room44  SCOB  Salvage  pos [-208100.0, 0.0, 328500.0]  GC ['004FF641 0000/0000/0003/FFFF']  HD ['004FF061 0000/0000/0003/FFFF']
+  changed sea      Room44  SCOB  Salvage  pos [-197200.0, 0.0, 313400.0]  GC ['004FF641 0000/0000/0002/FFFF']  HD ['004FF061 0000/0000/0002/FFFF']
+  changed sea      Room44  SCOB  Salvage  pos [-196700.0, 0.0, 324700.0]  GC ['004FF641 0000/0000/0001/FFFF']  HD ['004FF061 0000/0000/0001/FFFF']
+  changed sea      Room44  SCOB  Salvage  pos [-191300.0, 0.0, 314500.0]  GC ['004FF641 0000/0000/0000/FFFF']  HD ['004FF061 0000/0000/0000/FFFF']
+  GC only sea      Room44  SCOB  agbTBOX  pos [-209173.5, 898.3, 317406.4]  GC ['007AFFFF 0000/0000/0006/FFFF']  HD []
+  changed sea      Room46  SCOB  Salvage  pos [-3200.0, -5000.0, 280800.0]  GC ['008FF681 0000/0000/0000/FFFF']  HD ['008FF071 0000/0000/0000/FFFF']
+  changed sea      Room46  SCOB  Salvage  pos [1800.0, -5000.0, 283600.0]  GC ['008FF681 0000/0000/0001/FFFF']  HD ['008FF071 0000/0000/0001/FFFF']
+  changed sea      Room46  SCOB  Salvage  pos [2300.0, -5000.0, 276800.0]  GC ['008FF681 0000/0000/0002/FFFF']  HD ['008FF071 0000/0000/0002/FFFF']
+  changed sea      Room46  SCOB  Salvage  pos [8300.0, -5000.0, 285300.0]  GC ['008FF681 0000/0000/0003/FFFF']  HD ['008FF071 0000/0000/0003/FFFF']
+  changed sea      Room6   SCOB  Salvage  pos [215400.0, -5000.0, -316900.0]  GC ['007FF671 0000/0000/0000/FFFF']  HD ['007FF0F1 0000/0000/0000/FFFF']
+  changed sea      Room6   SCOB  Salvage  pos [218100.0, -5000.0, -325800.0]  GC ['007FF671 0000/0000/0001/FFFF']  HD ['007FF0F1 0000/0000/0001/FFFF']
+  changed sea      Room6   SCOB  Salvage  pos [223300.0, -5000.0, -319700.0]  GC ['007FF671 0000/0000/0002/FFFF']  HD ['007FF0F1 0000/0000/0002/FFFF']
+  changed sea      Room6   SCOB  Salvage  pos [227100.0, -5000.0, -312700.0]  GC ['007FF671 0000/0000/0003/FFFF']  HD ['007FF0F1 0000/0000/0003/FFFF']
+  GC only sea      Stage   SCOB  LOD45    pos [-100000.0, 3.3, 300000.0]  GC ['0000002D 0000/0000/0000/FFFF']  HD []
+== player spawn points
+  PShip    Room0   spawn 0   GC ['FFFF0000']  HD -
+  PShip    Room1   spawn 0   GC ['FFFF0001']  HD -
+  sea      Room44  spawn 203 GC ['FFFF002C']  HD ['01FF002C']
+== summary by actor name
+  GC only  ALLdie     2
+  GC only  AND_SW0    1
+  GC only  AND_SW2    2
+  GC only  Bk         1
+  GC only  Bm4        1
+  GC only  Ebrock     1
+  GC only  Hyuf2      4
+  GC only  LOD45      1
+  GC only  LTag1      2
+  GC only  Mhsg4h     2
+  GC only  MknjD      1
+  GC only  Odokuro    16
+  GC only  PScnChg    2
+  GC only  Rdead1     2
+  GC only  SW_C00     3
+  GC only  Ysdls00    4
+  GC only  agbTBOX    13
+  GC only  amos       1
+  GC only  bable      2
+  GC only  flower     2
+  GC only  ky_tag0    2
+  GC only  mo2        4
+  GC only  ootubo1    12
+  GC only  wiz_r      2
+  HD only  Bm4        1
+  HD only  Ebrock     1
+  HD only  MknjD      1
+  HD only  Ysdls00    4
+  changed  Hys2       1
+  changed  Salvage    20
