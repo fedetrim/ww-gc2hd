@@ -148,14 +148,18 @@ def cmd_convert(a):
     # Checked before any question is asked. A save is cking.sav plus its album files. One already in the folder is never mixed with the new one
     # and never lost: with --force all of it is moved to a backup folder first.
     target = os.path.join(a.output, "cking.sav")
-    existing = []
-    if os.path.isdir(a.output):
-        existing = sorted(n for n in os.listdir(a.output)
-                          if n == "cking.sav" or (n.startswith("cking_pic") and n.endswith(".sav")))
-    if existing and not a.force:
-        sys.exit("%s already holds a save (%s). Use --force to replace it: the files there are first moved to "
-                 "a backup folder inside it." % (a.output, ", ".join(existing[:3]) +
-                                                 (" and %d more" % (len(existing) - 3) if len(existing) > 3 else "")))
+    def save_in_output():
+        found = []
+        if os.path.isdir(a.output):
+            found = sorted(n for n in os.listdir(a.output)
+                           if n == "cking.sav" or (n.startswith("cking_pic") and n.endswith(".sav")))
+        if found and not a.force:
+            sys.exit("%s already holds a save (%s). Use --force to replace it: the files there are first moved "
+                     "to a backup folder inside it." % (a.output, ", ".join(found[:3]) + (
+                         " and %d more" % (len(found) - 3) if len(found) > 3 else "")))
+        return found
+
+    existing = save_in_output()
     healthy = [s for s, g in enumerate(slots) if conv.is_converted(g)]
     if not healthy:                             # checked first: nothing is asked or written
         problems = ["File %d: %s" % (s + 1, p) for s, g in enumerate(slots)
@@ -217,6 +221,7 @@ def cmd_convert(a):
         d, s = pending[0]
         options.answer(d.key, s, _ask(d, s))
 
+    existing = save_in_output()                 # again: a save may have been written there while a question waited
     out_file, reports = conv.convert(card, options)
     # An answer typed for a Quest Log that is not in that case did nothing: say so (a mistyped number
     # would otherwise leave the intended Quest Log with the --all answer).

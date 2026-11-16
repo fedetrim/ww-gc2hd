@@ -243,10 +243,9 @@ class CommandLine(unittest.TestCase):
             def run(answers, *extra, extra_env=None):
                 text = io.StringIO()
                 asked = mock.Mock(side_effect=answers)
-                text.isatty = lambda: True
                 env = {k: v for k, v in os.environ.items() if k not in ("NO_COLOR", "TERM")}
                 env.update(extra_env or {})
-                with mock.patch("sys.stdin.isatty", return_value=True), \
+                with mock.patch("wwsave.term.terminal", return_value=True), \
                         mock.patch("wwsave.term._windows_console", return_value=True), \
                         mock.patch.dict(os.environ, env, clear=True), \
                         mock.patch("sys.stderr", io.StringIO()), \

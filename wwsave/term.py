@@ -1,6 +1,7 @@
 """Terminal output: styles (bold, colours) and line width. Styles are used only when the stream is a
-terminal, NO_COLOR is not set and TERM is not 'dumb'; otherwise text is plain. Text is wrapped to
-the window only in a terminal: redirected output keeps its one-line form."""
+terminal, NO_COLOR is not set and TERM is not 'dumb'; otherwise text is plain. In a terminal
+text is wrapped to the window; redirected output keeps the form it had (only the report's change lines
+are wrapped, at PLAIN_WIDTH)."""
 import os
 import shutil
 import sys
@@ -38,8 +39,11 @@ def _windows_console(stream, enable_vt=False):
     return _vt[key]
 
 
-def terminal(stream=None):
-    stream = sys.stdout if stream is None else stream     # a closed standard stream is None
+STDOUT = object()            # default argument: sys.stdout at the time of the call
+
+
+def terminal(stream=STDOUT):
+    stream = sys.stdout if stream is STDOUT else stream   # a closed standard stream is None: no terminal
     try:
         if stream is None or not hasattr(stream, "isatty") or not stream.isatty():
             return False
@@ -48,12 +52,12 @@ def terminal(stream=None):
         return False
 
 
-def styled(stream=None):
+def styled(stream=STDOUT):
     return (terminal(stream) and not os.environ.get("NO_COLOR") and os.environ.get("TERM") != "dumb"
-            and (os.name != "nt" or _windows_console(stream or sys.stdout, enable_vt=True)))
+            and (os.name != "nt" or _windows_console(sys.stdout if stream is STDOUT else stream, enable_vt=True)))
 
 
-def paint(text, *names, stream=None):
+def paint(text, *names, stream=STDOUT):
     if not names or not styled(stream):
         return text
     return "\033[%sm%s\033[0m" % (";".join(str(CODES[n]) for n in names), text)
