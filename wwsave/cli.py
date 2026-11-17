@@ -403,8 +403,9 @@ def main(argv=None):
                         "than one used file, name a Quest Log: --name 2=Zelda (repeatable)")
     c.add_argument("--force", action="store_true",
                    help="replace a save already in the output folder (it is moved to a backup folder there)")
-    c.add_argument("--allow-region", action="store_true", help="also accept European and Japanese saves (unverified). A European one is written for the "
-                        "European game; a Japanese one needs --hd-region")
+    c.add_argument("--allow-region", action="store_true",
+                   help="also accept European and Japanese saves (unverified). A European one is written for "
+                        "the European game; a Japanese one needs --hd-region")
     c.add_argument("-y", "--yes", action="store_true",
                    help="in a terminal: do not show the input and ask before converting; go straight to the cases")
     c.add_argument("--quiet", action="store_true", help="do not print the summary of each converted file")

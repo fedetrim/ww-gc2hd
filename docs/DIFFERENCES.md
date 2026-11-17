@@ -457,7 +457,8 @@ taken away in the final battle), and HD puts the item back on load.
   played, and its disc was not compared (4b).
 - Japanese and European GameCube saves convert (`--allow-region`; a Japanese one with `--hd-region`) but were
   not analysed. A European save written for the European HD game, which is what the tool does without
-  `--hd-region`, was never loaded in any game. A Japanese name is
+  `--hd-region`, was loaded in the USA game only (one sample, both modes; `docs/verification/hd-region.md`),
+  never in the European one. A Japanese name is
   written as "Link" (with a warning): the tool writes only characters below U+0250, and whether the USA HD
   game shows kana was not checked.
 - A name with spaces at its ends is written without them (the report says so). Whether HD can hold such a

@@ -65,3 +65,16 @@ fields.
   conversions for the USA game of all 34 USA sample cards, with `--all steps` and with `--all rewards` (68
   outputs), were compared with those of the commit before this change: 66 are the same bytes, and the two
   that differ are the card above, which was played in both modes.
+
+## A European GameCube save, written for the game of its own region
+
+Without `--hd-region` a European GameCube save (`--allow-region`) is written for the European game.
+`samples/gc/archive-org-zeldasaves/extracted/NGC/PAL/the-legend-of-zelda-the-wind-waker.14259.gci`, File 1,
+converted with `--all steps --allow-region --no-pictures` and with `--all rewards --allow-region
+--no-pictures`, loaded with `scripts/ingame_test.py` for 6 seconds.
+
+Result (2026-11-17, same build, the USA game): in both modes the file goes into gameplay and keeps all 442
+compared fields.
+
+Not checked: the same file in the European game, on a console or otherwise. European GameCube saves remain
+unanalysed (`docs/DIFFERENCES.md`, Known gaps).

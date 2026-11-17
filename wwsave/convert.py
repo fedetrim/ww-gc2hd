@@ -941,7 +941,10 @@ def convert(card, options=None):
                                 "game; the disc of the %s game was not compared. A published comparison of "
                                 "the two programs finds them the same except for language code, and one "
                                 "converted save was loaded on a console with that game "
-                                "(docs/DIFFERENCES.md, 4b)" % target.game)
+                                "(docs/DIFFERENCES.md, 4b)%s" % (
+                                    target.game, "" if card.game_code[0:4] == b"GZLE" else
+                                    "; that save came from a USA GameCube one, and none from a %s GameCube "
+                                    "save was loaded in that game" % card.regional))
         elif out.u("config.ruby") != target.ruby:
             rep.changes.append("The reading-aid setting for Japanese text set to %d, with no effect on "
                                "what you hold: the %s HD game gives every Quest Log that value." % (
