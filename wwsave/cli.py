@@ -145,11 +145,6 @@ def cmd_convert(a):
     if card.game_code != b"GZLE01" and not a.allow_region:
         sys.exit("%s is a %s save (%s). Only USA (GZLE01) saves are supported; --allow-region converts it "
                  "anyway (unverified)." % (a.input, card.region, card.code))
-    if a.hd_region is None:                 # the game of the save's own region
-        try:
-            a.hd_region = conv.hd_region_for(card)
-        except conv.ConversionError as e:
-            sys.exit("%s: %s." % (a.input, e))
     slots = card.slots()
     if not any(s is not None and not s.is_new() for s in slots):
         if any(s is None for s in slots):
@@ -182,6 +177,11 @@ def cmd_convert(a):
                  "with glitches, or damaged). The tool translates consistent files only and does not try to "
                  "repair one.\n  %s" % (a.input, "\n  ".join(problems)))
     used = healthy
+    asked_region = a.hd_region              # None: the game of the save's own region
+    try:
+        a.hd_region = conv.hd_region_for(card, conv.Options(hd_region=asked_region))
+    except conv.ConversionError as e:
+        sys.exit("%s: %s." % (a.input, e))
     names = {}
     for value in a.name or []:
         log, sep, name = value.partition("=")
@@ -203,7 +203,7 @@ def cmd_convert(a):
     if terminal and not a.yes:
         _confirm(a, card, used, existing)
     options = conv.Options(name=names or None, swift_sail=bool(a.swift_sail), hero_mode=bool(a.hero_mode),
-                           hd_region=a.hd_region)
+                           hd_region=asked_region)
     for key in conv.Options.CASES:
         value = getattr(a, key)
         if isinstance(value, dict):                         # a copy: answers given later are not "typed"

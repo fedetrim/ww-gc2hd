@@ -46,7 +46,7 @@ def main():
     exe, game, src, out = sys.argv[1], sys.argv[2], sys.argv[3], os.path.abspath(sys.argv[5])
     slot = int(sys.argv[4]) - 1
     card = gc.load(open(src, "rb").read())
-    hd_file, reports = conv.convert(card, conv.Options.all("steps"))
+    hd_file, reports = conv.convert(card, conv.Options.all("steps", hd_region="usa"))
     given = [k for k in POINTS if _bit(hd_file.slots[slot].raw("map.get_map"), k)]
     if sys.argv[6:]:
         given = [k for k in given if str(conv.REUSED_CHARTS[k]) in sys.argv[6:]]

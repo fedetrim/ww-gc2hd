@@ -360,6 +360,16 @@ class CommandLine(unittest.TestCase):
             self.assertIn("defaults of the USA game", self._run("info", out).stdout)
             self.assertEqual(self._run("verify", eur).returncode, 0)
             self.assertEqual(self._run("convert", gci, "-o", eur, "--hd-region", "japan").returncode, 2)
+            # without the option: a European save is for the European game, a Japanese one has to say
+            data = _read(gci)
+            for code, rc, text in ((b"GZLP01", 0, "10143600"), (b"GZLJ01", 1, "--hd-region usa or europe")):
+                other = os.path.join(tmp, code.decode() + ".gci")
+                with open(other, "wb") as f:
+                    f.write(code + data[6:])
+                r = self._run("convert", other, "-o", os.path.join(tmp, code.decode()), "--floor50", "steps",
+                              "--allow-region")
+                self.assertEqual(r.returncode, rc, r.stderr)
+                self.assertIn(text, " ".join((r.stdout + r.stderr).split()))
             back = hd.HdFile.parse(_read(os.path.join(out, "cking.sav")))
             self.assertEqual([back.slots[i].u("status_a.max_life") for i in (0, 1)], [47, 48])
             self.assertEqual([back.slots[i].u("status_a.rupee") for i in (0, 1)], [500, 500])   # HD wallet limit
