@@ -147,6 +147,7 @@ def main():
             exec(e, {"g": g, "conv": conv, "layout": layout, "tbox": tbox, "mapbit": mapbit})
         card = gc.load(gc.build_gci(card.game_code, [bytes(x) if x is not None else bytes(layout.SAVE_SIZE) for x in slots]))
     mode = opts.pop("all", None)
+    opts.setdefault("hd_region", "usa")         # the game the rig runs, whatever the sample's region
     options = conv.Options.all(mode, **opts) if mode else conv.Options(**opts)
     f, reports = conv.convert(card, options)
     if reports[slot].unhealthy or not reports[slot].used:

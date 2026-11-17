@@ -52,7 +52,7 @@ def load():
             continue
         # every region on purpose: the save block is the same and the statistics need the numbers
         card = gc.load(open(f, "rb").read())
-        slots = card.slots() if RAW else conv.convert(card, conv.Options.all("steps"))[0].slots
+        slots = card.slots() if RAW else conv.convert(card, conv.Options.all("steps", hd_region="usa"))[0].slots
         for g, s in zip(card.slots(), slots):
             if g is None or g.is_new() or not (RAW or conv.is_converted(g)):
                 continue                        # a file that is not converted comes out as an empty Quest Log

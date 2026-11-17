@@ -39,8 +39,7 @@ with open(RUNNER, "w") as f:
 EXPECTED = {"status_b.date_ipl", "status_b.time", "status_b.date", "info.save_count", "status_a.life",
             "status_b.tact_wind_x", "status_b.tact_wind_y"}
 
-if "--europe" in sys.argv:
-    OPTIONS.hd_region = "europe"
+OPTIONS.hd_region = "europe" if "--europe" in sys.argv else "usa"    # the samples are USA saves
 print("files written for the %s game" % hd.REGIONS[OPTIONS.hd_region].game, flush=True)
 
 jobs = sample_jobs(OPTIONS, out)

@@ -122,5 +122,6 @@ python3 scripts/ingame_save_batch.py PORT_EXE GAME_DIR OUT_DIR 3 [--alt] [--euro
   executables and on that one console run (`docs/DIFFERENCES.md`, 4b). Its disc was never compared.
 - A run on Windows: the console handling in `wwsave/term.py` (styles, whether a stream is a console) was
   written from the API documentation and never executed.
-- Japanese and European GameCube saves (`--allow-region` converts them, nothing was verified).
+- Japanese and European GameCube saves (`--allow-region` converts them, a Japanese one together with
+  `--hd-region`; nothing was verified).
 - The reverse direction (HD -> GameCube).

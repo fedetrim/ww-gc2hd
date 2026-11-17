@@ -54,7 +54,9 @@ PRECHARTED_SECTORS = (0, 10, 43)   # Forsaken Fortress, Windfall, Outset: charte
 Region = collections.namedtuple("Region", "game title build ruby")
 REGIONS = {"usa": Region("USA", "0005000010143500", 0, 1),
            "europe": Region("European", "0005000010143600", 1, 0)}
-DEFAULT_REGION = "usa"
+# The HD game of the same region as a GameCube save (first four bytes of its game code). The Japanese HD
+# game (title 0005000010143400) is not one this tool writes for.
+GC_REGIONS = {b"GZLE": "usa", b"GZLP": "europe"}
 
 
 def set_region(slots, extras, region):

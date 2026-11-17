@@ -38,7 +38,7 @@ This tool was written to make the conversion exact and to prove it:
 | Report | short notes | every change with its reason, and what you hold before and after |
 | Completeness of the difference list | not stated | both games compared in full: stage data byte by byte, machine code of every save access and item gift, both randomizers' location tables, shops |
 | Verified in the game | one load in the port, per its README | every case played in both modes in the port; every healthy used file of the USA samples (42) loaded, 36 of them saved from the pause menu (the other six start in a scene without the menu); load and save in Cemu |
-| Regions | USA, Japan, Europe | USA (Japan / Europe convert with `--allow-region`, unverified) |
+| Regions | USA, Japan, Europe | USA (Europe converts with `--allow-region`, Japan with `--allow-region --hd-region`; unverified) |
 | HD -> GameCube | `hd2gc.py`, shared fields | no |
 
 Tested on a real Wii U: a converted save loads in the European game.
@@ -66,7 +66,8 @@ All three files of the card are converted to Quest Logs 1-3. The input is never 
 save in the output folder is only replaced with `--force`, which first moves it (`cking.sav` and its
 `cking_pic*` album files) to a `backup-<date>` folder there.
 
-The save is written for the USA game. For the European game give `--hd-region europe`: the file format is
+The save is written for the Wind Waker HD game of the GameCube save's own region: the USA game for a USA
+save. For another one say which, for example `--hd-region europe` for the European game: the file format is
 the same and two settings get the values that game writes. This rests on real European saves and on a
 published comparison of the two executables; in the European game one converted save was loaded on a
 console, and its disc was not compared with the USA one (`docs/DIFFERENCES.md`, 4b). The Japanese game is not covered.
@@ -108,7 +109,7 @@ Other options:
 | `--swift-sail` | upgrade an owned Sail to HD's Swift Sail (off unless given) |
 | `--hero-mode` | HD's Hero Mode (off unless given) |
 | `--name NAME`, `--name N=NAME` | the player name of the HD file (up to 8 characters; default: the GameCube name). With more than one used file, say which Quest Log: `--name 2=Zelda` |
-| `--hd-region usa\|europe` | the Wind Waker HD game the save is for: the USA one (title `10143500`, the default) or the European one (title `10143600`), described above |
+| `--hd-region usa\|europe` | the Wind Waker HD game the save is for: the USA one (title `10143500`) or the European one (title `10143600`), described above. Default: the game of the GameCube save's own region |
 | `--no-pictures` | do not write the Picto Box album files |
 | `--force` | replace a save already in the output folder (it is moved to a backup folder there) |
 | `-y`, `--yes` | in a terminal: skip the confirmation described above and go straight to the cases |
@@ -191,7 +192,8 @@ port, used to run converted saves; `scripts/port-ship-warp.patch` and `scripts/p
 the test aids the in-game scripts use).
 
 Only USA GameCube saves are supported; `--allow-region` converts Japanese and European ones without any
-of the checks above having been made for them.
+of the checks above having been made for them. A European save is then written for the European HD game;
+a Japanese one needs `--hd-region`, because the Japanese HD game is not covered.
 
 ## License
 

@@ -19,7 +19,7 @@ from wwsave import convert as conv, hd  # noqa: E402
 exe, game, out = [os.path.abspath(p) for p in sys.argv[1:4]]
 workers = int(sys.argv[4]) if len(sys.argv) > 4 else 3
 MODE = sys.argv[5] if len(sys.argv) > 5 else "steps"      # steps | rewards, for every case
-REGION = sys.argv[6] if len(sys.argv) > 6 else hd.DEFAULT_REGION
+REGION = sys.argv[6] if len(sys.argv) > 6 else "usa"            # the samples are USA saves
 if MODE not in conv.MODES or REGION not in hd.REGIONS:
     sys.exit(__doc__)
 OPTIONS = conv.Options.all(MODE, hd_region=REGION)

@@ -112,7 +112,7 @@ def _print_gc(card):
                 print(term.labelled("  ", "NOT CONVERTIBLE:", p, "bold", "red"))
 
 
-def _confirm(a, card, converted, existing):
+def _confirm(a, card, converted, existing, region_asked=True):
     """In a terminal: show what the input holds and ask before going on (--yes skips this), so that a
     wrong file is noticed before its cases are answered."""
     print(paint(a.input, "dim"))
@@ -126,6 +126,10 @@ def _confirm(a, card, converted, existing):
     if existing:
         print(term.labelled("", "note:", "the save already in the output folder is first moved to a backup "
                             "folder there (--force).", "yellow"))
+    if not region_asked and a.hd_region != "usa":
+        print(term.labelled("", "note:", "the save is written for the %s game, the one of this %s save's region. "
+                            "--hd-region usa writes it for the USA game." % (
+                                hd.REGIONS[a.hd_region].game, card.regional), "yellow"))
     if a.hd_region == "europe":
         print(term.labelled("", "note:", "the rules were established on the USA game; the disc of the %s game was "
                             "not compared (docs/DIFFERENCES.md, 4b)." % hd.REGIONS[a.hd_region].game, "yellow"))
@@ -143,8 +147,12 @@ def _confirm(a, card, converted, existing):
 def cmd_convert(a):
     card = _read_gc(a.input)
     if card.game_code != b"GZLE01" and not a.allow_region:
+        more = ""
+        if not a.hd_region and card.game_code[0:4] not in hd.GC_REGIONS:
+            more = " For this one also say which game the save is for (--hd-region %s): the Wind Waker HD " \
+                   "game of that region is not covered." % " or ".join(hd.REGIONS)
         sys.exit("%s is a %s save (%s). Only USA (GZLE01) saves are supported; --allow-region converts it "
-                 "anyway (unverified)." % (a.input, card.region, card.code))
+                 "anyway (unverified).%s" % (a.input, card.regional, card.code, more))
     slots = card.slots()
     if not any(s is not None and not s.is_new() for s in slots):
         if any(s is None for s in slots):
@@ -177,6 +185,11 @@ def cmd_convert(a):
                  "with glitches, or damaged). The tool translates consistent files only and does not try to "
                  "repair one.\n  %s" % (a.input, "\n  ".join(problems)))
     used = healthy
+    asked_region = a.hd_region              # None: the game of the save's own region
+    try:
+        a.hd_region = conv.hd_region_for(card, asked_region)
+    except conv.ConversionError as e:
+        sys.exit("%s: %s." % (a.input, e))
     names = {}
     for value in a.name or []:
         log, sep, name = value.partition("=")
@@ -196,9 +209,9 @@ def cmd_convert(a):
                      "--name %d=%s (the option can be repeated)." % (value, len(used), used[0] + 1, value))
     terminal = term.terminal(sys.stdin) and term.terminal()
     if terminal and not a.yes:
-        _confirm(a, card, used, existing)
+        _confirm(a, card, used, existing, asked_region is not None)
     options = conv.Options(name=names or None, swift_sail=bool(a.swift_sail), hero_mode=bool(a.hero_mode),
-                           hd_region=a.hd_region)
+                           hd_region=asked_region)
     for key in conv.Options.CASES:
         value = getattr(a, key)
         if isinstance(value, dict):                         # a copy: answers given later are not "typed"
@@ -380,10 +393,9 @@ def main(argv=None):
                    help="Lenzo's third picture accepted without the Deluxe Picto Box (HD gives it at that step)")
     c.add_argument("--swift-sail", action="store_true", help="upgrade an owned Sail to the HD Swift Sail")
     c.add_argument("--hero-mode", action="store_true", help="enable HD Hero Mode")
-    c.add_argument("--hd-region", choices=list(hd.REGIONS), default=hd.DEFAULT_REGION,
-                   help="the Wind Waker HD game the save is for: %s (default: %s)" % (
-                       ", ".join("%s (title %s)" % (k, r.title[8:]) for k, r in hd.REGIONS.items()),
-                       hd.DEFAULT_REGION))
+    c.add_argument("--hd-region", choices=list(hd.REGIONS),
+                   help="the Wind Waker HD game the save is for: %s (default: the game of the GameCube save's "
+                        "own region)" % ", ".join("%s (title %s)" % (k, r.title[8:]) for k, r in hd.REGIONS.items()))
     c.add_argument("--no-pictures", action="store_true",
                    help="do not write the Picto Box album files (cking_pic*.sav)")
     c.add_argument("--name", action="append", metavar="NAME or N=NAME",
@@ -391,7 +403,9 @@ def main(argv=None):
                         "than one used file, name a Quest Log: --name 2=Zelda (repeatable)")
     c.add_argument("--force", action="store_true",
                    help="replace a save already in the output folder (it is moved to a backup folder there)")
-    c.add_argument("--allow-region", action="store_true", help="also accept Japanese / European saves (unverified)")
+    c.add_argument("--allow-region", action="store_true",
+                   help="also accept European and Japanese saves (unverified). A European one is written for "
+                        "the European game; a Japanese one needs --hd-region")
     c.add_argument("-y", "--yes", action="store_true",
                    help="in a terminal: do not show the input and ask before converting; go straight to the cases")
     c.add_argument("--quiet", action="store_true", help="do not print the summary of each converted file")
