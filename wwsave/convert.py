@@ -932,7 +932,7 @@ def convert(card, options=None):
         if not rep.used:
             continue
         if region == "europe":                   # the evidence named below is that game's
-            how = "--hd-region %s" % region if options.hd_region else \
+            how = "--hd-region %s" % region if options.hd_region is not None else \
                 "the game of this %s save's region; --hd-region usa writes it for the USA game" % card.region
             rep.changes.append("File written for the %s game (%s), with no effect on what you "
                                "hold: the two settings that game gives every Quest Log differently from "

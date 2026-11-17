@@ -526,6 +526,8 @@ class Conversion(unittest.TestCase):
             # no option: the HD game of the save's region; a Japanese save has to name one
             region = None if card.game_code[0:4] in hd.GC_REGIONS else "usa"
             self._check(path, card, conv.Options.all("steps", hd_region=region))
+            if region is None and card.game_code[0:4] != b"GZLE":       # and for the USA game, by option
+                self._check(path, card, conv.Options.all("steps", hd_region="usa"))
             n += 1
         if not GC_FILES:
             self.skipTest("no GameCube samples under samples/gc")

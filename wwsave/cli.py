@@ -112,7 +112,7 @@ def _print_gc(card):
                 print(term.labelled("  ", "NOT CONVERTIBLE:", p, "bold", "red"))
 
 
-def _confirm(a, card, converted, existing):
+def _confirm(a, card, converted, existing, region_asked=True):
     """In a terminal: show what the input holds and ask before going on (--yes skips this), so that a
     wrong file is noticed before its cases are answered."""
     print(paint(a.input, "dim"))
@@ -126,6 +126,10 @@ def _confirm(a, card, converted, existing):
     if existing:
         print(term.labelled("", "note:", "the save already in the output folder is first moved to a backup "
                             "folder there (--force).", "yellow"))
+    if not region_asked and a.hd_region != "usa":
+        print(term.labelled("", "note:", "the save is written for the %s game, the one of this %s save's region. "
+                            "--hd-region usa writes it for the USA game." % (
+                                hd.REGIONS[a.hd_region].game, card.region), "yellow"))
     if a.hd_region == "europe":
         print(term.labelled("", "note:", "the rules were established on the USA game; the disc of the %s game was "
                             "not compared (docs/DIFFERENCES.md, 4b)." % hd.REGIONS[a.hd_region].game, "yellow"))
@@ -144,7 +148,9 @@ def cmd_convert(a):
     card = _read_gc(a.input)
     if card.game_code != b"GZLE01" and not a.allow_region:
         sys.exit("%s is a %s save (%s). Only USA (GZLE01) saves are supported; --allow-region converts it "
-                 "anyway (unverified)." % (a.input, card.region, card.code))
+                 "anyway (unverified)%s." % (a.input, card.region, card.code, "" if a.hd_region or card.game_code[0:4] in hd.GC_REGIONS else
+                     ", together with --hd-region %s: the HD game of that region is not covered" %
+                     " or ".join(hd.REGIONS)))
     slots = card.slots()
     if not any(s is not None and not s.is_new() for s in slots):
         if any(s is None for s in slots):
@@ -201,7 +207,7 @@ def cmd_convert(a):
                      "--name %d=%s (the option can be repeated)." % (value, len(used), used[0] + 1, value))
     terminal = term.terminal(sys.stdin) and term.terminal()
     if terminal and not a.yes:
-        _confirm(a, card, used, existing)
+        _confirm(a, card, used, existing, asked_region is not None)
     options = conv.Options(name=names or None, swift_sail=bool(a.swift_sail), hero_mode=bool(a.hero_mode),
                            hd_region=asked_region)
     for key in conv.Options.CASES:
