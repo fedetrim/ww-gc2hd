@@ -306,6 +306,14 @@ class CommandLine(unittest.TestCase):
         hd.HdFile.parse(conv.convert(card, conv.Options(hd_region="europe"))[0].serialize())
         with self.assertRaises(conv.ConversionError):
             conv.convert(card, conv.Options(hd_region="japan"))
+        # without the option: the game of the save's own region; a Japanese save has none here
+        pal = gc.load(gc.build_gci(b"GZLP01", [save, hd.fresh_slot(), hd.fresh_slot()]))
+        self.assertEqual(hd.region_of(conv.convert(pal)[0]), "europe")
+        self.assertEqual(hd.region_of(conv.convert(pal, conv.Options(hd_region="usa"))[0]), "usa")
+        jap = gc.load(gc.build_gci(b"GZLJ01", [save, hd.fresh_slot(), hd.fresh_slot()]))
+        with self.assertRaisesRegex(conv.ConversionError, "--hd-region"):
+            conv.convert(jap)
+        self.assertEqual(hd.region_of(conv.convert(jap, conv.Options(hd_region="usa"))[0]), "usa")
         save.set_u("config.ruby", 0)                        # as a Japanese or European GameCube file has it
         card = gc.load(gc.build_gci(b"GZLE01", [save, hd.fresh_slot(), hd.fresh_slot()]))
         out, reports = conv.convert(card, conv.Options())
@@ -484,12 +492,12 @@ class Conversion(unittest.TestCase):
             h = back.slots[s]
             if not conv.is_converted(g):                    # unused, unreadable or not from normal play
                 fresh, extra = hd.fresh_slot(), hd.default_extra()
-                hd.set_region([fresh], [extra], options.hd_region)
+                hd.set_region([fresh], [extra], conv.hd_region_for(card, options))
                 self.assertEqual((bytes(h), back.extras[s]["options"]), (bytes(fresh), extra["options"]), path)
                 continue
             self.assertGreater(h.u("info.save_count"), 0, path)
             self.assertEqual(hdcheck.invariants(h), [], "%s file %d" % (path, s + 1))
-            self.assertEqual(hd.slot_region(h, back.extras[s]), options.hd_region, path)
+            self.assertEqual(hd.slot_region(h, back.extras[s]), conv.hd_region_for(card, options), path)
             for name, (off, size) in layout.FIELDS.items():
                 if name in self.MAY_CHANGE or name.startswith("status_c"):
                     continue
@@ -505,7 +513,9 @@ class Conversion(unittest.TestCase):
         n = 0
         for path in GC_FILES:
             card = gc.load(_read(path))
-            self._check(path, card, conv.Options.all("steps"))
+            # no option: the HD game of the save's region; a Japanese save has to name one
+            region = None if card.game_code[0:4] in hd.GC_REGIONS else "usa"
+            self._check(path, card, conv.Options.all("steps", hd_region=region))
             n += 1
         if not GC_FILES:
             self.skipTest("no GameCube samples under samples/gc")

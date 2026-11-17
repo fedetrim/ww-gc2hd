@@ -305,7 +305,7 @@ pictures the album shows all three with the game's "Good!" mark.
 | | byte 4 | language, rewritten from the console at start-up | 0 |
 | | byte 5 | GamePad motion aiming on | 1 (HD default) |
 | | byte 6 | Hero Mode (double damage, no heart drops) | `--hero-mode` |
-| | byte 3 | default of the game build: 0 USA, 1 Europe (4b) | 0, or 1 with `--hd-region europe` |
+| | byte 3 | default of the game build: 0 USA, 1 Europe (4b) | 0 for the USA game, 1 for the European one |
 | | bytes 7, 8 | role not established | 0 |
 | controller settings | 2 bytes | read by the options and Miiverse screens | 0 |
 | HD inventory | u32 flags | Zunari's pre-sail dialogue (bits 1, 2) | 0 |
@@ -320,8 +320,10 @@ three charted from the start (680 sector pairs, no exception).
 
 ### 4b. The game build: USA or Europe (`--hd-region`)
 
-The file is written for the USA game (title `00050000-10143500`) unless `--hd-region europe` is given
-(title `00050000-10143600`). The format is the same. Two values are the defaults a build gives a Quest
+The file is written for the USA game (title `00050000-10143500`) or the European one (title
+`00050000-10143600`). Without `--hd-region` it is the game of the GameCube save's own region (game code
+`GZLE` USA, `GZLP` Europe); a Japanese save (`GZLJ`, `--allow-region`) is not converted without the
+option, because the Japanese HD game is not covered. The format is the same. Two values are the defaults a build gives a Quest
 Log when it clears it, and they go together in every Quest Log of every real file, used or empty:
 
 | Field | USA | Europe | Evidence |
@@ -337,7 +339,7 @@ builds. Console and Cemu samples have one pair throughout.
 The conversion gives all three Quest Logs the pair of the chosen build; nothing else depends on the option
 (a test compares the two outputs). A GameCube file carries its own region's `config.ruby` (USA 1, Japan
 and Europe 0; two USA sample files have 0), so for the USA game the value changes for a Japanese or
-European GameCube file (`--allow-region`) and for those two files, and the report says so.
+European GameCube file (`--allow-region --hd-region usa`) and for those two files, and the report says so.
 
 What this rests on, and what was not checked:
 

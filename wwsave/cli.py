@@ -145,6 +145,11 @@ def cmd_convert(a):
     if card.game_code != b"GZLE01" and not a.allow_region:
         sys.exit("%s is a %s save (%s). Only USA (GZLE01) saves are supported; --allow-region converts it "
                  "anyway (unverified)." % (a.input, card.region, card.code))
+    if a.hd_region is None:                 # the game of the save's own region
+        try:
+            a.hd_region = conv.hd_region_for(card)
+        except conv.ConversionError as e:
+            sys.exit("%s: %s." % (a.input, e))
     slots = card.slots()
     if not any(s is not None and not s.is_new() for s in slots):
         if any(s is None for s in slots):
@@ -380,10 +385,9 @@ def main(argv=None):
                    help="Lenzo's third picture accepted without the Deluxe Picto Box (HD gives it at that step)")
     c.add_argument("--swift-sail", action="store_true", help="upgrade an owned Sail to the HD Swift Sail")
     c.add_argument("--hero-mode", action="store_true", help="enable HD Hero Mode")
-    c.add_argument("--hd-region", choices=list(hd.REGIONS), default=hd.DEFAULT_REGION,
-                   help="the Wind Waker HD game the save is for: %s (default: %s)" % (
-                       ", ".join("%s (title %s)" % (k, r.title[8:]) for k, r in hd.REGIONS.items()),
-                       hd.DEFAULT_REGION))
+    c.add_argument("--hd-region", choices=list(hd.REGIONS),
+                   help="the Wind Waker HD game the save is for: %s (default: the game of the GameCube save's "
+                        "own region)" % ", ".join("%s (title %s)" % (k, r.title[8:]) for k, r in hd.REGIONS.items()))
     c.add_argument("--no-pictures", action="store_true",
                    help="do not write the Picto Box album files (cking_pic*.sav)")
     c.add_argument("--name", action="append", metavar="NAME or N=NAME",
