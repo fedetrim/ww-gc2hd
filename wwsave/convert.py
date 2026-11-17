@@ -933,10 +933,13 @@ def convert(card, options=None):
         if region == "europe":                   # the evidence named below is that game's
             how = "--hd-region %s" % region if options.hd_region is not None else \
                 "the game of this %s save's region; --hd-region usa writes it for the USA game" % card.regional
-            rep.changes.append("File written for the %s game (%s), with no effect on what you "
-                               "hold: the two settings that game gives every Quest Log differently from "
-                               "the USA one are set its way (the reading-aid setting for Japanese text, "
-                               "and one options byte)." % (target.game, how))
+            both = out.u("config.ruby") != target.ruby      # a European GameCube file has that one already
+            rep.changes.append("File written for the %s game (%s), with no effect on what you hold: %s." % (
+                target.game, how,
+                "the two settings that game gives every Quest Log differently from the USA one are set its "
+                "way (the reading-aid setting for Japanese text, and one options byte)" if both else
+                "one options byte that game gives every Quest Log differently from the USA one is set its "
+                "way (the other such setting, the reading aid for Japanese text, the file already had)"))
             rep.warnings.append("every rule here, and each case's two answers, was established on the USA "
                                 "game; the disc of the %s game was not compared. A published comparison of "
                                 "the two programs finds them the same except for language code, and one "

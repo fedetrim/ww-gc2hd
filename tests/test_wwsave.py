@@ -495,6 +495,7 @@ class Conversion(unittest.TestCase):
         return None
 
     def _check(self, path, card, options):
+        region = options.hd_region or {b"GZLE": "usa", b"GZLP": "europe"}[card.game_code[0:4]]
         out, reports = conv.convert(card, options)
         data = out.serialize()
         back = hd.HdFile.parse(data)                       # strict: checksums and CRC
@@ -502,12 +503,12 @@ class Conversion(unittest.TestCase):
             h = back.slots[s]
             if not conv.is_converted(g):                    # unused, unreadable or not from normal play
                 fresh, extra = hd.fresh_slot(), hd.default_extra()
-                hd.set_region([fresh], [extra], conv.hd_region_for(card, options.hd_region))
+                hd.set_region([fresh], [extra], region)
                 self.assertEqual((bytes(h), back.extras[s]["options"]), (bytes(fresh), extra["options"]), path)
                 continue
             self.assertGreater(h.u("info.save_count"), 0, path)
             self.assertEqual(hdcheck.invariants(h), [], "%s file %d" % (path, s + 1))
-            self.assertEqual(hd.slot_region(h, back.extras[s]), conv.hd_region_for(card, options.hd_region), path)
+            self.assertEqual(hd.slot_region(h, back.extras[s]), region, path)
             for name, (off, size) in layout.FIELDS.items():
                 if name in self.MAY_CHANGE or name.startswith("status_c"):
                     continue
