@@ -129,7 +129,7 @@ def _confirm(a, card, converted, existing, region_asked=True):
     if not region_asked and a.hd_region != "usa":
         print(term.labelled("", "note:", "the save is written for the %s game, the one of this %s save's region. "
                             "--hd-region usa writes it for the USA game." % (
-                                hd.REGIONS[a.hd_region].game, card.region), "yellow"))
+                                hd.REGIONS[a.hd_region].game, card.regional), "yellow"))
     if a.hd_region == "europe":
         print(term.labelled("", "note:", "the rules were established on the USA game; the disc of the %s game was "
                             "not compared (docs/DIFFERENCES.md, 4b)." % hd.REGIONS[a.hd_region].game, "yellow"))
@@ -147,10 +147,12 @@ def _confirm(a, card, converted, existing, region_asked=True):
 def cmd_convert(a):
     card = _read_gc(a.input)
     if card.game_code != b"GZLE01" and not a.allow_region:
+        more = ""
+        if not a.hd_region and card.game_code[0:4] not in hd.GC_REGIONS:
+            more = " For this one also say which game the save is for (--hd-region %s): the Wind Waker HD " \
+                   "game of that region is not covered." % " or ".join(hd.REGIONS)
         sys.exit("%s is a %s save (%s). Only USA (GZLE01) saves are supported; --allow-region converts it "
-                 "anyway (unverified)%s." % (a.input, card.region, card.code, "" if a.hd_region or card.game_code[0:4] in hd.GC_REGIONS else
-                     ", together with --hd-region %s: the HD game of that region is not covered" %
-                     " or ".join(hd.REGIONS)))
+                 "anyway (unverified).%s" % (a.input, card.regional, card.code, more))
     slots = card.slots()
     if not any(s is not None and not s.is_new() for s in slots):
         if any(s is None for s in slots):
@@ -185,7 +187,7 @@ def cmd_convert(a):
     used = healthy
     asked_region = a.hd_region              # None: the game of the save's own region
     try:
-        a.hd_region = conv.hd_region_for(card, conv.Options(hd_region=asked_region))
+        a.hd_region = conv.hd_region_for(card, asked_region)
     except conv.ConversionError as e:
         sys.exit("%s: %s." % (a.input, e))
     names = {}
@@ -401,7 +403,8 @@ def main(argv=None):
                         "than one used file, name a Quest Log: --name 2=Zelda (repeatable)")
     c.add_argument("--force", action="store_true",
                    help="replace a save already in the output folder (it is moved to a backup folder there)")
-    c.add_argument("--allow-region", action="store_true", help="also accept Japanese / European saves (unverified)")
+    c.add_argument("--allow-region", action="store_true", help="also accept European and Japanese saves (unverified). A European one is written for the "
+                        "European game; a Japanese one needs --hd-region")
     c.add_argument("-y", "--yes", action="store_true",
                    help="in a terminal: do not show the input and ask before converting; go straight to the cases")
     c.add_argument("--quiet", action="store_true", help="do not print the summary of each converted file")

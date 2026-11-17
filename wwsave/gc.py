@@ -66,6 +66,11 @@ class GcCardFile:
     def region(self):
         return REGIONS[self.game_code[0:4]]
 
+    @property
+    def regional(self):
+        """The region as an adjective, for messages: 'a European save'."""
+        return {"Japan": "Japanese", "Europe": "European"}.get(self.region, self.region)
+
     def _copy(self, k):
         return self.blocks[BLOCK * k:BLOCK * (k + 1)]
 

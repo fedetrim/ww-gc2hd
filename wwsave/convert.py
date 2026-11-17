@@ -885,15 +885,14 @@ def convert_slot(g, slot, options, game_code=b"GZLE01"):
     return settled, extra, rep
 
 
-def hd_region_for(card, options=None):
+def hd_region_for(card, region=None):
     """The HD game the file is written for: the one asked for, else the one of the save's own region."""
-    region = options.hd_region if options else None
     if region is None:
         region = hd.GC_REGIONS.get(card.game_code[0:4])
         if region is None:
-            raise ConversionError("this is a %s save (%s), and this tool does not write for the Wind Waker HD "
-                                  "game of that region: say which game the save is for (--hd-region %s)" % (
-                                      card.region, card.code, " or ".join(hd.REGIONS)))
+            raise ConversionError("this is a %s save (%s), and the Wind Waker HD game of that region is not "
+                                  "covered: say which game the save is for (--hd-region %s)" % (
+                                      card.regional, card.code, " or ".join(hd.REGIONS)))
     if region not in hd.REGIONS:
         raise ConversionError("unknown HD region %r (%s)" % (region, " or ".join(hd.REGIONS)))
     return region
@@ -902,7 +901,7 @@ def hd_region_for(card, options=None):
 def convert(card, options=None):
     """GcCardFile -> (HdFile, [SlotReport])."""
     options = options or Options()
-    region = hd_region_for(card, options)
+    region = hd_region_for(card, options.hd_region)
     slots, extras, reports = [], [], []
     pictures = card.pictures()
     for s, g in enumerate(card.slots()):
@@ -933,7 +932,7 @@ def convert(card, options=None):
             continue
         if region == "europe":                   # the evidence named below is that game's
             how = "--hd-region %s" % region if options.hd_region is not None else \
-                "the game of this %s save's region; --hd-region usa writes it for the USA game" % card.region
+                "the game of this %s save's region; --hd-region usa writes it for the USA game" % card.regional
             rep.changes.append("File written for the %s game (%s), with no effect on what you "
                                "hold: the two settings that game gives every Quest Log differently from "
                                "the USA one are set its way (the reading-aid setting for Japanese text, "

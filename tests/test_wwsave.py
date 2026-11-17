@@ -502,12 +502,12 @@ class Conversion(unittest.TestCase):
             h = back.slots[s]
             if not conv.is_converted(g):                    # unused, unreadable or not from normal play
                 fresh, extra = hd.fresh_slot(), hd.default_extra()
-                hd.set_region([fresh], [extra], conv.hd_region_for(card, options))
+                hd.set_region([fresh], [extra], conv.hd_region_for(card, options.hd_region))
                 self.assertEqual((bytes(h), back.extras[s]["options"]), (bytes(fresh), extra["options"]), path)
                 continue
             self.assertGreater(h.u("info.save_count"), 0, path)
             self.assertEqual(hdcheck.invariants(h), [], "%s file %d" % (path, s + 1))
-            self.assertEqual(hd.slot_region(h, back.extras[s]), conv.hd_region_for(card, options), path)
+            self.assertEqual(hd.slot_region(h, back.extras[s]), conv.hd_region_for(card, options.hd_region), path)
             for name, (off, size) in layout.FIELDS.items():
                 if name in self.MAY_CHANGE or name.startswith("status_c"):
                     continue
