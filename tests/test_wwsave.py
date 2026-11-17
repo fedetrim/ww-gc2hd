@@ -15,7 +15,7 @@ HD_FILES = sorted(f for f in glob.glob(os.path.join(ROOT, "samples/hd/**/cking.s
                   if "/rejected/" not in f)
 # fields no code reads and the game leaves uninitialised
 GARBAGE = ("return_place._unk_a", "return_place._unk_b", "get_bag_item._unk_6", "priest.pos", "priest.angle",
-           "priest.room", "config.ruby") + tuple("status_c%d.a__pad_17" % i for i in range(4))
+           "priest.room") + tuple("status_c%d.a__pad_17" % i for i in range(4))
 
 
 def _read(path):
@@ -125,6 +125,10 @@ class Formats(unittest.TestCase):
                 if save.u("info.save_count") or save.u("info.clear_count"):
                     continue
                 n += 1
+                region = hd.slot_region(save, f.extras[s])  # the build that cleared this Quest Log
+                self.assertIsNotNone(region, path)
+                hd.set_region([fresh], [hd.default_extra()], region)     # the options record holds the
+                                                            # player's settings too: not compared
                 diff = [i for i in range(layout.SAVE_SIZE) if i not in skip and save.data[i] != fresh.data[i]]
                 self.assertEqual(diff, [], path)
                 self.assertEqual(f.extras[s]["playlog"], hd.default_extra()["playlog"])
@@ -275,6 +279,39 @@ class CommandLine(unittest.TestCase):
             self.assertIn("by steps:", text.replace("\033[1m", "").replace("\033[0m", ""))
             self.assertIn("by steps", text[text.index("What changed"):])
 
+    def test_hd_region(self):
+        """--hd-region europe gives all three Quest Logs the European game's two defaults, as real
+        European saves have them, and changes nothing else."""
+        for path in HD_FILES:
+            f = hd.HdFile.parse(_read(path))
+            for s in range(3):                              # every Quest Log of every sample has one of the
+                self.assertIsNotNone(hd.slot_region(f.slots[s], f.extras[s]), path)     # two pairs
+            source = os.path.relpath(path, ROOT)
+            region = "europe" if "BCZP" in source or "savegameworld" in source else \
+                "usa" if "BCZE" in source else None
+            if region:                                      # the samples whose source states the game
+                self.assertEqual(hd.region_of(f), region, path)
+        save = hd.fresh_slot()
+        save.set_raw("info.player_name", b"Tester".ljust(17, b"\0"))
+        save.set_u("map.triforce_bits", 0)
+        card = gc.load(gc.build_gci(b"GZLE01", [save, hd.fresh_slot(), hd.fresh_slot()]))
+        usa, _ = conv.convert(card, conv.Options())
+        eur, reports = conv.convert(card, conv.Options(hd_region="europe"))
+        self.assertEqual((hd.region_of(usa), hd.region_of(eur)), ("usa", "europe"))
+        self.assertIn("--hd-region europe", " ".join(reports[0].changes))
+        self.assertIn("established on the USA game", " ".join(reports[0].warnings))
+        self.assertEqual(reports[1].changes, [])
+        hd.set_region(eur.slots, eur.extras, "usa")         # the two defaults are the only difference
+        self.assertEqual(eur.serialize(), usa.serialize())
+        hd.HdFile.parse(conv.convert(card, conv.Options(hd_region="europe"))[0].serialize())
+        with self.assertRaises(conv.ConversionError):
+            conv.convert(card, conv.Options(hd_region="japan"))
+        save.set_u("config.ruby", 0)                        # as a Japanese or European GameCube file has it
+        card = gc.load(gc.build_gci(b"GZLE01", [save, hd.fresh_slot(), hd.fresh_slot()]))
+        out, reports = conv.convert(card, conv.Options())
+        self.assertEqual(hd.region_of(out), "usa")
+        self.assertIn("reading-aid setting for Japanese text set to 1", " ".join(reports[0].changes))
+
     def test_convert_info_verify(self):
         import tempfile
         save = hd.fresh_slot()
@@ -305,6 +342,16 @@ class CommandLine(unittest.TestCase):
             self.assertIn("do not fit: the wallet holds 500", report)
             self.assertIn("Maximum life:    12 hearts -> 11 hearts + 3/4", r.stdout)
             self.assertEqual(self._run("verify", out).returncode, 0)
+            # the same card for the European game: the hint and info name it, the file is valid
+            eur = os.path.join(tmp, "eur")
+            r = self._run("convert", gci, "-o", eur, "--floor50", "steps", "--hd-region", "europe")
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("mlc01/usr/save/00050000/10143600/user/80000001", r.stdout)
+            self.assertIn("the disc of the European game was not compared", " ".join(r.stdout.split()))
+            self.assertIn("defaults of the European game", self._run("info", eur).stdout)
+            self.assertIn("defaults of the USA game", self._run("info", out).stdout)
+            self.assertEqual(self._run("verify", eur).returncode, 0)
+            self.assertEqual(self._run("convert", gci, "-o", eur, "--hd-region", "japan").returncode, 2)
             back = hd.HdFile.parse(_read(os.path.join(out, "cking.sav")))
             self.assertEqual([back.slots[i].u("status_a.max_life") for i in (0, 1)], [47, 48])
             self.assertEqual([back.slots[i].u("status_a.rupee") for i in (0, 1)], [500, 500])   # HD wallet limit
@@ -409,6 +456,7 @@ class Conversion(unittest.TestCase):
                   "item.slot12", "status_a.select_equip", "collect.collect", "memory00.switch", "map.fmap_bits", "return_place.stage",
                   "status_a.max_life", "status_a.life",                    # floor 50
                   "config.attention_type",                                 # kept in the options record
+                  "config.ruby",                                           # the HD build's default
                   "status_a.rupee", "bag_item.beast", "bag_item_record.beast_num"}     # GameCube rewards taken back
     # In these fields only the listed bits may change: the event flags and registers and the chest flags
     # that a rule names.
@@ -435,10 +483,13 @@ class Conversion(unittest.TestCase):
         for s, g in enumerate(card.slots()):
             h = back.slots[s]
             if not conv.is_converted(g):                    # unused, unreadable or not from normal play
-                self.assertEqual(bytes(h), bytes(hd.fresh_slot()), path)
+                fresh, extra = hd.fresh_slot(), hd.default_extra()
+                hd.set_region([fresh], [extra], options.hd_region)
+                self.assertEqual((bytes(h), back.extras[s]["options"]), (bytes(fresh), extra["options"]), path)
                 continue
             self.assertGreater(h.u("info.save_count"), 0, path)
             self.assertEqual(hdcheck.invariants(h), [], "%s file %d" % (path, s + 1))
+            self.assertEqual(hd.slot_region(h, back.extras[s]), options.hd_region, path)
             for name, (off, size) in layout.FIELDS.items():
                 if name in self.MAY_CHANGE or name.startswith("status_c"):
                     continue
@@ -460,11 +511,12 @@ class Conversion(unittest.TestCase):
             self.skipTest("no GameCube samples under samples/gc")
 
     def test_all_samples_other_options(self):
-        opts = conv.Options.all("rewards", swift_sail=True, hero_mode=True)
         if not GC_FILES:
             self.skipTest("no GameCube samples under samples/gc")
-        for path in GC_FILES:
-            self._check(path, gc.load(_read(path)), opts)
+        for region in hd.REGIONS:                           # the other answers and extras, for each HD game
+            opts = conv.Options.all("rewards", swift_sail=True, hero_mode=True, hd_region=region)
+            for path in GC_FILES:
+                self._check(path, gc.load(_read(path)), opts)
 
     def _card(self, edit):
         save = hd.fresh_slot()

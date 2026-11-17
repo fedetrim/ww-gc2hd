@@ -305,7 +305,8 @@ pictures the album shows all three with the game's "Good!" mark.
 | | byte 4 | language, rewritten from the console at start-up | 0 |
 | | byte 5 | GamePad motion aiming on | 1 (HD default) |
 | | byte 6 | Hero Mode (double damage, no heart drops) | `--hero-mode` |
-| | bytes 3, 7, 8 | role not established | 0 |
+| | byte 3 | default of the game build: 0 USA, 1 Europe (4b) | 0, or 1 with `--hd-region europe` |
+| | bytes 7, 8 | role not established | 0 |
 | controller settings | 2 bytes | read by the options and Miiverse screens | 0 |
 | HD inventory | u32 flags | Zunari's pre-sail dialogue (bits 1, 2) | 0 |
 | | 12 entries + count | Carlov's figurine queue (GameCube: one pending figure in register 0xA9FF) | entry 0 = register, count 1, when event 0x2F01 is set or 0x3080 is set without 0x4080 |
@@ -317,10 +318,57 @@ pictures the album shows all three with the game's "Good!" mark.
 Play log evidence: in all genuine HD Quest Logs, bit 0 equals the charted bit for every sector other than the
 three charted from the start (680 sector pairs, no exception).
 
+### 4b. The game build: USA or Europe (`--hd-region`)
+
+The file is written for the USA game (title `00050000-10143500`) unless `--hd-region europe` is given
+(title `00050000-10143600`). The format is the same. Two values are the defaults a build gives a Quest
+Log when it clears it, and they go together in every Quest Log of every real file, used or empty:
+
+| Field | USA | Europe | Evidence |
+|---|---|---|---|
+| options byte 3 | 0 | 1 | [DATA] every Quest Log of the three saves whose source states the European game (two uploaders) has 1, every one of the four whose source states the USA game has 0. The USA code sets 0 when it clears a Quest Log (HD `d/hd_save_slot_flags.cpp:23`), keeps the byte across a New Game+ (`d/d_save_5.cpp:55,74-75`, under the same "below 2" guard as the targeting setting of byte 0) and has no other reader or writer in the decompilation. If the European game has a setting behind it, a Quest Log could carry a pair other than these two; no sample does. |
+| `config.ruby` (reading aid for Japanese text) | 1 | 0 | [DATA] in every HD sample, 0 exactly in the Quest Logs where options byte 3 is 1 (a test checks every Quest Log). [CODE] the GameCube game has the same split: `dSv_player_config_c::init` sets `VERSION_SELECT(0, 0, 1, 0)` (`src/d/d_save.cpp:994`). No reader in the HD decompilation. |
+
+The pair belongs to the Quest Log, not to the file: one sample written by a port
+(`samples/hd/github-issue-attachments/SwitchWakerHD_issue126_34516588`) has the USA pair in Quest Log 1 and
+the European pair in Quest Logs 2 and 3, as a file would whose Quest Logs were created under different
+builds. Console and Cemu samples have one pair throughout.
+
+The conversion gives all three Quest Logs the pair of the chosen build; nothing else depends on the option
+(a test compares the two outputs). A GameCube file carries its own region's `config.ruby` (USA 1, Japan
+and Europe 0; two USA sample files have 0), so for the USA game the value changes for a Japanese or
+European GameCube file (`--allow-region`) and for those two files, and the report says so.
+
+What this rests on, and what was not checked:
+
+- The research was done on the USA game only: the code and stage data of the European game were not read
+  here.
+- [in-game] tested on a real Wii U with the European game: a converted save loads, and file select,
+  gameplay, inventory, sea chart and album show what the file holds. Nothing was played there and no file
+  written by that game was read back.
+- That the two builds are otherwise the same program is the claim of the native port's own comparison of
+  the two executables (ZeldaWWHDRecomp at 1af1d61, `docs/builds.md` and `tools/savegame/README.md`): 18 of
+  37,766 functions differ, all of them language code (the reader of the console language, the player name
+  in a message, parts of the message window and the keyboard); the functions that read, write and
+  checksum the save have identical bodies; the function that clears a Quest Log stores options byte 3 as
+  0 in the USA build and 1 in the European one. It is a third party's result, not repeated here. The save
+  samples agree with it.
+- Not compared: the stage and event data of the European disc (chests, rewards). Every case of 3.2 was
+  established on the USA disc.
+- [in-game] the USA game loads files written with `--hd-region europe`, saves them from the pause menu and
+  writes both values back unchanged (every healthy USA sample, 42 files, 36 of which save;
+  `docs/verification/hd-region.md`): that build reads and keeps the other build's pair. It says nothing
+  about the European build.
+- The language (options byte 4) is left at 0, as in every Quest Log of every European sample. In the USA
+  code the console's language is written into the running options at start-up (4); the port's notes say
+  the options of a Quest Log are copied over them when it is selected, which would let byte 4 decide the
+  language. On the console run the text stayed in the console's language, which is not English, at file
+  select and after the Quest Log was loaded, with byte 4 at 0. Other console languages were not tried.
+
 ## 5. Unused and damaged files
 - A GameCube file without a player name is unused; it becomes a fresh HD Quest Log
   (`dSv_info_c::initdata_to_card` 025BAC50; equal to the 65 empty Quest Logs of the real HD files, apart from
-  bytes the game leaves uninitialised).
+  bytes the game leaves uninitialised and from the two defaults of the game build, 4b).
 - A raw memory card image keeps a backup copy of its directory and of its block map. The one in use is
   the copy with the higher update counter among those whose checksums are right, as the console picks it.
 - The card file holds two copies of the three files. The converter reads them as the game does
@@ -402,6 +450,9 @@ taken away in the final battle), and HD puts the item back on load.
   about, was not played to the second rupee: that needs Mrs. Marie's reward and then the salvage.
 - A consumable already used on the GameCube cannot be taken back by `steps` (the report says so when it
   happens).
+- `--hd-region europe` writes the file for the European HD game from samples and a third party's
+  comparison of the executables; in the European game one save was loaded on a console, nothing was
+  played, and its disc was not compared (4b).
 - Japanese and European GameCube saves convert (`--allow-region`) but were not analysed. A Japanese name is
   written as "Link" (with a warning): the tool writes only characters below U+0250, and whether the USA HD
   game shows kana was not checked.
@@ -512,6 +563,6 @@ taken away in the final battle), and HD puts the item back on load.
 - The ZeldaWWHDRecomp converter (`tools/savegame/gc2hd.py`), written independently, produces
   the same value for every field that the rules above do not touch, on 470 used files.
 
-Limits: not run on a real console; apart from the quests above, the checks load a save and play seconds to
+Limits: on a real console one converted save was loaded and nothing was played; apart from the quests above, the checks load a save and play seconds to
 minutes, not a playthrough. In the salvage runs the chart is marked as opened in the file instead of on the
 chart screen, and the quest runs start from a file placed next to the goal, not sailed there.

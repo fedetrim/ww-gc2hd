@@ -126,8 +126,8 @@ Two things differ from the report's first Lenzo `rewards` run:
 
 From the reports:
 
-- The port is not a console. The same load, play and save cycle was repeated by hand in Cemu; a run
-  on a real Wii U was not made.
+- The port is not a console. The same load, play and save cycle was repeated by hand in Cemu. On a real
+  Wii U one converted save was loaded (European game); none of these cases was played there.
 - Positions are forced: Link or the boat is moved with `WWHD_LINK_WARP` / `WWHD_SHIP_WARP`, and the
   Savage Labyrinth floors are entered by starting the file on them. The way to each place was not
   played.

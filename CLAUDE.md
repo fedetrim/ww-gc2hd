@@ -77,8 +77,8 @@ In-game checks need `research/` set up (`docs/SETUP-RESEARCH.md`):
 ```
 python3 scripts/ingame_case.py SAVE.gci FILE out/cking.sav STAGE ROOM POINT all=steps [case=rewards ...]
 python3 scripts/ingame_test.py PORT_EXE GAME_DIR out/cking.sav RUN_DIR SECONDS [WWHD_...=value ...]
-python3 scripts/ingame_batch.py PORT_EXE GAME_DIR OUT_DIR 3 steps|rewards     # every sample loads
-python3 scripts/ingame_save_batch.py PORT_EXE GAME_DIR OUT_DIR 3 [--alt]      # load, save, compare
+python3 scripts/ingame_batch.py PORT_EXE GAME_DIR OUT_DIR 3 steps|rewards [usa|europe]   # every sample loads
+python3 scripts/ingame_save_batch.py PORT_EXE GAME_DIR OUT_DIR 3 [--alt] [--europe]       # load, save, compare
 ```
 
 ## Adding or changing a rule
@@ -116,7 +116,10 @@ python3 scripts/ingame_save_batch.py PORT_EXE GAME_DIR OUT_DIR 3 [--alt]      # 
 
 ## Not done
 
-- A run on a real Wii U.
+- On a real Wii U one converted save was loaded and looked at, in the European game. Nothing was played
+  there and no file the console wrote was read back.
+- The European HD game: `--hd-region europe` rests on samples, on the native port's comparison of the
+  executables and on that one console run (`docs/DIFFERENCES.md`, 4b). Its disc was never compared.
 - A run on Windows: the console handling in `wwsave/term.py` (styles, whether a stream is a console) was
   written from the API documentation and never executed.
 - Japanese and European GameCube saves (`--allow-region` converts them, nothing was verified).

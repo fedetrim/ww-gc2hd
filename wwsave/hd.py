@@ -14,6 +14,7 @@ hd_save_holders.cpp; checked here against real console and Cemu saves):
   0x2302  u32         CRC-32 of the five HD sections (0x342 bytes), with the quirk that each name
                       contributes only its first (characters + 1) BYTES, zero padded to 18
 """
+import collections
 import struct
 import zlib
 
@@ -31,6 +32,8 @@ NAME_CHARS = 8
 
 # options record (hdSaveSlotFlags_c) byte indices
 OPT_LOCK_ON = 0       # Z-targeting: 0 hold, 1 switch (GameCube: config.attention_type)
+OPT_BUILD = 3         # default of the game build: 0 in files of the USA game, 1 in files of the European
+                      # one, in every Quest Log, used or empty; no reader found (docs/DIFFERENCES.md, 4b)
 OPT_LANGUAGE = 4      # PAL language, written by the game from the console setting
 OPT_GYRO = 5          # 1 = motion aiming enabled (default of a fresh file)
 OPT_HERO_MODE = 6     # 1 = Hero Mode
@@ -43,6 +46,40 @@ INV_AUCTION_ITEM = 17 # auction item re-offered after losing a bid
 # play log (hdSavePlayLog_c): 0x18 bytes of map-view state, then 49 x u32 per sea sector
 PLAYLOG_FLAGS = 0x18  # bit 0: this sector's Fishman has drawn the chart
 PRECHARTED_SECTORS = (0, 10, 43)   # Forsaken Fortress, Windfall, Outset: charted in a new file
+
+
+# The game builds a file can be written for. `build` (options byte OPT_BUILD) and `ruby` (config.ruby) are
+# the defaults the build gives a Quest Log when it clears it; they go together in every real file, per
+# Quest Log. Nothing else in the file depends on the build.
+Region = collections.namedtuple("Region", "game title build ruby")
+REGIONS = {"usa": Region("USA", "0005000010143500", 0, 1),
+           "europe": Region("European", "0005000010143600", 1, 0)}
+DEFAULT_REGION = "usa"
+
+
+def set_region(slots, extras, region):
+    """Give all three Quest Logs, used or empty, the defaults of that build of the game."""
+    target = REGIONS[region]
+    for save, extra in zip(slots, extras):
+        save.set_u("config.ruby", target.ruby)
+        options = bytearray(extra["options"])
+        options[OPT_BUILD] = target.build
+        extra["options"] = bytes(options)
+
+
+def slot_region(save, extra):
+    """The build whose defaults one Quest Log carries: 'usa' | 'europe', or None for another pair."""
+    for region, r in REGIONS.items():
+        if (extra["options"][OPT_BUILD], save.u("config.ruby")) == (r.build, r.ruby):
+            return region
+    return None
+
+
+def region_of(hd_file):
+    """'usa' | 'europe' when all three Quest Logs carry that build's defaults, else None (a file whose
+    Quest Logs were created by different builds, which the ports can produce)."""
+    found = {slot_region(s, e) for s, e in zip(hd_file.slots, hd_file.extras)}
+    return found.pop() if len(found) == 1 else None
 
 
 class HdError(Exception):

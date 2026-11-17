@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """For every USA GameCube sample: convert (every case by steps; with --alt every case by rewards plus Swift Sail and Hero Mode), load the
 result in the game, walk a little, save from the pause menu, and compare the file the game writes with the
-converted one.  usage: ingame_save_batch.py EXE GAME_DIR OUT_DIR [WORKERS] [--alt]"""
+converted one. With --europe the files are written for the European game (--hd-region europe); the game
+that loads them is the one in GAME_DIR.
+usage: ingame_save_batch.py EXE GAME_DIR OUT_DIR [WORKERS] [--alt] [--europe]"""
 import concurrent.futures
 import os
 import subprocess
@@ -14,6 +16,8 @@ from sample_jobs import sample_jobs  # noqa: E402
 from wwsave import convert as conv, hd, layout  # noqa: E402
 
 args = [a for a in sys.argv[1:] if not a.startswith("--")]
+if len(args) < 3 or [a for a in sys.argv[1:] if a.startswith("--") and a not in ("--alt", "--europe")]:
+    sys.exit(__doc__)
 exe, game, out = [os.path.abspath(p) for p in args[:3]]
 workers = int(args[3]) if len(args) > 3 else 3
 ALT = "--alt" in sys.argv
@@ -34,6 +38,10 @@ with open(RUNNER, "w") as f:
     f.write(src.replace("\nrm -rf save states\n", "\nrm -rf states\n"))
 EXPECTED = {"status_b.date_ipl", "status_b.time", "status_b.date", "info.save_count", "status_a.life",
             "status_b.tact_wind_x", "status_b.tact_wind_y"}
+
+if "--europe" in sys.argv:
+    OPTIONS.hd_region = "europe"
+print("files written for the %s game" % hd.REGIONS[OPTIONS.hd_region].game, flush=True)
 
 jobs = sample_jobs(OPTIONS, out)
 
