@@ -44,7 +44,7 @@ your save is in one of them.
 You can check it yourself with a real save from this repository,
 `samples/gc/pack1/Wind Waker/5th save.gci`. That player opened the Savage Labyrinth chest on floor 30,
 got Triforce Chart 6 and had not salvaged the shard yet: a normal mid-game save. We ran `gc2hd.py` on it.
-Its whole output for that file is (player name replaced here):
+Its line for that file is (player name replaced here):
 
 ```
 file 1: 'NAME' -> 'NAME'  [save counter 0 -> 1; Tingle Tuner -> Tingle Bottle (same item number 0x21)]
@@ -62,12 +62,14 @@ That is not the only problem. With that converter:
 - Your **Picto Box pictures** are dropped.
 - The Sail and the Wind Waker stay on item buttons, where HD never has them.
 
-Its own README says it was not tested in Cemu or on a Wii U, and that saving and reloading in the game
-was not tested either.
+Its own README reports that 26 converted saves load into gameplay in the port and show the right hearts,
+rupees and items, which is true and is exactly why the problem goes unnoticed. It lists Cemu, a Wii U and
+saving and reloading in the game as not tested.
 
 To be fair: if your save has not touched any of these places, for example a save from early in the game,
-that converter gives a file where nothing is lost and nothing can be collected twice (the last two points
-still apply). The trouble is that it cannot tell you which kind of save you have.
+none of the reward problems above arise with that converter (the last two points still apply, and we did
+not check its output further than that). The trouble is that it cannot tell you which kind of save you
+have.
 
 ### What this tool does instead
 
@@ -80,8 +82,8 @@ still apply). The trouble is that it cannot tell you which kind of save you have
 - Your Picto Box pictures come along.
 - Every situation the tool asks about (listed below) was played in the running game with both answers,
   not only read in code, and the converted samples were loaded in the game. "The game" here is the native
-  PC port of Wind Waker HD, which runs the game's own code, plus Cemu. On a real Wii U one converted save
-  was loaded and looked at; nothing was played there.
+  PC port of Wind Waker HD, which runs the game's own code; loading and saving were repeated in Cemu. On a
+  real Wii U one converted save was loaded and looked at; nothing was played there.
 
 ## The questions it may ask
 
@@ -92,7 +94,8 @@ explains it and offers two answers:
   gives there. With the floor-50 chest: it stays open, and your Piece of Heart becomes the Hero's Charm.
 - **`rewards`**: what you hold stays yours. The place is undone, and the place where HD keeps your reward
   is marked done. With the floor-50 chest: you keep the Piece of Heart, and the chest is closed again with
-  the Hero's Charm inside.
+  the Hero's Charm inside. A Triforce Chart is the exception, because HD has no such chart: it is dropped
+  and its chest is closed again, so you open it in HD and get the shard.
 
 Both are correct saves. There is no default, because it is your save and your call.
 
@@ -153,7 +156,8 @@ Two more commands:
   `--hd-region`, because the Japanese Wind Waker HD is not covered.
 - **Only saves made by normal play.** A save that was edited, made with glitches, or damaged is left out:
   its Quest Log is written empty and the report says what is wrong with it. The tool does not try to
-  repair it. (`convert` then ends with exit status 3 instead of 0.)
+  repair it. (`convert` then ends with exit status 3 instead of 0. If no file on the card can be
+  converted, nothing is written and it ends with status 1.)
 
 In a terminal the output uses colours; set `NO_COLOR` to turn them off. Output sent to a file is plain
 text. Without a terminal nothing is asked: if your save is in a situation that has no answer yet, the
@@ -173,9 +177,9 @@ Fair question for a tool that rewrites your save. In short:
 - On a real Wii U one converted save was loaded and looked at (European game). Nothing was played there.
 
 What is **not** covered is written down too: nothing was played on a console, the European
-Wind Waker HD rests on less evidence than the USA one, and there is one place where a kept rupee can be
-found a second time. All of it, with the evidence for every claim, is in
-[docs/DIFFERENCES.md](docs/DIFFERENCES.md); the reports of the runs in the game are in
+Wind Waker HD rests on less evidence than the USA one, there is one place where a kept rupee can be
+found a second time, and the tool was never run on Windows. The details, with the evidence for every
+claim, are in [docs/DIFFERENCES.md](docs/DIFFERENCES.md); the reports of the runs in the game are in
 `docs/verification/`.
 
 ## For contributors
@@ -184,7 +188,8 @@ found a second time. All of it, with the evidence for every claim, is in
 `docs/SETUP-RESEARCH.md` explains how to set up the game dumps and the tools needed to repeat the research
 and the checks in the game. `python3 -m unittest tests.test_wwsave` runs the tests.
 
-The repository holds no game data and no third-party code. The saves under `samples/` were shared
+The repository holds no game data and no third-party code, except two small patches for the native port
+(`scripts/PORT-PATCHES.md`). The saves under `samples/` were shared
 publicly by their authors and are kept here with their sources (`samples/SOURCES.md`). If one of them is
 yours and you want it removed, open an issue.
 
