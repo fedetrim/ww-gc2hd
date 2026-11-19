@@ -49,7 +49,7 @@ got Triforce Chart 6 and had not salvaged the shard yet: a normal mid-game save.
 Its line for that file is (player name replaced here):
 
 ```
-file 1: 'NAME' -> 'NAME'  [save counter 0 -> 1; Tingle Tuner -> Tingle Bottle (same item number 0x21)]
+  file 1: 'NAME' -> 'NAME'  [save counter 0 -> 1; Tingle Tuner -> Tingle Bottle (same item number 0x21)]
 ```
 
 In the file it wrote, the chest is open, Triforce Shard 6 is not held, and the chart is now Treasure
@@ -59,8 +59,8 @@ That is not the only problem. With that converter:
 
 - The **Hero's Charm** can be lost for good, and a **Piece of Heart** can be collected twice, depending
   on what you did in the Savage Labyrinth and with Mrs. Marie.
-- **Treasure Charts 43 to 46**, or the sunken treasure they lead to, can be lost: the place that gives
-  each chart in HD (three chests and Mrs. Marie's reward) may already be done on the GameCube, and a
+- **Treasure Charts 42 to 46**, or the sunken treasure they lead to, can be lost: the place that gives
+  charts 43 to 46 in HD (three chests and Mrs. Marie's reward) may already be done on the GameCube, and a
   Triforce Chart you had already used turns into one of these charts marked as salvaged.
 - Your **Picto Box pictures** are dropped.
 - The Sail and the Wind Waker stay on item buttons, where HD never has them.
@@ -71,8 +71,8 @@ goes unnoticed. It lists Cemu, a Wii U and
 saving and reloading in the game as not tested.
 
 To be fair: if your save has not touched any of these places, for example a save from early in the game,
-none of the reward problems above arise with that converter. Where the two games agree, its output and
-ours are the same: we compared them on the 470 used files of the sample cards. (The last two points still apply, along with a few
+none of the reward problems above arise with that converter. For every field our rules do not touch,
+both tools write the same value: we compared them on the 470 used files of the sample cards. (The last two points still apply, along with a few
 smaller conventions listed in `docs/DIFFERENCES.md`.) The trouble is that it cannot tell you which kind of
 save you have.
 
@@ -98,8 +98,8 @@ several. For each one your save is in, the tool explains it and offers two answe
 - **`steps`**: what you did stays done. You give up what the GameCube gave you there and receive what HD
   gives there. With the floor-50 chest: it stays open, and your Piece of Heart becomes the Hero's Charm.
 - **`rewards`**: what you hold stays yours. The place is undone, and the place where HD keeps your reward
-  is marked done. With the floor-50 chest: you keep the Piece of Heart, and the chest is closed again with
-  the Hero's Charm inside. A Triforce Chart is the exception, because HD has no chart for that shard: it is dropped
+  is marked done. With the floor-50 chest, if you do not hold the Hero's Charm: you keep the Piece of
+  Heart, and the chest is closed again with the charm inside. A Triforce Chart is the exception, because HD has no chart for that shard: it is dropped
   and its chest is closed again, so you open it in HD and get the shard.
 
 Both are correct saves. There is no default, because it is your save and your call. Some situations
