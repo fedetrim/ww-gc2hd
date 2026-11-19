@@ -21,10 +21,10 @@ loads, Link has his items, the map is there.
 But HD is not the same game. Nintendo moved some rewards to other places. A save that was fine on the
 GameCube can describe a situation that cannot happen in HD, and the game does not notice or repair it.
 
-The worst example is the Triforce. On the GameCube, five of the eight shards work like this: a chest
-gives you a **Triforce Chart** (charts 2, 4, 6, 7 and 8), and you
-later salvage the shard from the sea. In HD those same five chests give you the **Triforce Shard**
-directly, and the old chart numbers now belong to ordinary Treasure Charts. So if your GameCube save has
+The worst example is the Triforce. On the GameCube every shard has a **Triforce Chart**: you find the
+chart, then salvage the shard from the sea. In HD, for five of the eight (2, 4, 6, 7 and 8), the chest
+that held the chart gives you the **Triforce Shard** directly, and the old chart numbers now belong to
+ordinary Treasure Charts. So if your GameCube save has
 one of those charts and you have not salvaged its shard yet, a plain copy leaves you with:
 
 - the chest already open, so it will never give the shard;
