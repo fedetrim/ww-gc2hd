@@ -62,14 +62,16 @@ That is not the only problem. With that converter:
 - Your **Picto Box pictures** are dropped.
 - The Sail and the Wind Waker stay on item buttons, where HD never has them.
 
-Its own README reports that 26 converted saves load into gameplay in the port and show the right hearts,
-rupees and items, which is true and is exactly why the problem goes unnoticed. It lists Cemu, a Wii U and
+Its own README reports a test in the game: 26 converted saves show up in the file select, load into
+gameplay and have the right hearts, rupees and items. That is true, and it is exactly why the problem
+goes unnoticed. It lists Cemu, a Wii U and
 saving and reloading in the game as not tested.
 
 To be fair: if your save has not touched any of these places, for example a save from early in the game,
-none of the reward problems above arise with that converter (the last two points still apply, and we did
-not check its output further than that). The trouble is that it cannot tell you which kind of save you
-have.
+none of the reward problems above arise with that converter. Where the two games agree, its output and
+ours are the same: we compared them on 470 files. (The last two points still apply, along with a few
+smaller conventions listed in `docs/DIFFERENCES.md`.) The trouble is that it cannot tell you which kind of
+save you have.
 
 ### What this tool does instead
 
@@ -87,8 +89,8 @@ have.
 
 ## The questions it may ask
 
-Most saves are in none of these situations, or in one or two. For each one your save is in, the tool
-explains it and offers two answers:
+Most saves are in none of these situations (32 of the 42 USA samples here); a late-game save can be in
+several. For each one your save is in, the tool explains it and offers two answers:
 
 - **`steps`**: what you did stays done. You give up what the GameCube gave you there and receive what HD
   gives there. With the floor-50 chest: it stays open, and your Piece of Heart becomes the Hero's Charm.
@@ -97,7 +99,9 @@ explains it and offers two answers:
   the Hero's Charm inside. A Triforce Chart is the exception, because HD has no such chart: it is dropped
   and its chest is closed again, so you open it in HD and get the shard.
 
-Both are correct saves. There is no default, because it is your save and your call.
+Both are correct saves. There is no default, because it is your save and your call. Some situations
+affect each other (the floor-50 chest, Mrs. Marie and the Pawprint chest share rewards), so when the tool
+asks, it spells out what each answer means for your save in particular.
 
 To answer in advance, for example in a script, use `--all steps` or `--all rewards`, or one option per
 situation:
@@ -107,7 +111,7 @@ situation:
 | `--triforce-chart-2`, `-4`, `-6`, `-7`, `-8` | you own that Triforce Chart and have not salvaged its shard |
 | `--horseshoe-chest`, `--star-belt-chest` | you opened that lookout chest (HD keeps Treasure Chart 43 / 44 there) |
 | `--floor50` | you opened the Savage Labyrinth chest on floor 50 (GameCube: Piece of Heart, HD: Hero's Charm) |
-| `--pawprint-chest` | you opened the chest in the Pawprint Isle Wizzrobe cave (HD keeps Treasure Chart 46 there) |
+| `--pawprint-chest` | you opened the chest in the Pawprint Isle Wizzrobe cave (HD keeps Treasure Chart 46 there). With `--floor50 rewards` the chest stays open and the answer is only about its Silver Rupee |
 | `--marie` | Mrs. Marie gave you her reward for 40 Joy Pendants (GameCube: Hero's Charm, HD: Treasure Chart 45) |
 | `--lenzo` | Lenzo accepted your third picture and you do not have the Deluxe Picto Box yet |
 
@@ -150,7 +154,7 @@ Two more commands:
 ## What it accepts
 
 - **Files**: `.gci`, `.gcs`, `.sav`, or a whole memory card image (Dolphin's `MemoryCardA.USA.raw`, a
-  Nintendont card, a card dump). All three files on the card become Quest Logs 1 to 3.
+  card dump). All three files on the card become Quest Logs 1 to 3.
 - **Region**: USA GameCube saves (`GZLE01`). European and Japanese saves are refused unless you add
   `--allow-region`; they convert, but none of the checks were made for them. A Japanese save also needs
   `--hd-region`, because the Japanese Wind Waker HD is not covered.
@@ -160,8 +164,8 @@ Two more commands:
   converted, nothing is written and it ends with status 1.)
 
 In a terminal the output uses colours; set `NO_COLOR` to turn them off. Output sent to a file is plain
-text. Without a terminal nothing is asked: if your save is in a situation that has no answer yet, the
-tool lists them and stops.
+text. Without a terminal nothing is asked: if your save is in situations that have no answer yet, the
+tool lists them with their options and stops.
 
 ## How do I know it is right?
 
@@ -171,7 +175,9 @@ Fair question for a tool that rewrites your save. In short:
   place. They were checked against 257 real GameCube saves and 45 real HD saves.
 - Every situation the tool asks about was played in the running game, with both answers. The running
   game is the [ZeldaWWHDRecomp](https://github.com/ZeldaWWHDRecomp/ZeldaWWHDRecomp) native port, built
-  from a copy of Wind Waker HD; loading, saving and reloading were repeated in Cemu.
+  from a copy of Wind Waker HD; loading, saving and reloading were repeated in Cemu. These runs start
+  next to the place being tested, with test aids, and last seconds to minutes; they are not playthroughs
+  ("Limits" in `docs/DIFFERENCES.md`).
 - Every healthy USA sample (42 files) was converted and loaded in the game, and 36 of them were saved
   again from the pause menu and compared with what the game wrote.
 - On a real Wii U one converted save was loaded and looked at (European game). Nothing was played there.
