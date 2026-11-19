@@ -7,8 +7,8 @@ you left off.
 ./ww-gc2hd convert "My Save.gci" -o out
 ```
 
-It shows you what is in the save, asks before converting, and writes `out/cking.sav` together with a
-report of everything it changed and why. Your original save is never modified.
+It shows you what is in the save, asks before converting, writes `out/cking.sav` and prints a report of
+everything it changed and why. Your original save is never modified.
 
 You need Python 3.8 or newer. Nothing else to install.
 
@@ -36,16 +36,18 @@ nothing tells you: you find out hours later, when the shard is nowhere.
 
 There is one other converter, `gc2hd.py`, part of the
 [ZeldaWWHDRecomp](https://github.com/ZeldaWWHDRecomp/ZeldaWWHDRecomp) project (read at commit `1af1d61`).
-It copies the save field by field and adjusts three things. It does not handle any of the places where the
-two games give different rewards, and it prints no warning when your save is in one of them.
+It copies the save field by field and adjusts three things: the save counter, the Tingle Tuner (HD's
+Tingle Bottle) and the Deluxe Picto Box at one step of Lenzo's quest. It does not handle any of the chests,
+charts or Mrs. Marie's reward, where the two games give different things, and it prints no warning when
+your save is in one of them.
 
 You can check it yourself with a real save from this repository,
 `samples/gc/pack1/Wind Waker/5th save.gci`. That player opened the Savage Labyrinth chest on floor 30,
 got Triforce Chart 6 and had not salvaged the shard yet: a normal mid-game save. We ran `gc2hd.py` on it.
-Its whole output for that file is:
+Its whole output for that file is (player name replaced here):
 
 ```
-file 1: ' Lunk' -> ' Lunk'  [save counter 0 -> 1; Tingle Tuner -> Tingle Bottle (same item number 0x21)]
+file 1: 'NAME' -> 'NAME'  [save counter 0 -> 1; Tingle Tuner -> Tingle Bottle (same item number 0x21)]
 ```
 
 In the file it wrote, the chest is open, Triforce Shard 6 is not held, and the chart is now Treasure
@@ -55,7 +57,8 @@ That is not the only problem. With that converter:
 
 - The **Hero's Charm** can be lost for good, and a **Piece of Heart** can be collected twice, depending
   on what you did in the Savage Labyrinth and with Mrs. Marie.
-- **Treasure Charts 43 to 46** cannot be obtained if you had opened their chests on the GameCube.
+- **Treasure Charts 43 to 46** cannot be obtained if the place that gives each one in HD (three chests
+  and Mrs. Marie's reward) was already done on the GameCube.
 - Your **Picto Box pictures** are dropped.
 - The Sail and the Wind Waker stay on item buttons, where HD never has them.
 
@@ -63,7 +66,8 @@ Its own README says it was not tested in Cemu or on a Wii U, and that saving and
 was not tested either.
 
 To be fair: if your save has not touched any of these places, for example a save from early in the game,
-that converter gives a correct file. The trouble is that it cannot tell you which kind of save you have.
+that converter gives a file where nothing is lost and nothing can be collected twice (the last two points
+still apply). The trouble is that it cannot tell you which kind of save you have.
 
 ### What this tool does instead
 
@@ -74,8 +78,10 @@ that converter gives a correct file. The trouble is that it cannot tell you whic
 - Nothing unique is lost and nothing can be collected twice: Triforce Shards, charts, the Hero's Charm,
   Pieces of Heart, the Deluxe Picto Box. A test checks every combination of situations and answers.
 - Your Picto Box pictures come along.
-- Every situation above was played in the running game with both answers, not only read in code, and
-  the converted samples were loaded in the game. A converted save was also tested on a real Wii U.
+- Every situation the tool asks about (listed below) was played in the running game with both answers,
+  not only read in code, and the converted samples were loaded in the game. "The game" here is the native
+  PC port of Wind Waker HD, which runs the game's own code, plus Cemu. On a real Wii U one converted save
+  was loaded and looked at; nothing was played there.
 
 ## The questions it may ask
 
@@ -159,12 +165,14 @@ Fair question for a tool that rewrites your save. In short:
 
 - The rules come from reading the code of both games and comparing the data on both discs, place by
   place. They were checked against 257 real GameCube saves and 45 real HD saves.
-- Every situation the tool asks about was played in the running game, with both answers.
+- Every situation the tool asks about was played in the running game, with both answers. The running
+  game is the [ZeldaWWHDRecomp](https://github.com/ZeldaWWHDRecomp/ZeldaWWHDRecomp) native port, built
+  from a copy of Wind Waker HD; loading, saving and reloading were repeated in Cemu.
 - Every healthy USA sample (42 files) was converted and loaded in the game, and 36 of them were saved
   again from the pause menu and compared with what the game wrote.
-- A converted save was tested on a real Wii U.
+- On a real Wii U one converted save was loaded and looked at (European game). Nothing was played there.
 
-What is **not** covered is written down too: nothing was played to the end on a console, the European
+What is **not** covered is written down too: nothing was played on a console, the European
 Wind Waker HD rests on less evidence than the USA one, and there is one place where a kept rupee can be
 found a second time. All of it, with the evidence for every claim, is in
 [docs/DIFFERENCES.md](docs/DIFFERENCES.md); the reports of the runs in the game are in
