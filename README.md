@@ -10,7 +10,8 @@ you left off.
 It shows you what is in the save, asks before converting, writes `out/cking.sav` and prints a report of
 everything it changed and why. Your original save is never modified.
 
-You need Python 3.8 or newer. Nothing else to install.
+You need Python 3.8 or newer and a copy of this repository (`git clone`, or "Download ZIP" on GitHub).
+Nothing else to install. On Windows, run it as `python ww-gc2hd convert ...`.
 
 ## Why a plain copy is not enough
 
@@ -20,7 +21,8 @@ loads, Link has his items, the map is there.
 But HD is not the same game. Nintendo moved some rewards to other places. A save that was fine on the
 GameCube can describe a situation that cannot happen in HD, and the game does not notice or repair it.
 
-The worst example is the Triforce. On the GameCube, five chests give you a **Triforce Chart**, and you
+The worst example is the Triforce. On the GameCube, five of the eight shards work like this: a chest
+gives you a **Triforce Chart** (charts 2, 4, 6, 7 and 8), and you
 later salvage the shard from the sea. In HD those same five chests give you the **Triforce Shard**
 directly, and the old chart numbers now belong to ordinary Treasure Charts. So if your GameCube save has
 one of those charts and you have not salvaged its shard yet, a plain copy leaves you with:
@@ -57,8 +59,9 @@ That is not the only problem. With that converter:
 
 - The **Hero's Charm** can be lost for good, and a **Piece of Heart** can be collected twice, depending
   on what you did in the Savage Labyrinth and with Mrs. Marie.
-- **Treasure Charts 43 to 46** cannot be obtained if the place that gives each one in HD (three chests
-  and Mrs. Marie's reward) was already done on the GameCube.
+- **Treasure Charts 43 to 46**, or the sunken treasure they lead to, can be lost: the place that gives
+  each chart in HD (three chests and Mrs. Marie's reward) may already be done on the GameCube, and a
+  Triforce Chart you had already used turns into one of these charts marked as salvaged.
 - Your **Picto Box pictures** are dropped.
 - The Sail and the Wind Waker stay on item buttons, where HD never has them.
 
@@ -69,7 +72,7 @@ saving and reloading in the game as not tested.
 
 To be fair: if your save has not touched any of these places, for example a save from early in the game,
 none of the reward problems above arise with that converter. Where the two games agree, its output and
-ours are the same: we compared them on 470 files. (The last two points still apply, along with a few
+ours are the same: we compared them on the 470 used files of the sample cards. (The last two points still apply, along with a few
 smaller conventions listed in `docs/DIFFERENCES.md`.) The trouble is that it cannot tell you which kind of
 save you have.
 
@@ -89,14 +92,14 @@ save you have.
 
 ## The questions it may ask
 
-Most saves are in none of these situations (32 of the 42 USA samples here); a late-game save can be in
+Of the 42 healthy USA sample files here, 32 are in none of these situations; a late-game save can be in
 several. For each one your save is in, the tool explains it and offers two answers:
 
 - **`steps`**: what you did stays done. You give up what the GameCube gave you there and receive what HD
   gives there. With the floor-50 chest: it stays open, and your Piece of Heart becomes the Hero's Charm.
 - **`rewards`**: what you hold stays yours. The place is undone, and the place where HD keeps your reward
   is marked done. With the floor-50 chest: you keep the Piece of Heart, and the chest is closed again with
-  the Hero's Charm inside. A Triforce Chart is the exception, because HD has no such chart: it is dropped
+  the Hero's Charm inside. A Triforce Chart is the exception, because HD has no chart for that shard: it is dropped
   and its chest is closed again, so you open it in HD and get the shard.
 
 Both are correct saves. There is no default, because it is your save and your call. Some situations
@@ -177,7 +180,7 @@ Fair question for a tool that rewrites your save. In short:
   game is the [ZeldaWWHDRecomp](https://github.com/ZeldaWWHDRecomp/ZeldaWWHDRecomp) native port, built
   from a copy of Wind Waker HD; loading, saving and reloading were repeated in Cemu. These runs start
   next to the place being tested, with test aids, and last seconds to minutes; they are not playthroughs
-  ("Limits" in `docs/DIFFERENCES.md`).
+  (the end of "Verification" in `docs/DIFFERENCES.md`).
 - Every healthy USA sample (42 files) was converted and loaded in the game, and 36 of them were saved
   again from the pause menu and compared with what the game wrote.
 - On a real Wii U one converted save was loaded and looked at (European game). Nothing was played there.
