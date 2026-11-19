@@ -178,7 +178,8 @@ Fair question for a tool that rewrites your save. In short:
 
 What is **not** covered is written down too: nothing was played on a console, the European
 Wind Waker HD rests on less evidence than the USA one, there is one place where a kept rupee can be
-found a second time, and the tool was never run on Windows. The details, with the evidence for every
+found a second time, and the coloured output was never tried in a Windows console (the tests do run
+on Windows). The details, with the evidence for every
 claim, are in [docs/DIFFERENCES.md](docs/DIFFERENCES.md); the reports of the runs in the game are in
 `docs/verification/`.
 
