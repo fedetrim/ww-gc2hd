@@ -1,206 +1,213 @@
 # ww-gc2hd
 
-Converts a *The Legend of Zelda: The Wind Waker* save from the GameCube (NTSC-U, `GZLE01`) into a
-*Wind Waker HD* save for the Wii U (`cking.sav`, USA title `00050000-10143500`, or the European title
-`00050000-10143600` with `--hd-region europe`; also what Cemu uses).
-
-Python 3.8+, no dependencies.
-
-## Why this tool
-
-Nintendo offers no way to bring a GameCube save to Wind Waker HD. One community converter exists:
-`tools/savegame/gc2hd.py` of the [ZeldaWWHDRecomp](https://github.com/ZeldaWWHDRecomp/ZeldaWWHDRecomp) native
-port (read at commit `1af1d61`, 2026-11-13). It copies the save block field by field and applies three rules:
-save counter 0 -> 1, Tingle Tuner -> Tingle Bottle, and the Deluxe Picto Box when Lenzo is waiting for the
-firefly. Its README lists as not tested: HD saves in Cemu or on a Wii U, and saving and reloading in the game.
-
-That is enough for a save where the two games agree. They do not agree everywhere: HD moved rewards between
-places and reused chart numbers, so a plain copy can produce a file that no HD game could have written. For
-example, with that converter:
-
-- A GameCube Triforce Chart 2, 4, 6, 7 or 8 becomes HD's Treasure Chart 42-46 (same number, other chart). If
-  its shard was not salvaged yet, the shard cannot be obtained any more: in HD it sits in the chest the
-  GameCube player already opened.
-- The Hero's Charm becomes unobtainable when the Savage Labyrinth floor-50 chest was opened on the GameCube
-  before Mrs. Marie gave her reward (HD keeps the charm in that chest), and the floor-50 Piece of Heart can
-  be collected a second time under Two-Eye Reef, where HD keeps it.
-- Treasure Charts 43-46 cannot be obtained when their chests were opened on the GameCube.
-- The Sail and the Wind Waker stay on item buttons, where HD never has them; Picto Box pictures are dropped.
-
-This tool was written to make the conversion exact and to prove it:
-
-| | ZeldaWWHDRecomp `gc2hd.py` | `ww-gc2hd` |
-|---|---|---|
-| Translation rules | 3 | every difference found between the two games (`docs/DIFFERENCES.md`): 13 fields with other conventions, the HD-only records, and every place whose reward differs |
-| Places whose reward differs | not handled | each is a case with two exact translations, `steps` or `rewards`, chosen by the user, no default |
-| Guarantee | none stated | every unique reward (shards, charts, Hero's Charm, Pieces of Heart, Deluxe Picto Box) is held exactly when its HD place is done: none lost, none twice (a test runs every combination of cases and answers). Rupees and spoils, which both games give without limit, are translated as far as possible; the exception is in `docs/DIFFERENCES.md`, Known gaps |
-| Picto Box pictures | dropped | converted to the HD album |
-| Report | short notes | every change with its reason, and what you hold before and after |
-| Completeness of the difference list | not stated | both games compared in full: stage data byte by byte, machine code of every save access and item gift, both randomizers' location tables, shops |
-| Verified in the game | one load in the port, per its README | every case played in both modes in the port; every healthy used file of the USA samples (42) loaded, 36 of them saved from the pause menu (the other six start in a scene without the menu); load and save in Cemu |
-| Regions | USA, Japan, Europe | USA (Europe converts with `--allow-region`, Japan with `--allow-region --hd-region`; unverified) |
-| HD -> GameCube | `hd2gc.py`, shared fields | no |
-
-Tested on a real Wii U: a converted save loads in the European game.
+Bring your GameCube *Wind Waker* save to *Wind Waker HD* on the Wii U (or Cemu), and keep playing where
+you left off.
 
 ```
-./ww-gc2hd info    "My Save.gci"                 # what is in a GameCube or HD save
-./ww-gc2hd convert "My Save.gci" -o out          # writes out/cking.sav and reports every change
-./ww-gc2hd verify  out/cking.sav                 # checksums and structure of an HD save
+./ww-gc2hd convert "My Save.gci" -o out
 ```
 
-Only files that normal play can have written are converted. A file that was edited, made with glitches or
-damaged (for example a Triforce Chart whose chest is still closed), or that the game itself cannot read,
-is left out: its Quest Log is written
-empty, the report says what is wrong with it, and `convert` ends with exit status 3 instead of 0. The tool
-does not try to repair one
-(`docs/DIFFERENCES.md`, section 5b).
+It shows you what is in the save, asks before converting, writes `out/cking.sav` and prints a report of
+everything it changed and why. Your original save is never modified.
 
-In a terminal, `convert` first shows what the input holds (the same as `info`) and asks whether to convert
-it, so that a wrong file is noticed before anything else is asked; `--yes` skips that. Without a terminal
-nothing is asked. In a terminal the output uses bold and colours and is wrapped to the window; set
-`NO_COLOR` to turn the styles off. Redirected output is plain text.
+You need Python 3.8 or newer and a copy of this repository (`git clone`, or "Download ZIP" on GitHub).
+Nothing else to install. On Windows, run it as `python ww-gc2hd convert ...`.
 
-Input: `.gci`, `.gcs`, `.sav`, or a raw memory card image (Dolphin `MemoryCardA.USA.raw`, a card dump).
-All three files of the card are converted to Quest Logs 1-3. The input is never modified, and an existing
-save in the output folder is only replaced with `--force`, which first moves it (`cking.sav` and its
-`cking_pic*` album files) to a `backup-<date>` folder there.
+## Why a plain copy is not enough
 
-The save is written for the Wind Waker HD game of the GameCube save's own region: the USA game for a USA
-save. For another one say which, for example `--hd-region europe` for the European game: the file format is
-the same and two settings get the values that game writes. This rests on real European saves and on a
-published comparison of the two executables; in the European game one converted save was loaded on a
-console, and its disc was not compared with the USA one (`docs/DIFFERENCES.md`, 4b). The Japanese game is not covered.
+The two games store a save in almost the same way, so copying it across looks like it works: the file
+loads, Link has his items, the map is there.
 
-Install the result as `mlc01/usr/save/00050000/10143500/user/80000001/cking.sav` (Cemu; `10143600` for the
-European game) or with a save
-manager such as SaveMii on a console, together with the `cking_pic*` files written next to it. It replaces
-all three Quest Logs: back up the game's save folder first and remove its old `cking_pic*` files, which
-are the albums of the Quest Logs being replaced.
+But HD is not the same game. Nintendo moved some rewards to other places. A save that was fine on the
+GameCube can describe a situation that cannot happen in HD, and the game does not notice or repair it.
 
-## Choices
+The worst example is the Triforce. On the GameCube every shard has a **Triforce Chart**: you find the
+chart, then salvage the shard from the sea. In HD, for five of the eight (2, 4, 6, 7 and 8), the chest
+that held the chart gives you the **Triforce Shard** directly, and the old chart numbers now belong to
+ordinary Treasure Charts. So if your GameCube save has
+one of those charts and you have not salvaged its shard yet, a plain copy leaves you with:
 
-The two games are not the same game. Some places give a different reward in each, so a GameCube save can
-be in a state HD does not have. For each such case the save is in, the tool stops, explains it and asks.
-There is no default. Each case has two answers:
+- the chest already open, so it will never give the shard;
+- a Treasure Chart that leads to an ordinary treasure where your Triforce Chart used to lead to the shard;
+- no other place in the game that has that shard.
 
-- `steps`: the place stays done; you lose what the GameCube gave there and get what HD gives there. Consumables
-  (rupees, a Skull Necklace, a Joy Pendant) are taken back as far as you still hold them.
-- `rewards`: you keep what you have; the place is undone (the chest is closed again) and the place that gives
-  your reward in HD is marked done.
+You need all eight shards to reach the end of the game. **That save can no longer be finished**, and
+nothing tells you: you find out hours later, when the shard is nowhere.
 
-An option answers a case in advance, and `--all steps|rewards` answers all of them, so a script never stops.
-Without a terminal and without the option, the tool exits and lists the cases. A case can be answered per Quest
-Log (`--floor50 1=steps,3=rewards`).
+### The existing converter does exactly this
 
-| Option (`steps` / `rewards`) | Case |
+There is one other converter, `gc2hd.py`, part of the
+[ZeldaWWHDRecomp](https://github.com/ZeldaWWHDRecomp/ZeldaWWHDRecomp) project (read at commit `1af1d61`).
+It copies the save field by field and adjusts three things: the save counter, the Tingle Tuner (HD's
+Tingle Bottle) and the Deluxe Picto Box at one step of Lenzo's quest. It does not handle any of the chests,
+charts or Mrs. Marie's reward, where the two games give different things, and it prints no warning when
+your save is in one of them.
+
+You can check it yourself with a real save from this repository,
+`samples/gc/pack1/Wind Waker/5th save.gci`. That player opened the Savage Labyrinth chest on floor 30,
+got Triforce Chart 6 and had not salvaged the shard yet: a normal mid-game save. We ran `gc2hd.py` on it.
+Its line for that file is (player name replaced here):
+
+```
+  file 1: 'NAME' -> 'NAME'  [save counter 0 -> 1; Tingle Tuner -> Tingle Bottle (same item number 0x21)]
+```
+
+In the file it wrote, the chest is open, Triforce Shard 6 is not held, and the chart is now Treasure
+Chart 44. Triforce Shard 6 cannot be obtained in that save.
+
+That is not the only problem. With that converter:
+
+- The **Hero's Charm** can be lost for good, and a **Piece of Heart** can be collected twice, depending
+  on what you did in the Savage Labyrinth and with Mrs. Marie.
+- **Treasure Charts 42 to 46**, or the sunken treasure they lead to, can be lost: the place that gives
+  charts 43 to 46 in HD (three chests and Mrs. Marie's reward) may already be done on the GameCube, and a
+  Triforce Chart you had already used turns into one of these charts marked as salvaged.
+- Your **Picto Box pictures** are dropped.
+- The Sail and the Wind Waker stay on item buttons, where HD never has them.
+
+Its own README reports a test in the game: 26 converted saves show up in the file select, load into
+gameplay and have the right hearts, rupees and items. That is true, and it is exactly why the problem
+goes unnoticed. It lists Cemu, a Wii U and
+saving and reloading in the game as not tested.
+
+To be fair: if your save has not touched any of these places, for example a save from early in the game,
+none of the reward problems above arise with that converter. For every field our rules do not touch,
+both tools write the same value: we compared them on the 470 used files of the sample cards. (The last two points still apply, along with a few
+smaller conventions listed in `docs/DIFFERENCES.md`.) The trouble is that it cannot tell you which kind of
+save you have.
+
+### What this tool does instead
+
+- It knows every difference we found between the two games, after comparing them in full
+  ([docs/DIFFERENCES.md](docs/DIFFERENCES.md) lists each one with its evidence).
+- When your save is in one of those situations, it stops, explains it and lets you choose how to
+  resolve it. Either way you end up with a save HD itself could have written.
+- Nothing unique is lost and nothing can be collected twice: Triforce Shards, charts, the Hero's Charm,
+  Pieces of Heart, the Deluxe Picto Box. A test checks every combination of situations and answers.
+- Your Picto Box pictures come along.
+- Every situation the tool asks about (listed below) was played in the running game with both answers,
+  not only read in code, and the converted samples were loaded in the game. "The game" here is the native
+  PC port of Wind Waker HD, which runs the game's own code; loading and saving were repeated in Cemu. On a
+  real Wii U one converted save was loaded and looked at; nothing was played there.
+
+## The questions it may ask
+
+Of the 42 healthy USA sample files here, 32 are in none of these situations; a late-game save can be in
+several. For each one your save is in, the tool explains it and offers two answers:
+
+- **`steps`**: what you did stays done. You give up what the GameCube gave you there and receive what HD
+  gives there. With the floor-50 chest: it stays open, and your Piece of Heart becomes the Hero's Charm.
+- **`rewards`**: what you hold stays yours. The place is undone, and the place where HD keeps your reward
+  is marked done. With the floor-50 chest, if you do not hold the Hero's Charm: you keep the Piece of
+  Heart, and the chest is closed again with the charm inside. A Triforce Chart is the exception, because HD has no chart for that shard: it is dropped
+  and its chest is closed again, so you open it in HD and get the shard.
+
+Both are correct saves. There is no default, because it is your save and your call. Some situations
+affect each other (the floor-50 chest, Mrs. Marie and the Pawprint chest share rewards), so when the tool
+asks, it spells out what each answer means for your save in particular.
+
+To answer in advance, for example in a script, use `--all steps` or `--all rewards`, or one option per
+situation:
+
+| Option (`steps` or `rewards`) | Your save is in it when |
 |---|---|
-| `--triforce-chart-2`, `-4`, `-6`, `-7`, `-8` | that Triforce Chart is owned and its shard is not salvaged (HD: the chest holds the shard) |
-| `--horseshoe-chest`, `--star-belt-chest` | that lookout chest is open (HD: Treasure Chart 43 / 44) |
-| `--floor50` | the Savage Labyrinth floor-50 chest is open (GameCube: Piece of Heart; HD: Hero's Charm) |
-| `--pawprint-chest` | the Pawprint Isle Wizzrobe cave chest is open (HD: Treasure Chart 46; with `--floor50 rewards` the chest stays open and the answer is about its Silver Rupee only) |
-| `--marie` | Mrs. Marie's reward for 40 Joy Pendants was given (GameCube: Hero's Charm; HD: Treasure Chart 45) |
-| `--lenzo` | Lenzo accepted the third picture and the Picto Box is not the Deluxe one (HD gives it at that step) |
+| `--triforce-chart-2`, `-4`, `-6`, `-7`, `-8` | you own that Triforce Chart and have not salvaged its shard |
+| `--horseshoe-chest`, `--star-belt-chest` | you opened that lookout chest (HD keeps Treasure Chart 43 / 44 there) |
+| `--floor50` | you opened the Savage Labyrinth chest on floor 50 (GameCube: Piece of Heart, HD: Hero's Charm) |
+| `--pawprint-chest` | you opened the chest in the Pawprint Isle Wizzrobe cave (HD keeps Treasure Chart 46 there). With `--floor50 rewards` the chest stays open and the answer is only about its Silver Rupee |
+| `--marie` | Mrs. Marie gave you her reward for 40 Joy Pendants (GameCube: Hero's Charm, HD: Treasure Chart 45) |
+| `--lenzo` | Lenzo accepted your third picture and you do not have the Deluxe Picto Box yet |
 
-Other options:
+An answer can differ per file: `--floor50 1=steps,3=rewards`.
 
-| Option | Effect |
+## Putting the save on your console
+
+The tool writes `cking.sav` and, if you had pictures, `cking_pic*.sav` files next to it. Copy all of them.
+
+- **Wii U**: restore them with a save manager such as SaveMii.
+- **Cemu**: put them in `mlc01/usr/save/00050000/10143500/user/80000001/` (`10143600` for the European
+  game).
+
+The save replaces all three Quest Logs of the game. Back up the save you have there first, and remove its
+old `cking_pic*` files.
+
+**Which game do you have?** A USA GameCube save is written for the USA version of Wind Waker HD. If your
+Wind Waker HD is the European one, add `--hd-region europe`.
+
+## Other options
+
+| Option | What it does |
 |---|---|
-| `--swift-sail` | upgrade an owned Sail to HD's Swift Sail (off unless given) |
-| `--hero-mode` | HD's Hero Mode (off unless given) |
-| `--name NAME`, `--name N=NAME` | the player name of the HD file (up to 8 characters; default: the GameCube name). With more than one used file, say which Quest Log: `--name 2=Zelda` |
-| `--hd-region usa\|europe` | the Wind Waker HD game the save is for: the USA one (title `10143500`) or the European one (title `10143600`), described above. Default: the game of the GameCube save's own region |
-| `--no-pictures` | do not write the Picto Box album files |
-| `--force` | replace a save already in the output folder (it is moved to a backup folder there) |
-| `-y`, `--yes` | in a terminal: skip the confirmation described above and go straight to the cases |
-| `--quiet` | do not print the summary of each converted file |
+| `--swift-sail` | turns your Sail into HD's Swift Sail |
+| `--hero-mode` | turns on HD's Hero Mode |
+| `--name NAME` | changes the player name (up to 8 characters). With several files: `--name 2=Zelda` |
+| `--hd-region usa\|europe` | the Wind Waker HD game the save is for. Default: the same region as the GameCube save |
+| `--no-pictures` | leaves the Picto Box pictures out |
+| `--force` | replaces a save already in the output folder, after moving it to a backup folder there |
+| `-y`, `--yes` | skips the "convert this file?" question |
+| `--quiet` | does not print the summary of each file |
 
-Picto Box pictures are converted into HD's album files (`cking_pic*.sav`, written next to `cking.sav`;
-`--no-pictures` skips them). Not carried over: the card's banner, icon and comment (the picture and text the
-GameCube's memory card screen shows for the file). They are not part of the progress: the game writes the
-same picture from its disc into every card file, with its title and the date of the save as text, and never reads them
-back. `cking.sav` has no place for them. Everything else
-is listed, with evidence, in [docs/DIFFERENCES.md](docs/DIFFERENCES.md).
-
-## How it was checked
-
-- Both save formats and every rule come from the decompilations of both games and were checked against
-  257 real GameCube saves and 45 real HD saves (`samples/`, sources in `samples/SOURCES.md`).
-- `python3 -m unittest tests.test_wwsave` converts every GameCube sample and checks the result against a
-  model of what HD does when it loads a Quest Log, against properties of all real HD saves, and that no
-  field outside the documented rules changes.
-- `python3 scripts/compare_with_hd.py` compares converted saves with real HD saves statistically.
-- `python3 scripts/stage_diff.py`, `scripts/evnt_diff.py` and `scripts/event_diff.py` compare the stage data,
-  stage event tables and event scripts of the two games.
-- `python3 scripts/gc_stage_dump.py DISC.iso out.json` dumps chests and actors from your own GameCube disc
-  image; the chest flags the rules rely on were confirmed with it.
-- In the game: `scripts/ingame_test.py` loads a save with the game's own code (the ZeldaWWHDRecomp native
-  port, built from your copy of Wind Waker HD) and compares the game's memory with the file;
-  `scripts/ingame_batch.py` does it for every converted USA sample, and `scripts/ingame_save_batch.py`
-  also saves from the pause menu and compares the file the game writes. Loading, playing and saving from the
-  pause menu were checked this way, and the same load / play / save / reload cycle was repeated in Cemu.
-  `scripts/ingame_case.py` builds a test save for one case with chosen answers and a start place.
-  `scripts/ingame_salvage.py` salvages the HD Treasure Charts 43-46 of a converted save (needs the port
-  built with `scripts/port-ship-warp.patch`); the Triforce (down to Hyrule with eight shards) and Lenzo's
-  dialogue after the Deluxe Picto Box rule were also played from converted saves (docs/DIFFERENCES.md,
-  Verification). On a real console one converted save was loaded (European game); nothing was played there.
-
-## Layout
+Two more commands:
 
 ```
-ww-gc2hd            command-line entry point
-wwsave/layout.py    the 0x768-byte save block both games share
-wwsave/gc.py        GameCube card files and memory card images
-wwsave/hd.py        HD cking.sav
-wwsave/convert.py   conversion rules and options
-wwsave/hdcheck.py   model of HD's load-time rewrites and HD invariants
-wwsave/picture.py   Picto Box pictures: GameCube texture -> HD album (JPEG)
-wwsave/describe.py  human-readable summary
-tests/              unit tests (conversion rules, every combination of cases and answers)
-scripts/            tools used for the research and for the checks in the running game
-docs/DIFFERENCES.md every GameCube/HD difference found, with evidence
-docs/research/      longer notes and the audits the difference list rests on
-docs/verification/  reports of the runs in the game, case by case
-docs/SETUP-RESEARCH.md  how to set up research/ (game dumps, clones, the native port) for what follows
-audit/              the scripts of the audits behind "nothing else differs" (audit/README.md)
-verify/             the scripts that play each case in the game (verify/README.md)
-CLAUDE.md           how a coding agent should work on this project
-samples/            real saves used for verification, with their sources (SOURCES.md)
+./ww-gc2hd info   "My Save.gci"     # what a GameCube or HD save holds
+./ww-gc2hd verify out/cking.sav     # checks that an HD save is well formed
 ```
 
-## Samples
+## What it accepts
 
-`samples/` holds the real saves the tests and the checks in the game run on: GameCube saves under
-`samples/gc`, Wind Waker HD saves under `samples/hd`. They were shared publicly by their authors and are
-included as downloaded, each folder named after its source; `samples/SOURCES.md` lists every source with
-its link and what the uploader said about the file. If one of them is yours and you want it removed, open
-an issue.
+- **Files**: `.gci`, `.gcs`, `.sav`, or a whole memory card image (Dolphin's `MemoryCardA.USA.raw`, a
+  card dump). All three files on the card become Quest Logs 1 to 3.
+- **Region**: USA GameCube saves (`GZLE01`). European and Japanese saves are refused unless you add
+  `--allow-region`; they convert, but none of the checks were made for them. A Japanese save also needs
+  `--hd-region`, because the Japanese Wind Waker HD is not covered.
+- **Only saves made by normal play.** A save that was edited, made with glitches, or damaged is left out:
+  its Quest Log is written empty and the report says what is wrong with it. The tool does not try to
+  repair it. (`convert` then ends with exit status 3 instead of 0. If no file on the card can be
+  converted, nothing is written and it ends with status 1.)
 
-`python3 scripts/fetch_samples.py --check` compares the folder with `samples/checksums.sha256`. Without
-`--check` the script downloads the sources whose saves are missing, and with `--again` every source
-(`samples/manifest.json`). A full download also brings
-what the repository does not keep because nothing here uses it: the original archives, files that failed
-validation, save states of the native port, and other files that came along (`.gitignore` lists them).
+In a terminal the output uses colours; set `NO_COLOR` to turn them off. Output sent to a file is plain
+text. Without a terminal nothing is asked: if your save is in situations that have no answer yet, the
+tool lists them with their options and stops.
 
-## What is not in this repository
+## How do I know it is right?
 
-No game data and no third-party code. To repeat the research or the checks in the game you need your own
-copies under `research/`, which is git-ignored (`docs/SETUP-RESEARCH.md` has the steps): your own dumps of
-both games, and clones of the projects the research reads: [zeldaret/tww](https://github.com/zeldaret/tww) (GameCube decompilation), the Wind
-Waker HD decompilation and [ZeldaWWHDRecomp](https://github.com/ZeldaWWHDRecomp/ZeldaWWHDRecomp) (native
-port, used to run converted saves; `scripts/port-ship-warp.patch` and `scripts/port-kill-enemies.patch` add
-the test aids the in-game scripts use).
+Fair question for a tool that rewrites your save. In short:
 
-Only USA GameCube saves are supported; `--allow-region` converts Japanese and European ones without any
-of the checks above having been made for them. A European save is then written for the European HD game;
-a Japanese one needs `--hd-region`, because the Japanese HD game is not covered.
+- The rules come from reading the code of both games and comparing the data on both discs, place by
+  place. They were checked against 257 real GameCube saves and 45 real HD saves.
+- Every situation the tool asks about was played in the running game, with both answers. The running
+  game is the [ZeldaWWHDRecomp](https://github.com/ZeldaWWHDRecomp/ZeldaWWHDRecomp) native port, built
+  from a copy of Wind Waker HD; loading, saving and reloading were repeated in Cemu. These runs start
+  next to the place being tested, with test aids, and last seconds to minutes; they are not playthroughs
+  (the end of "Verification" in `docs/DIFFERENCES.md`).
+- Every healthy USA sample (42 files) was converted and loaded in the game, and 36 of them were saved
+  again from the pause menu and compared with what the game wrote.
+- On a real Wii U one converted save was loaded and looked at (European game). Nothing was played there.
+
+What is **not** covered is written down too: nothing was played on a console, the European
+Wind Waker HD rests on less evidence than the USA one, there is one place where a kept rupee can be
+found a second time, and the coloured output was never tried in a Windows console (the tests do run
+on Windows). The details, with the evidence for every
+claim, are in [docs/DIFFERENCES.md](docs/DIFFERENCES.md); the reports of the runs in the game are in
+`docs/verification/`.
+
+## For contributors
+
+`CLAUDE.md` describes how the project is organised and the rules any change must keep.
+`docs/SETUP-RESEARCH.md` explains how to set up the game dumps and the tools needed to repeat the research
+and the checks in the game. `python3 -m unittest tests.test_wwsave` runs the tests.
+
+The repository holds no game data and no third-party code, except two small patches for the native port
+(`scripts/PORT-PATCHES.md`). The saves under `samples/` were shared
+publicly by their authors and are kept here with their sources (`samples/SOURCES.md`). If one of them is
+yours and you want it removed, open an issue.
 
 ## License
 
 MIT (`LICENSE`), for the code and documents of this project. Not covered by it: the saves in `samples/`,
-which belong to the people who shared them (`samples/SOURCES.md`), and the two patches for the native port
-in `scripts/`, which are under the Mozilla Public License 2.0 like the file they modify
-(`scripts/PORT-PATCHES.md`).
+which belong to the people who shared them, and the two patches for the native port in `scripts/`, which
+are under the Mozilla Public License 2.0 like the file they modify (`scripts/PORT-PATCHES.md`).
 
 This project is not affiliated with Nintendo. The Legend of Zelda and The Wind Waker are trademarks of
 Nintendo.
